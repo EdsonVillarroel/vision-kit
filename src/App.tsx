@@ -224,7 +224,7 @@ const AppContent = () => {
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/vision-kit">
       <ThemeProvider>
         <SnackbarProvider>
           <AuthProvider>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppointments } from '../hooks/useAppointments';
 import { useMedicalRecords } from '../../medical-records/hooks/useMedicalRecords';

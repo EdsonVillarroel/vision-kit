@@ -5,7 +5,7 @@ import type { ClinicalExam, ClinicalExamFormData, EyeMeasurement } from '../type
 
 interface ClinicalExamFormProps {
   exam?: ClinicalExam;
-  onSubmit: (data: ClinicalExamFormData) => Promise<void>;
+  onSubmit: (data: ClinicalExamFormData) => Promise<ClinicalExam | void>;
   isEditing?: boolean;
 }
 
@@ -73,7 +73,7 @@ export const ClinicalExamForm: React.FC<ClinicalExamFormProps> = ({
         ...prev[visionType],
         [eye]: {
           ...prev[visionType]![eye],
-          [field]: typeof value === 'string' ? value : parseFloat(value as string) || 0
+          [field]: typeof value === 'string' ? value : (typeof value === 'number' ? value : parseFloat(String(value)) || 0)
         }
       }
     }));

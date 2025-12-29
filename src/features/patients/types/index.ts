@@ -36,7 +36,7 @@ export interface Patient {
   lastVisit?: string;
 }
 
-export interface PatientFormData extends Omit<Patient, 'id' | 'createdAt' | 'updatedAt' | 'visitCount' | 'totalSpent'> {}
+export interface PatientFormData extends Omit<Patient, 'id' | 'createdAt' | 'updatedAt' | 'visitCount' | 'totalSpent' | 'status' | 'lastVisit'> {}
 
 export interface PatientFilters {
   search?: string;

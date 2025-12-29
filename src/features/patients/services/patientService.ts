@@ -176,6 +176,7 @@ export const patientService = {
         const newPatient: Patient = {
           ...data,
           id: `P${Date.now()}`,
+          status: 'normal',
           visitCount: 0,
           totalSpent: 0,
           createdAt: new Date().toISOString(),

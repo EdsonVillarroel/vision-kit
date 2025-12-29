@@ -26,10 +26,10 @@ export const SaleForm: React.FC<SaleFormProps> = ({ onSubmit }) => {
 
   // Productos del inventario
   const [products, setProducts] = useState<Product[]>([]);
-  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [, setLoadingProducts] = useState(true);
 
   // Form state
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [, setSelectedPatient] = useState<Patient | null>(null);
   const [formData, setFormData] = useState({
     patientId: patientId || '',
     patientName: '',

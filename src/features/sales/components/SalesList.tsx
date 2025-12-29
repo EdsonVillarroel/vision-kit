@@ -62,7 +62,6 @@ export const SalesList = () => {
   const avgTicket = monthSales.length > 0 ? monthTotal / monthSales.length : 0;
 
   const pendingSales = sales.filter(s => s.status === 'pending');
-  const pendingTotal = pendingSales.reduce((sum, s) => sum + s.total, 0);
 
   if (loading && sales.length === 0) {
     return (

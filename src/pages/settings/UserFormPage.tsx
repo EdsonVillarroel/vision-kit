@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { usePermissions } from '../../features/auth/hooks/usePermissions';
 import { userService } from '../../features/users/services/userService';
-import type { User, UserRole } from '../../features/auth/types';
+import type { UserRole } from '../../features/auth/types';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 

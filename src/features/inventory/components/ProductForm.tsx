@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { Product, ProductFormData, ProductCategory } from '../types';
 
 interface ProductFormProps {
@@ -56,7 +56,7 @@ export const ProductForm = ({ product, onSubmit }: ProductFormProps) => {
   const [lensType, setLensType] = useState<'single' | 'bifocal' | 'progressive' | ''>(
     product?.specifications?.lensType || ''
   );
-  const [lensMaterial, setLensMaterial] = useState<'plastic' | 'polycarbonate' | 'high-index' | 'glass' | ''>(
+  const [lensMaterial, setLensMaterial] = useState<string>(
     product?.specifications?.lensMaterial || ''
   );
   const [index, setIndex] = useState(product?.specifications?.index?.toString() || '');

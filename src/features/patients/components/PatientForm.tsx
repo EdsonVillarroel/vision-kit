@@ -6,7 +6,7 @@ import type { Patient, PatientFormData } from '../types';
 
 interface PatientFormProps {
   patient?: Patient;
-  onSubmit: (data: PatientFormData) => Promise<void>;
+  onSubmit: (data: PatientFormData) => Promise<Patient | void>;
   isEditing?: boolean;
 }
 
@@ -16,6 +16,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, isE
   const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<PatientFormData>({
+    identificationId: patient?.identificationId || '',
     firstName: patient?.firstName || '',
     lastName: patient?.lastName || '',
     dateOfBirth: patient?.dateOfBirth || '',
@@ -33,7 +34,9 @@ export const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, isE
       phone: ''
     },
     allergies: patient?.allergies || [],
-    medicalConditions: patient?.medicalConditions || []
+    medicalConditions: patient?.medicalConditions || [],
+    notes: patient?.notes || '',
+    warningReason: patient?.warningReason || ''
   });
 
   const [hasInsurance, setHasInsurance] = useState(!!patient?.insurance);

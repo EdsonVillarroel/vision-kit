@@ -82,6 +82,8 @@ export interface MedicalRecord {
 
 export interface MedicalRecordFormData extends Omit<MedicalRecord, 'id' | 'createdAt' | 'updatedAt'> {}
 
+export type ExamType = 'routine' | 'emergency' | 'followup' | 'contact-lens';
+
 export interface MedicalRecordFilters {
   patientId?: string;
   examType?: string;

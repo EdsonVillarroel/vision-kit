@@ -42,7 +42,7 @@ export interface Product {
 
     // Para lentes
     lensType?: 'single' | 'bifocal' | 'progressive';
-    lensMaterial?: 'plastic' | 'polycarbonate' | 'high-index' | 'glass';
+    lensMaterial?: 'plastic' | 'polycarbonate' | 'high-index' | 'glass' | string;
     index?: number; // Índice de refracción
     coatings?: string[];
 

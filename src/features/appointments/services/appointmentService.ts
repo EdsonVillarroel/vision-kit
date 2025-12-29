@@ -193,7 +193,7 @@ export const appointmentService = {
   getAvailableSlots: async (
     date: string,
     practitionerId: string,
-    duration: number = 30
+    _duration: number = 30
   ): Promise<TimeSlot[]> => {
     return new Promise((resolve) => {
       setTimeout(() => {

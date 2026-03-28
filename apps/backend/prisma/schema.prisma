@@ -1,0 +1,544 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────
+// USERS & AUTH
+// ─────────────────────────────────────────
+
+enum UserRole {
+  admin
+  manager
+  optician
+}
+
+enum UserStatus {
+  active
+  inactive
+}
+
+model User {
+  id        String     @id @default(uuid())
+  email     String     @unique
+  password  String
+  name      String
+  role      UserRole   @default(optician)
+  avatar    String?
+  phone     String?
+  status    UserStatus @default(active)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  appointments   Appointment[]   @relation("PractitionerAppointments")
+  sales          Sale[]
+  medicalRecords MedicalRecord[]
+  clinicalExams  ClinicalExam[]
+  stockMovements StockMovement[]
+
+  @@map("users")
+}
+
+// ─────────────────────────────────────────
+// PATIENTS
+// ─────────────────────────────────────────
+
+enum PatientGender {
+  male
+  female
+  other
+}
+
+enum PatientStatus {
+  frequent
+  normal
+  warning
+}
+
+model Patient {
+  id                String        @id @default(uuid())
+  identificationId  String        @unique
+  firstName         String
+  lastName          String
+  dateOfBirth       DateTime      @db.Date
+  gender            PatientGender
+  phone             String
+  email             String?
+  address           String
+  city              String
+  state             String
+  zipCode           String
+  allergies         String[]      @default([])
+  medicalConditions String[]      @default([])
+  status            PatientStatus @default(normal)
+  visitCount        Int           @default(0)
+  totalSpent        Decimal       @default(0) @db.Decimal(10, 2)
+  notes             String?
+  warningReason     String?
+  lastVisit         DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  insurance        PatientInsurance?
+  emergencyContact PatientEmergencyContact?
+  appointments     Appointment[]
+  medicalRecords   MedicalRecord[]
+  clinicalExams    ClinicalExam[]
+  sales            Sale[]
+
+  @@index([identificationId])
+  @@index([lastName, firstName])
+  @@index([status])
+  @@map("patients")
+}
+
+model PatientInsurance {
+  id           String  @id @default(uuid())
+  patientId    String  @unique
+  provider     String
+  policyNumber String
+  groupNumber  String?
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@map("patient_insurances")
+}
+
+model PatientEmergencyContact {
+  id           String @id @default(uuid())
+  patientId    String @unique
+  name         String
+  relationship String
+  phone        String
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@map("patient_emergency_contacts")
+}
+
+// ─────────────────────────────────────────
+// APPOINTMENTS
+// ─────────────────────────────────────────
+
+enum AppointmentType {
+  eye_exam
+  contact_lens_fitting
+  followup
+  emergency
+  frame_selection
+  adjustment
+}
+
+enum AppointmentStatus {
+  scheduled
+  confirmed
+  in_progress
+  completed
+  cancelled
+  no_show
+}
+
+model Appointment {
+  id                 String            @id @default(uuid())
+  appointmentNumber  String            @unique
+  patientId          String
+  practitionerId     String
+  date               DateTime          @db.Date
+  time               String
+  duration           Int               @default(30)
+  endTime            String
+  type               AppointmentType
+  status             AppointmentStatus @default(scheduled)
+  reason             String?
+  notes              String?
+  reminderSent       Boolean           @default(false)
+  reminderSentAt     DateTime?
+  medicalRecordId    String?
+  createdById        String
+  confirmedAt        DateTime?
+  completedAt        DateTime?
+  cancelledAt        DateTime?
+  cancellationReason String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  patient       Patient        @relation(fields: [patientId], references: [id])
+  practitioner  User           @relation("PractitionerAppointments", fields: [practitionerId], references: [id])
+  medicalRecord MedicalRecord? @relation(fields: [medicalRecordId], references: [id])
+
+  @@index([patientId])
+  @@index([practitionerId])
+  @@index([date])
+  @@index([status])
+  @@map("appointments")
+}
+
+// ─────────────────────────────────────────
+// MEDICAL RECORDS
+// ─────────────────────────────────────────
+
+enum ExamType {
+  routine
+  emergency
+  followup
+  contact_lens
+}
+
+model MedicalRecord {
+  id             String   @id @default(uuid())
+  patientId      String
+  practitionerId String
+  date           DateTime @db.Date
+  examType       ExamType @default(routine)
+
+  vaRightUncorrected String
+  vaRightCorrected   String
+  vaLeftUncorrected  String
+  vaLeftCorrected    String
+
+  refractionRightSphere   Decimal  @db.Decimal(5, 2)
+  refractionRightCylinder Decimal  @db.Decimal(5, 2)
+  refractionRightAxis     Int
+  refractionRightAdd      Decimal? @db.Decimal(5, 2)
+  refractionRightPrism    Decimal? @db.Decimal(5, 2)
+  refractionRightBase     String?
+  refractionRightPd       Decimal? @db.Decimal(4, 1)
+
+  refractionLeftSphere    Decimal  @db.Decimal(5, 2)
+  refractionLeftCylinder  Decimal  @db.Decimal(5, 2)
+  refractionLeftAxis      Int
+  refractionLeftAdd       Decimal? @db.Decimal(5, 2)
+  refractionLeftPrism     Decimal? @db.Decimal(5, 2)
+  refractionLeftBase      String?
+  refractionLeftPd        Decimal? @db.Decimal(4, 1)
+
+  prescriptionRightSphere   Decimal? @db.Decimal(5, 2)
+  prescriptionRightCylinder Decimal? @db.Decimal(5, 2)
+  prescriptionRightAxis     Int?
+  prescriptionRightAdd      Decimal? @db.Decimal(5, 2)
+  prescriptionRightPd       Decimal? @db.Decimal(4, 1)
+  prescriptionLeftSphere    Decimal? @db.Decimal(5, 2)
+  prescriptionLeftCylinder  Decimal? @db.Decimal(5, 2)
+  prescriptionLeftAxis      Int?
+  prescriptionLeftAdd       Decimal? @db.Decimal(5, 2)
+  prescriptionLeftPd        Decimal? @db.Decimal(4, 1)
+  prescriptionFrameType     String?
+  prescriptionLensType      String?
+
+  iopRight Int?
+  iopLeft  Int?
+
+  eyeHealthRightAnterior  String?
+  eyeHealthRightPosterior String?
+  eyeHealthRightNotes     String?
+  eyeHealthLeftAnterior   String?
+  eyeHealthLeftPosterior  String?
+  eyeHealthLeftNotes      String?
+
+  diagnosis            String[] @default([])
+  notes                String?
+  nextVisitRecommended DateTime? @db.Date
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  patient       Patient       @relation(fields: [patientId], references: [id])
+  practitioner  User          @relation(fields: [practitionerId], references: [id])
+  appointments  Appointment[]
+  sales         Sale[]
+  clinicalExam  ClinicalExam?
+
+  @@index([patientId])
+  @@index([date])
+  @@map("medical_records")
+}
+
+// ─────────────────────────────────────────
+// CLINICAL EXAMS
+// ─────────────────────────────────────────
+
+model ClinicalExam {
+  id              String   @id @default(uuid())
+  examNumber      String   @unique
+  patientId       String
+  examinerId      String
+  medicalRecordId String?  @unique
+  date            DateTime @db.Date
+
+  farRightSphere   Decimal  @db.Decimal(5, 2)
+  farRightCylinder Decimal  @db.Decimal(5, 2)
+  farRightAxis     Int
+  farRightPrism    Decimal  @default(0) @db.Decimal(5, 2)
+  farRightBase     String   @default("")
+  farRightAddition Decimal? @db.Decimal(5, 2)
+
+  farLeftSphere    Decimal  @db.Decimal(5, 2)
+  farLeftCylinder  Decimal  @db.Decimal(5, 2)
+  farLeftAxis      Int
+  farLeftPrism     Decimal  @default(0) @db.Decimal(5, 2)
+  farLeftBase      String   @default("")
+  farLeftAddition  Decimal? @db.Decimal(5, 2)
+
+  nearRightSphere   Decimal? @db.Decimal(5, 2)
+  nearRightCylinder Decimal? @db.Decimal(5, 2)
+  nearRightAxis     Int?
+  nearRightPrism    Decimal? @db.Decimal(5, 2)
+  nearRightBase     String?
+
+  nearLeftSphere    Decimal? @db.Decimal(5, 2)
+  nearLeftCylinder  Decimal? @db.Decimal(5, 2)
+  nearLeftAxis      Int?
+  nearLeftPrism     Decimal? @db.Decimal(5, 2)
+  nearLeftBase      String?
+
+  pdRight     Decimal  @db.Decimal(4, 1)
+  pdLeft      Decimal  @db.Decimal(4, 1)
+  pdNearRight Decimal? @db.Decimal(4, 1)
+  pdNearLeft  Decimal? @db.Decimal(4, 1)
+
+  frameHeight Decimal @db.Decimal(5, 1)
+  frameRight  Decimal @db.Decimal(5, 1)
+  frameLeft   Decimal @db.Decimal(5, 1)
+
+  lensDataRight String?
+  lensDataLeft  String?
+  observations  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  patient       Patient        @relation(fields: [patientId], references: [id])
+  examiner      User           @relation(fields: [examinerId], references: [id])
+  medicalRecord MedicalRecord? @relation(fields: [medicalRecordId], references: [id])
+
+  @@index([patientId])
+  @@map("clinical_exams")
+}
+
+// ─────────────────────────────────────────
+// INVENTORY
+// ─────────────────────────────────────────
+
+enum ProductCategory {
+  frames
+  lenses
+  sunglasses
+  contact_lenses
+  accessories
+  solutions
+}
+
+enum ProductStatus {
+  in_stock
+  low_stock
+  out_of_stock
+  discontinued
+}
+
+model Product {
+  id           String          @id @default(uuid())
+  sku          String          @unique
+  name         String
+  category     ProductCategory
+  brand        String
+  model        String?
+  costPrice    Decimal         @db.Decimal(10, 2)
+  sellingPrice Decimal         @db.Decimal(10, 2)
+  discount     Decimal?        @db.Decimal(5, 2)
+  stock        Int             @default(0)
+  minStock     Int             @default(5)
+  maxStock     Int?
+  status       ProductStatus   @default(in_stock)
+  images       String[]        @default([])
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  specifications ProductSpecification?
+  supplier       ProductSupplier?
+  stockMovements StockMovement[]
+  saleItems      SaleItem[]
+
+  @@index([category])
+  @@index([status])
+  @@index([sku])
+  @@map("products")
+}
+
+model ProductSpecification {
+  id        String  @id @default(uuid())
+  productId String  @unique
+
+  frameType  String?
+  material   String?
+  color      String?
+  lensSize   Decimal? @db.Decimal(4, 1)
+  bridge     Decimal? @db.Decimal(4, 1)
+  temple     Decimal? @db.Decimal(5, 1)
+
+  lensType     String?
+  lensMaterial String?
+  index        Decimal? @db.Decimal(3, 2)
+  coatings     String[] @default([])
+
+  baseCurve Decimal? @db.Decimal(4, 2)
+  diameter  Decimal? @db.Decimal(4, 1)
+  power     String?
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_specifications")
+}
+
+model ProductSupplier {
+  id        String  @id @default(uuid())
+  productId String  @unique
+  name      String
+  contact   String?
+  email     String?
+  phone     String?
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_suppliers")
+}
+
+enum StockMovementType {
+  in
+  out
+  adjustment
+}
+
+model StockMovement {
+  id            String            @id @default(uuid())
+  productId     String
+  performedById String
+  type          StockMovementType
+  quantity      Int
+  previousStock Int
+  newStock      Int
+  reason        String
+  reference     String?
+  notes         String?
+  date          DateTime          @db.Date
+  createdAt     DateTime          @default(now())
+
+  product     Product @relation(fields: [productId], references: [id])
+  performedBy User    @relation(fields: [performedById], references: [id])
+
+  @@index([productId])
+  @@index([date])
+  @@map("stock_movements")
+}
+
+// ─────────────────────────────────────────
+// SALES
+// ─────────────────────────────────────────
+
+enum PaymentMethod {
+  cash
+  card
+  transfer
+  check
+  mixed
+}
+
+enum SaleStatus {
+  pending
+  completed
+  cancelled
+  refunded
+}
+
+model Sale {
+  id                   String        @id @default(uuid())
+  saleNumber           String        @unique
+  patientId            String
+  soldById             String
+  medicalRecordId      String?
+  date                 DateTime      @db.Date
+  subtotal             Decimal       @db.Decimal(10, 2)
+  discount             Decimal       @default(0) @db.Decimal(10, 2)
+  tax                  Decimal       @db.Decimal(10, 2)
+  total                Decimal       @db.Decimal(10, 2)
+  paymentMethod        PaymentMethod
+  prescriptionRequired Boolean       @default(false)
+  status               SaleStatus    @default(pending)
+  notes                String?
+  warrantyExpiryDate   DateTime?     @db.Date
+  warrantyTerms        String?
+  completedAt          DateTime?
+  cancelledAt          DateTime?
+  refundedAt           DateTime?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  patient       Patient        @relation(fields: [patientId], references: [id])
+  soldBy        User           @relation(fields: [soldById], references: [id])
+  medicalRecord MedicalRecord? @relation(fields: [medicalRecordId], references: [id])
+  items         SaleItem[]
+  payments      Payment[]
+
+  @@index([patientId])
+  @@index([date])
+  @@index([status])
+  @@map("sales")
+}
+
+model SaleItem {
+  id          String  @id @default(uuid())
+  saleId      String
+  productId   String
+  productName String
+  productSku  String
+  quantity    Int
+  unitPrice   Decimal @db.Decimal(10, 2)
+  discount    Decimal @default(0) @db.Decimal(5, 2)
+  subtotal    Decimal @db.Decimal(10, 2)
+  total       Decimal @db.Decimal(10, 2)
+
+  sale    Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("sale_items")
+}
+
+model Payment {
+  id        String        @id @default(uuid())
+  saleId    String
+  method    PaymentMethod
+  amount    Decimal       @db.Decimal(10, 2)
+  reference String?
+  createdAt DateTime      @default(now())
+
+  sale Sale @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+// ─────────────────────────────────────────
+// CLINIC SETTINGS
+// ─────────────────────────────────────────
+
+model ClinicSettings {
+  id        String   @id @default(uuid())
+  name      String
+  rfc       String?
+  address   String?
+  city      String?
+  state     String?
+  zipCode   String?
+  phone     String?
+  email     String?
+  website   String?
+  logo      String?
+  taxRate   Decimal  @default(0.16) @db.Decimal(4, 2)
+  currency  String   @default("MXN")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("clinic_settings")
+}

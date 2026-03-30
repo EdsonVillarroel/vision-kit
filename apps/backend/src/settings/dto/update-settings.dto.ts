@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsNumber } from 'class-validator';
+import { IsOptional, IsString, IsNumber, IsObject } from 'class-validator';
 
 export class UpdateSettingsDto {
   @IsOptional() @IsString() name?: string;
@@ -13,4 +13,5 @@ export class UpdateSettingsDto {
   @IsOptional() @IsString() logo?: string;
   @IsOptional() @IsNumber() taxRate?: number;
   @IsOptional() @IsString() currency?: string;
+  @IsOptional() @IsObject() businessHours?: Record<string, { open: string; close: string; closed: boolean }>;
 }

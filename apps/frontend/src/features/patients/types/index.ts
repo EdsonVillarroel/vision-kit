@@ -7,12 +7,12 @@ export interface Patient {
   lastName: string;
   dateOfBirth: string;
   gender: 'male' | 'female' | 'other';
-  phone: string;
+  phone?: string;
   email?: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
   insurance?: {
     provider: string;
     policyNumber: string;

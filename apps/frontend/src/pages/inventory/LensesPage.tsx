@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useInventory } from '../../features/inventory/hooks/useInventory';
+import { SkeletonPageWithStats } from '../../components/ui/Skeleton';
 
 export const LensesPage = () => {
   const navigate = useNavigate();
@@ -20,11 +21,7 @@ export const LensesPage = () => {
   const contactLenses = lenses.filter(p => p.category === 'contact-lenses');
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <SkeletonPageWithStats statCount={3} tableRows={6} tableCols={6} />;
   }
 
   return (

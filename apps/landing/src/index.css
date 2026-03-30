@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+@theme {
+  --color-amber-brand:  #c17d2a;
+  --color-amber-light:  #e8d9b0;
+  --color-amber-dark:   #9a621e;
+  --color-amber-pale:   #fdf0d5;
+  --color-warm-bg:      #f7f2ec;
+  --color-warm-text:    #2c2118;
+  --color-warm-muted:   #9e8a6e;
+  --color-warm-border:  #f0e8d8;
+  --color-wa-green:     #25D366;
+
+  --font-family-sans: 'Poppins', system-ui, sans-serif;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-family-sans);
+  background-color: var(--color-warm-bg);
+  color: var(--color-warm-text);
+  min-height: 100dvh;
+}
+
+/* Entry animations */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.anim-0 { animation: fadeUp 0.45s ease both; animation-delay: 0ms; }
+.anim-1 { animation: fadeUp 0.45s ease both; animation-delay: 60ms; }
+.anim-2 { animation: fadeUp 0.45s ease both; animation-delay: 120ms; }
+.anim-3 { animation: fadeUp 0.45s ease both; animation-delay: 180ms; }
+.anim-4 { animation: fadeUp 0.45s ease both; animation-delay: 240ms; }
+.anim-5 { animation: fadeUp 0.45s ease both; animation-delay: 300ms; }
+
+/* Category card press effect */
+.cat-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.cat-card:active {
+  transform: scale(0.97);
+}
+
+/* Social card press effect */
+.social-card {
+  transition: transform 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.social-card:active {
+  transform: scale(0.93);
+}
+
+/* WhatsApp pulse */
+@keyframes wa-pulse {
+  0%   { box-shadow: 0 4px 16px rgba(37,211,102,0.45); }
+  50%  { box-shadow: 0 4px 28px rgba(37,211,102,0.7); }
+  100% { box-shadow: 0 4px 16px rgba(37,211,102,0.45); }
+}
+.wa-btn {
+  animation: wa-pulse 2.4s ease-in-out infinite;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.15s;
+}
+.wa-btn:active { opacity: 0.88; }

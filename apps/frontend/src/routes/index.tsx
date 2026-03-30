@@ -1,101 +1,118 @@
+import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { DashboardPage } from '../pages/dashboard/DashboardPage';
-import { PatientsPage } from '../pages/patients/PatientsPage';
-import { NewPatientPage } from '../pages/patients/NewPatientPage';
-import { EditPatientPage } from '../pages/patients/EditPatientPage';
-import { ViewPatientPage } from '../pages/patients/ViewPatientPage';
-import { AppointmentsPage } from '../pages/appointments/AppointmentsPage';
-import { MedicalRecordsPage } from '../pages/medical-records/MedicalRecordsPage';
-import { NewMedicalRecordPage } from '../pages/medical-records/NewMedicalRecordPage';
-import { ViewMedicalRecordPage } from '../pages/medical-records/ViewMedicalRecordPage';
-import { EditMedicalRecordPage } from '../pages/medical-records/EditMedicalRecordPage';
-import { SalesPage } from '../pages/sales/SalesPage';
-import { SalesListPage } from '../pages/sales/SalesListPage';
-import { NewSalePage } from '../pages/sales/NewSalePage';
-import { ViewSalePage } from '../pages/sales/ViewSalePage';
-import { InventoryPage } from '../pages/inventory/InventoryPage';
-import { InventoryListPage } from '../pages/inventory/InventoryListPage';
-import { NewProductPage } from '../pages/inventory/NewProductPage';
-import { ViewProductPage } from '../pages/inventory/ViewProductPage';
-import { EditProductPage } from '../pages/inventory/EditProductPage';
-import { AdjustStockPage } from '../pages/inventory/AdjustStockPage';
-import { FramesPage } from '../pages/inventory/FramesPage';
-import { LensesPage } from '../pages/inventory/LensesPage';
-import { StockControlPage } from '../pages/inventory/StockControlPage';
-import { AlertsPage } from '../pages/inventory/AlertsPage';
-import { ProfilePage } from '../pages/settings/ProfilePage';
-import { UsersPage } from '../pages/settings/UsersPage';
-import { UserFormPage } from '../pages/settings/UserFormPage';
-import { ClinicPage } from '../pages/settings/ClinicPage';
-import { AppearancePage } from '../pages/settings/AppearancePage';
-import {
-  ClinicalExamsListPage,
-  NewClinicalExamPage,
-  EditClinicalExamPage,
-  ClinicalExamDetailsPage
-} from '../pages/clinical-exams';
+
+// ─── Lazy imports por feature ─────────────────────────────────────────────────
+const DashboardPage       = lazy(() => import('../pages/dashboard/DashboardPage').then(m => ({ default: m.DashboardPage })));
+
+const PatientsPage        = lazy(() => import('../pages/patients/PatientsPage').then(m => ({ default: m.PatientsPage })));
+const NewPatientPage      = lazy(() => import('../pages/patients/NewPatientPage').then(m => ({ default: m.NewPatientPage })));
+const EditPatientPage     = lazy(() => import('../pages/patients/EditPatientPage').then(m => ({ default: m.EditPatientPage })));
+const ViewPatientPage     = lazy(() => import('../pages/patients/ViewPatientPage').then(m => ({ default: m.ViewPatientPage })));
+
+const AppointmentsPage    = lazy(() => import('../pages/appointments/AppointmentsPage').then(m => ({ default: m.AppointmentsPage })));
+
+const MedicalRecordsPage  = lazy(() => import('../pages/medical-records/MedicalRecordsPage').then(m => ({ default: m.MedicalRecordsPage })));
+const NewMedicalRecordPage   = lazy(() => import('../pages/medical-records/NewMedicalRecordPage').then(m => ({ default: m.NewMedicalRecordPage })));
+const ViewMedicalRecordPage  = lazy(() => import('../pages/medical-records/ViewMedicalRecordPage').then(m => ({ default: m.ViewMedicalRecordPage })));
+const EditMedicalRecordPage  = lazy(() => import('../pages/medical-records/EditMedicalRecordPage').then(m => ({ default: m.EditMedicalRecordPage })));
+
+const SalesPage           = lazy(() => import('../pages/sales/SalesPage').then(m => ({ default: m.SalesPage })));
+const SalesListPage       = lazy(() => import('../pages/sales/SalesListPage').then(m => ({ default: m.SalesListPage })));
+const NewSalePage         = lazy(() => import('../pages/sales/NewSalePage').then(m => ({ default: m.NewSalePage })));
+const ViewSalePage        = lazy(() => import('../pages/sales/ViewSalePage').then(m => ({ default: m.ViewSalePage })));
+
+const InventoryPage       = lazy(() => import('../pages/inventory/InventoryPage').then(m => ({ default: m.InventoryPage })));
+const InventoryListPage   = lazy(() => import('../pages/inventory/InventoryListPage').then(m => ({ default: m.InventoryListPage })));
+const NewProductPage      = lazy(() => import('../pages/inventory/NewProductPage').then(m => ({ default: m.NewProductPage })));
+const ViewProductPage     = lazy(() => import('../pages/inventory/ViewProductPage').then(m => ({ default: m.ViewProductPage })));
+const EditProductPage     = lazy(() => import('../pages/inventory/EditProductPage').then(m => ({ default: m.EditProductPage })));
+const AdjustStockPage     = lazy(() => import('../pages/inventory/AdjustStockPage').then(m => ({ default: m.AdjustStockPage })));
+const FramesPage          = lazy(() => import('../pages/inventory/FramesPage').then(m => ({ default: m.FramesPage })));
+const LensesPage          = lazy(() => import('../pages/inventory/LensesPage').then(m => ({ default: m.LensesPage })));
+const StockControlPage    = lazy(() => import('../pages/inventory/StockControlPage').then(m => ({ default: m.StockControlPage })));
+const AlertsPage          = lazy(() => import('../pages/inventory/AlertsPage').then(m => ({ default: m.AlertsPage })));
+
+const ProfilePage         = lazy(() => import('../pages/settings/ProfilePage').then(m => ({ default: m.ProfilePage })));
+const UsersPage           = lazy(() => import('../pages/settings/UsersPage').then(m => ({ default: m.UsersPage })));
+const UserFormPage        = lazy(() => import('../pages/settings/UserFormPage').then(m => ({ default: m.UserFormPage })));
+const ClinicPage          = lazy(() => import('../pages/settings/ClinicPage').then(m => ({ default: m.ClinicPage })));
+const AppearancePage      = lazy(() => import('../pages/settings/AppearancePage').then(m => ({ default: m.AppearancePage })));
+
+const ClinicalExamsListPage   = lazy(() => import('../pages/clinical-exams').then(m => ({ default: m.ClinicalExamsListPage })));
+const NewClinicalExamPage     = lazy(() => import('../pages/clinical-exams').then(m => ({ default: m.NewClinicalExamPage })));
+const EditClinicalExamPage    = lazy(() => import('../pages/clinical-exams').then(m => ({ default: m.EditClinicalExamPage })));
+const ClinicalExamDetailsPage = lazy(() => import('../pages/clinical-exams').then(m => ({ default: m.ClinicalExamDetailsPage })));
+
+// ─── Fallback de carga ────────────────────────────────────────────────────────
+const PageLoader = () => (
+  <div className="flex items-center justify-center h-64">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+  </div>
+);
 
 export const AppRoutes = () => {
   return (
-    <Routes>
-      {/* Ruta por defecto */}
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        {/* Ruta por defecto */}
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-      {/* Dashboard */}
-      <Route path="/dashboard" element={<DashboardPage />} />
+        {/* Dashboard */}
+        <Route path="/dashboard" element={<DashboardPage />} />
 
-      {/* Pacientes */}
-      <Route path="/patients" element={<PatientsPage />} />
-      <Route path="/patients/new" element={<NewPatientPage />} />
-      <Route path="/patients/:id" element={<ViewPatientPage />} />
-      <Route path="/patients/:id/edit" element={<EditPatientPage />} />
+        {/* Pacientes */}
+        <Route path="/patients" element={<PatientsPage />} />
+        <Route path="/patients/new" element={<NewPatientPage />} />
+        <Route path="/patients/:id" element={<ViewPatientPage />} />
+        <Route path="/patients/:id/edit" element={<EditPatientPage />} />
 
-      {/* Citas */}
-      <Route path="/appointments" element={<AppointmentsPage />} />
-      <Route path="/appointments/new" element={<AppointmentsPage />} />
-      <Route path="/appointments/pending" element={<AppointmentsPage />} />
-      <Route path="/appointments/:id" element={<AppointmentsPage />} />
+        {/* Citas */}
+        <Route path="/appointments" element={<AppointmentsPage />} />
+        <Route path="/appointments/new" element={<AppointmentsPage />} />
+        <Route path="/appointments/pending" element={<AppointmentsPage />} />
+        <Route path="/appointments/:id" element={<AppointmentsPage />} />
 
-      {/* Historia Clínica */}
-      <Route path="/medical-records" element={<MedicalRecordsPage />} />
-      <Route path="/medical-records/new" element={<NewMedicalRecordPage />} />
-      <Route path="/medical-records/:id" element={<ViewMedicalRecordPage />} />
-      <Route path="/medical-records/:id/edit" element={<EditMedicalRecordPage />} />
+        {/* Historia Clínica */}
+        <Route path="/medical-records" element={<MedicalRecordsPage />} />
+        <Route path="/medical-records/new" element={<NewMedicalRecordPage />} />
+        <Route path="/medical-records/:id" element={<ViewMedicalRecordPage />} />
+        <Route path="/medical-records/:id/edit" element={<EditMedicalRecordPage />} />
 
-      {/* Exámenes Clínicos */}
-      <Route path="/clinical-exams" element={<ClinicalExamsListPage />} />
-      <Route path="/clinical-exams/new" element={<NewClinicalExamPage />} />
-      <Route path="/clinical-exams/:id" element={<ClinicalExamDetailsPage />} />
-      <Route path="/clinical-exams/:id/edit" element={<EditClinicalExamPage />} />
+        {/* Exámenes Clínicos */}
+        <Route path="/clinical-exams" element={<ClinicalExamsListPage />} />
+        <Route path="/clinical-exams/new" element={<NewClinicalExamPage />} />
+        <Route path="/clinical-exams/:id" element={<ClinicalExamDetailsPage />} />
+        <Route path="/clinical-exams/:id/edit" element={<EditClinicalExamPage />} />
 
-      {/* Ventas */}
-      <Route path="/sales" element={<SalesListPage />} />
-      <Route path="/sales/new" element={<NewSalePage />} />
-      <Route path="/sales/reports" element={<SalesPage />} />
-      <Route path="/sales/:id" element={<ViewSalePage />} />
+        {/* Ventas */}
+        <Route path="/sales" element={<SalesListPage />} />
+        <Route path="/sales/new" element={<NewSalePage />} />
+        <Route path="/sales/reports" element={<SalesPage />} />
+        <Route path="/sales/:id" element={<ViewSalePage />} />
 
-      {/* Inventario */}
-      <Route path="/inventory" element={<InventoryListPage />} />
-      <Route path="/inventory/new" element={<NewProductPage />} />
-      <Route path="/inventory/products" element={<InventoryPage />} />
-      <Route path="/inventory/frames" element={<FramesPage />} />
-      <Route path="/inventory/lenses" element={<LensesPage />} />
-      <Route path="/inventory/stock" element={<StockControlPage />} />
-      <Route path="/inventory/alerts" element={<AlertsPage />} />
-      <Route path="/inventory/:id" element={<ViewProductPage />} />
-      <Route path="/inventory/:id/edit" element={<EditProductPage />} />
-      <Route path="/inventory/:id/adjust" element={<AdjustStockPage />} />
+        {/* Inventario */}
+        <Route path="/inventory" element={<InventoryListPage />} />
+        <Route path="/inventory/new" element={<NewProductPage />} />
+        <Route path="/inventory/products" element={<InventoryPage />} />
+        <Route path="/inventory/frames" element={<FramesPage />} />
+        <Route path="/inventory/lenses" element={<LensesPage />} />
+        <Route path="/inventory/stock" element={<StockControlPage />} />
+        <Route path="/inventory/alerts" element={<AlertsPage />} />
+        <Route path="/inventory/:id" element={<ViewProductPage />} />
+        <Route path="/inventory/:id/edit" element={<EditProductPage />} />
+        <Route path="/inventory/:id/adjust" element={<AdjustStockPage />} />
 
-      {/* Configuración */}
-      <Route path="/settings/profile" element={<ProfilePage />} />
-      <Route path="/settings/users" element={<UsersPage />} />
-      <Route path="/settings/users/new" element={<UserFormPage />} />
-      <Route path="/settings/users/:id/edit" element={<UserFormPage />} />
-      <Route path="/settings/clinic" element={<ClinicPage />} />
-      <Route path="/settings/appearance" element={<AppearancePage />} />
+        {/* Configuración */}
+        <Route path="/settings/profile" element={<ProfilePage />} />
+        <Route path="/settings/users" element={<UsersPage />} />
+        <Route path="/settings/users/new" element={<UserFormPage />} />
+        <Route path="/settings/users/:id/edit" element={<UserFormPage />} />
+        <Route path="/settings/clinic" element={<ClinicPage />} />
+        <Route path="/settings/appearance" element={<AppearancePage />} />
 
-      {/* 404 */}
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
-    </Routes>
+        {/* 404 */}
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    </Suspense>
   );
 };

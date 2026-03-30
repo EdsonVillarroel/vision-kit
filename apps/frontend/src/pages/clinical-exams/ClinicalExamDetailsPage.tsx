@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { clinicalExamService } from '../../features/clinical-exams/services/clinicalExamService';
 import type { ClinicalExam } from '../../features/clinical-exams/types';
 import { Button, Card } from '../../components/ui';
+import { SkeletonDetailCard } from '../../components/ui/Skeleton';
 
 export const ClinicalExamDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -29,11 +30,7 @@ export const ClinicalExamDetailsPage = () => {
   }, [id]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-16 w-16 border-4 border-theme-primary border-t-transparent shadow-lg"></div>
-      </div>
-    );
+    return <SkeletonDetailCard />;
   }
 
   if (error || !exam) {

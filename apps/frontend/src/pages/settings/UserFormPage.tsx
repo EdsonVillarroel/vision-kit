@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { SkeletonFormCard } from '../../components/ui/Skeleton';
 import { useNavigate, useParams } from 'react-router-dom';
 import { usePermissions } from '../../features/auth/hooks/usePermissions';
 import { userService } from '../../features/users/services/userService';
@@ -93,11 +94,8 @@ export const UserFormPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="p-6 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando...</p>
-        </div>
+      <div className="p-6 max-w-2xl mx-auto">
+        <SkeletonFormCard fields={4} />
       </div>
     );
   }

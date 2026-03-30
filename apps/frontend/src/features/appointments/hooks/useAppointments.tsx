@@ -50,10 +50,10 @@ export const useAppointments = () => {
     }
   };
 
-  const createAppointment = async (data: AppointmentFormData, createdBy: { id: string; name: string }) => {
+  const createAppointment = async (data: AppointmentFormData) => {
     setError(null);
     try {
-      const newAppointment = await appointmentService.create(data, createdBy);
+      const newAppointment = await appointmentService.create(data);
       setAppointments(prev => [...prev, newAppointment]);
       return newAppointment;
     } catch (err) {

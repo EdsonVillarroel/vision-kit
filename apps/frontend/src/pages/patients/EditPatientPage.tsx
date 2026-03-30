@@ -2,6 +2,7 @@ import { useParams } from 'react-router-dom';
 import { usePatient } from '../../features/patients/hooks/usePatients';
 import { usePatients } from '../../features/patients/hooks/usePatients';
 import { PatientForm } from '../../features/patients/components/PatientForm';
+import { SkeletonFormCard } from '../../components/ui/Skeleton';
 
 export const EditPatientPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -9,11 +10,7 @@ export const EditPatientPage = () => {
   const { updatePatient } = usePatients();
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <SkeletonFormCard fields={8} />;
   }
 
   if (error || !patient) {

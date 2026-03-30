@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useProduct } from '../../features/inventory/hooks/useInventory';
 import { StockAdjustment } from '../../features/inventory/components/StockAdjustment';
+import { SkeletonFormCard } from '../../components/ui/Skeleton';
 
 export const AdjustStockPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -8,11 +9,7 @@ export const AdjustStockPage = () => {
   const { product, loading, error } = useProduct(id!);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <SkeletonFormCard fields={4} />;
   }
 
   if (error || !product) {

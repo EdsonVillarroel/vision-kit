@@ -4,6 +4,7 @@ import { ClinicalExamForm } from '../../features/clinical-exams/components/Clini
 import { useClinicalExams } from '../../features/clinical-exams/hooks/useClinicalExams';
 import { clinicalExamService } from '../../features/clinical-exams/services/clinicalExamService';
 import type { ClinicalExam } from '../../features/clinical-exams/types';
+import { SkeletonFormCard } from '../../components/ui/Skeleton';
 
 export const EditClinicalExamPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -30,11 +31,7 @@ export const EditClinicalExamPage = () => {
   }, [id]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-16 w-16 border-4 border-theme-primary border-t-transparent shadow-lg"></div>
-      </div>
-    );
+    return <SkeletonFormCard fields={8} />;
   }
 
   if (error || !exam) {

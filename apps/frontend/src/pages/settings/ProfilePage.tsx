@@ -1,10 +1,16 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useAuth } from '../../features/auth/hooks/useAuth';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { userService } from '../../features/users/services/userService';
+import { useSnackbar } from '../../components/Snackbar';
+import { uploadService } from '../../lib/uploadService';
 
 export const ProfilePage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
+  const { showSuccess, showError } = useSnackbar();
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
@@ -13,20 +19,73 @@ export const ProfilePage: React.FC = () => {
     phone: user?.phone || '',
   });
 
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+
   const handleSave = async () => {
+    if (!user) return;
     setIsSaving(true);
     try {
-      // Simular llamada al servicio
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // TODO: Actualizar usuario en el servicio
-      // await userService.update(user.id, formData);
-
+      const updated = await userService.update(user.id, {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone || undefined,
+      });
+      updateUser(updated);
       setIsEditing(false);
+      showSuccess('Perfil actualizado exitosamente');
     } catch (error) {
-      console.error('Error al actualizar perfil:', error);
+      showError('Error al actualizar perfil');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!user || !e.target.files?.[0]) return;
+    const file = e.target.files[0];
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      showError('Formato no permitido. Usa JPEG, PNG o WebP');
+      return;
+    }
+    setIsUploadingAvatar(true);
+    try {
+      const url = await uploadService.uploadAvatar(user.id, file);
+      updateUser({ avatarUrl: url });
+      showSuccess('Foto de perfil actualizada');
+    } catch (error: any) {
+      showError(error?.message ?? 'Error al subir la foto');
+    } finally {
+      setIsUploadingAvatar(false);
+      if (avatarInputRef.current) avatarInputRef.current.value = '';
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!user) return;
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      showError('Las contraseñas nuevas no coinciden');
+      return;
+    }
+    if (passwordData.newPassword.length < 6) {
+      showError('La nueva contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+    setIsChangingPassword(true);
+    try {
+      await userService.changePassword(user.id, passwordData.currentPassword, passwordData.newPassword);
+      showSuccess('Contraseña actualizada exitosamente');
+      setShowPasswordForm(false);
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (error: any) {
+      showError(error?.message ?? 'Error al cambiar contraseña');
+    } finally {
+      setIsChangingPassword(false);
     }
   };
 
@@ -73,18 +132,33 @@ export const ProfilePage: React.FC = () => {
       {/* Avatar y Rol */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
         <div className="flex items-center gap-6">
-          <div className="flex-shrink-0">
-            {user.avatar ? (
+          <div className="flex-shrink-0 relative group">
+            {user.avatarUrl ? (
               <img
-                src={user.avatar}
+                src={user.avatarUrl}
                 alt={user.name}
-                className="w-24 h-24 rounded-full border-4 border-gray-100"
+                className="w-24 h-24 rounded-full border-4 border-gray-100 object-cover"
               />
             ) : (
               <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-3xl font-bold">
                 {user.name.charAt(0).toUpperCase()}
               </div>
             )}
+            {/* Overlay para cambiar foto */}
+            <button
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={isUploadingAvatar}
+              className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium"
+            >
+              {isUploadingAvatar ? '...' : 'Cambiar'}
+            </button>
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handleAvatarChange}
+            />
           </div>
           <div className="flex-1">
             <h2 className="text-2xl font-bold text-gray-900">{user.name}</h2>
@@ -97,6 +171,13 @@ export const ProfilePage: React.FC = () => {
                 {user.status === 'active' ? 'Activo' : 'Inactivo'}
               </span>
             </div>
+            <button
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={isUploadingAvatar}
+              className="mt-3 text-sm text-blue-600 hover:text-blue-800 disabled:text-gray-400"
+            >
+              {isUploadingAvatar ? 'Subiendo...' : 'Cambiar foto de perfil'}
+            </button>
           </div>
         </div>
       </div>
@@ -189,12 +270,51 @@ export const ProfilePage: React.FC = () => {
       {/* Cambio de Contraseña */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Seguridad</h3>
-        <p className="text-gray-600 mb-4">
-          Para cambiar tu contraseña, contacta al administrador del sistema.
-        </p>
-        <Button variant="outline" disabled>
-          Cambiar Contraseña
-        </Button>
+
+        {!showPasswordForm ? (
+          <Button variant="outline" onClick={() => setShowPasswordForm(true)}>
+            Cambiar Contraseña
+          </Button>
+        ) : (
+          <div className="space-y-4">
+            <Input
+              id="currentPassword"
+              type="password"
+              label="Contraseña Actual"
+              value={passwordData.currentPassword}
+              onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+            />
+            <Input
+              id="newPassword"
+              type="password"
+              label="Nueva Contraseña"
+              value={passwordData.newPassword}
+              onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+            />
+            <Input
+              id="confirmPassword"
+              type="password"
+              label="Confirmar Nueva Contraseña"
+              value={passwordData.confirmPassword}
+              onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+            />
+            <div className="flex gap-3 pt-2">
+              <Button onClick={handleChangePassword} isLoading={isChangingPassword}>
+                Actualizar Contraseña
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowPasswordForm(false);
+                  setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                }}
+                disabled={isChangingPassword}
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Información de Cuenta */}

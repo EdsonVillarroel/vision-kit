@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStockMovements } from '../../features/inventory/hooks/useInventory';
+import { SkeletonPageWithStats } from '../../components/ui/Skeleton';
 
 const MOVEMENT_TYPE_CONFIG: Record<string, { label: string; icon: string; className: string }> = {
   in: { label: 'Entrada', icon: '↑', className: 'text-green-600 bg-green-50' },
@@ -29,11 +30,7 @@ export const StockControlPage = () => {
   const totalAdjustments = movements.filter((m) => m.type === 'adjustment').length;
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <SkeletonPageWithStats statCount={4} tableRows={6} tableCols={5} />;
   }
 
   return (

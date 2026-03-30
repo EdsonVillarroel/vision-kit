@@ -1,17 +1,14 @@
 import { useParams } from 'react-router-dom';
 import { useSale } from '../../features/sales/hooks/useSales';
 import { SaleDetails } from '../../features/sales/components/SaleDetails';
+import { SkeletonDetailCard } from '../../components/ui/Skeleton';
 
 export const ViewSalePage = () => {
   const { id } = useParams<{ id: string }>();
   const { sale, loading, error } = useSale(id!);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <SkeletonDetailCard />;
   }
 
   if (error || !sale) {

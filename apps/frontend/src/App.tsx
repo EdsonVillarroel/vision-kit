@@ -6,6 +6,7 @@ import { MainLayout, SidebarProvider, type MenuItem } from './features/layout';
 import { AppRoutes } from './routes';
 import { ThemeProvider } from './theme/ThemeContext';
 import { SnackbarProvider } from './components/Snackbar';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 const menuItems: MenuItem[] = [
   {
@@ -224,15 +225,17 @@ const AppContent = () => {
 
 function App() {
   return (
-    <BrowserRouter basename="/vision-kit">
-      <ThemeProvider>
-        <SnackbarProvider>
-          <AuthProvider>
-            <AppContent />
-          </AuthProvider>
-        </SnackbarProvider>
-      </ThemeProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter basename="/vision-kit">
+        <ThemeProvider>
+          <SnackbarProvider>
+            <AuthProvider>
+              <AppContent />
+            </AuthProvider>
+          </SnackbarProvider>
+        </ThemeProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ─────────────────────────────────────────
@@ -15,24 +16,30 @@ enum UserRole {
   admin
   manager
   optician
+
+  @@map("user_role")
 }
 
 enum UserStatus {
   active
   inactive
+
+  @@map("user_status")
 }
 
+// Maps to the "profiles" table in Supabase.
+// NestJS manages auth independently (passwordHash).
 model User {
-  id        String     @id @default(uuid())
-  email     String     @unique
-  password  String
-  name      String
-  role      UserRole   @default(optician)
-  avatar    String?
-  phone     String?
-  status    UserStatus @default(active)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id           String     @id @default(uuid())
+  email        String     @unique
+  passwordHash String     @map("password_hash")
+  name         String
+  role         UserRole   @default(optician)
+  avatarUrl    String?    @map("avatar_url")
+  phone        String?
+  status       UserStatus @default(active)
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
 
   appointments   Appointment[]   @relation("PractitionerAppointments")
   sales          Sale[]
@@ -40,7 +47,7 @@ model User {
   clinicalExams  ClinicalExam[]
   stockMovements StockMovement[]
 
-  @@map("users")
+  @@map("profiles")
 }
 
 // ─────────────────────────────────────────
@@ -51,37 +58,41 @@ enum PatientGender {
   male
   female
   other
+
+  @@map("gender_type")
 }
 
 enum PatientStatus {
   frequent
   normal
   warning
+
+  @@map("patient_status")
 }
 
 model Patient {
   id                String        @id @default(uuid())
-  identificationId  String        @unique
-  firstName         String
-  lastName          String
-  dateOfBirth       DateTime      @db.Date
-  gender            PatientGender
-  phone             String
+  identificationId  String        @unique @map("identification_id")
+  firstName         String        @map("first_name")
+  lastName          String        @map("last_name")
+  dateOfBirth       DateTime?     @db.Date @map("date_of_birth")
+  gender            PatientGender?
+  phone             String?
   email             String?
-  address           String
-  city              String
-  state             String
-  zipCode           String
+  address           String?
+  city              String?
+  state             String?
+  zipCode           String?       @map("zip_code")
   allergies         String[]      @default([])
-  medicalConditions String[]      @default([])
+  medicalConditions String[]      @default([]) @map("medical_conditions")
   status            PatientStatus @default(normal)
-  visitCount        Int           @default(0)
-  totalSpent        Decimal       @default(0) @db.Decimal(10, 2)
+  visitCount        Int           @default(0) @map("visit_count")
+  totalSpent        Decimal       @default(0) @db.Decimal(10, 2) @map("total_spent")
   notes             String?
-  warningReason     String?
-  lastVisit         DateTime?
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  warningReason     String?       @map("warning_reason")
+  lastVisit         DateTime?     @map("last_visit")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
 
   insurance        PatientInsurance?
   emergencyContact PatientEmergencyContact?
@@ -98,10 +109,10 @@ model Patient {
 
 model PatientInsurance {
   id           String  @id @default(uuid())
-  patientId    String  @unique
+  patientId    String  @unique @map("patient_id")
   provider     String
-  policyNumber String
-  groupNumber  String?
+  policyNumber String  @map("policy_number")
+  groupNumber  String? @map("group_number")
 
   patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
 
@@ -110,7 +121,7 @@ model PatientInsurance {
 
 model PatientEmergencyContact {
   id           String @id @default(uuid())
-  patientId    String @unique
+  patientId    String @unique @map("patient_id")
   name         String
   relationship String
   phone        String
@@ -125,46 +136,50 @@ model PatientEmergencyContact {
 // ─────────────────────────────────────────
 
 enum AppointmentType {
-  eye_exam
-  contact_lens_fitting
+  eye_exam             @map("eye-exam")
+  contact_lens_fitting @map("contact-lens-fitting")
   followup
   emergency
-  frame_selection
+  frame_selection      @map("frame-selection")
   adjustment
+
+  @@map("appointment_type")
 }
 
 enum AppointmentStatus {
   scheduled
   confirmed
-  in_progress
+  in_progress @map("in-progress")
   completed
   cancelled
-  no_show
+  no_show     @map("no-show")
+
+  @@map("appointment_status")
 }
 
 model Appointment {
   id                 String            @id @default(uuid())
-  appointmentNumber  String            @unique
-  patientId          String
-  practitionerId     String
+  appointmentNumber  String            @unique @map("appointment_number")
+  patientId          String            @map("patient_id")
+  practitionerId     String            @map("practitioner_id")
   date               DateTime          @db.Date
   time               String
   duration           Int               @default(30)
-  endTime            String
+  endTime            String            @map("end_time")
   type               AppointmentType
   status             AppointmentStatus @default(scheduled)
   reason             String?
   notes              String?
-  reminderSent       Boolean           @default(false)
-  reminderSentAt     DateTime?
-  medicalRecordId    String?
-  createdById        String
-  confirmedAt        DateTime?
-  completedAt        DateTime?
-  cancelledAt        DateTime?
-  cancellationReason String?
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
+  reminderSent       Boolean           @default(false) @map("reminder_sent")
+  reminderSentAt     DateTime?         @map("reminder_sent_at")
+  medicalRecordId    String?           @map("medical_record_id")
+  createdById        String            @map("created_by_id")
+  confirmedAt        DateTime?         @map("confirmed_at")
+  completedAt        DateTime?         @map("completed_at")
+  cancelledAt        DateTime?         @map("cancelled_at")
+  cancellationReason String?           @map("cancellation_reason")
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @updatedAt @map("updated_at")
 
   patient       Patient        @relation(fields: [patientId], references: [id])
   practitioner  User           @relation("PractitionerAppointments", fields: [practitionerId], references: [id])
@@ -185,66 +200,73 @@ enum ExamType {
   routine
   emergency
   followup
-  contact_lens
+  contact_lens @map("contact-lens")
+
+  @@map("exam_type")
 }
 
 model MedicalRecord {
   id             String   @id @default(uuid())
-  patientId      String
-  practitionerId String
+  patientId      String   @map("patient_id")
+  practitionerId String   @map("practitioner_id")
   date           DateTime @db.Date
-  examType       ExamType @default(routine)
+  examType       ExamType @default(routine) @map("exam_type")
 
-  vaRightUncorrected String
-  vaRightCorrected   String
-  vaLeftUncorrected  String
-  vaLeftCorrected    String
+  // Visual Acuity
+  vaRightUncorrected String? @map("va_right_uncorrected")
+  vaRightCorrected   String? @map("va_right_corrected")
+  vaLeftUncorrected  String? @map("va_left_uncorrected")
+  vaLeftCorrected    String? @map("va_left_corrected")
 
-  refractionRightSphere   Decimal  @db.Decimal(5, 2)
-  refractionRightCylinder Decimal  @db.Decimal(5, 2)
-  refractionRightAxis     Int
-  refractionRightAdd      Decimal? @db.Decimal(5, 2)
-  refractionRightPrism    Decimal? @db.Decimal(5, 2)
-  refractionRightBase     String?
-  refractionRightPd       Decimal? @db.Decimal(4, 1)
+  // Refraction
+  refractionRightSphere   Decimal? @db.Decimal(5, 2) @map("refraction_right_sphere")
+  refractionRightCylinder Decimal? @db.Decimal(5, 2) @map("refraction_right_cylinder")
+  refractionRightAxis     Int?     @map("refraction_right_axis")
+  refractionRightAdd      Decimal? @db.Decimal(5, 2) @map("refraction_right_add")
+  refractionRightPrism    Decimal? @db.Decimal(5, 2) @map("refraction_right_prism")
+  refractionRightBase     String?  @map("refraction_right_base")
+  refractionRightPd       Decimal? @db.Decimal(4, 1) @map("refraction_right_pd")
 
-  refractionLeftSphere    Decimal  @db.Decimal(5, 2)
-  refractionLeftCylinder  Decimal  @db.Decimal(5, 2)
-  refractionLeftAxis      Int
-  refractionLeftAdd       Decimal? @db.Decimal(5, 2)
-  refractionLeftPrism     Decimal? @db.Decimal(5, 2)
-  refractionLeftBase      String?
-  refractionLeftPd        Decimal? @db.Decimal(4, 1)
+  refractionLeftSphere    Decimal? @db.Decimal(5, 2) @map("refraction_left_sphere")
+  refractionLeftCylinder  Decimal? @db.Decimal(5, 2) @map("refraction_left_cylinder")
+  refractionLeftAxis      Int?     @map("refraction_left_axis")
+  refractionLeftAdd       Decimal? @db.Decimal(5, 2) @map("refraction_left_add")
+  refractionLeftPrism     Decimal? @db.Decimal(5, 2) @map("refraction_left_prism")
+  refractionLeftBase      String?  @map("refraction_left_base")
+  refractionLeftPd        Decimal? @db.Decimal(4, 1) @map("refraction_left_pd")
 
-  prescriptionRightSphere   Decimal? @db.Decimal(5, 2)
-  prescriptionRightCylinder Decimal? @db.Decimal(5, 2)
-  prescriptionRightAxis     Int?
-  prescriptionRightAdd      Decimal? @db.Decimal(5, 2)
-  prescriptionRightPd       Decimal? @db.Decimal(4, 1)
-  prescriptionLeftSphere    Decimal? @db.Decimal(5, 2)
-  prescriptionLeftCylinder  Decimal? @db.Decimal(5, 2)
-  prescriptionLeftAxis      Int?
-  prescriptionLeftAdd       Decimal? @db.Decimal(5, 2)
-  prescriptionLeftPd        Decimal? @db.Decimal(4, 1)
-  prescriptionFrameType     String?
-  prescriptionLensType      String?
+  // Prescription
+  prescriptionRightSphere   Decimal? @db.Decimal(5, 2) @map("prescription_right_sphere")
+  prescriptionRightCylinder Decimal? @db.Decimal(5, 2) @map("prescription_right_cylinder")
+  prescriptionRightAxis     Int?     @map("prescription_right_axis")
+  prescriptionRightAdd      Decimal? @db.Decimal(5, 2) @map("prescription_right_add")
+  prescriptionRightPd       Decimal? @db.Decimal(4, 1) @map("prescription_right_pd")
+  prescriptionLeftSphere    Decimal? @db.Decimal(5, 2) @map("prescription_left_sphere")
+  prescriptionLeftCylinder  Decimal? @db.Decimal(5, 2) @map("prescription_left_cylinder")
+  prescriptionLeftAxis      Int?     @map("prescription_left_axis")
+  prescriptionLeftAdd       Decimal? @db.Decimal(5, 2) @map("prescription_left_add")
+  prescriptionLeftPd        Decimal? @db.Decimal(4, 1) @map("prescription_left_pd")
+  prescriptionFrameType     String?  @map("prescription_frame_type")
+  prescriptionLensType      String?  @map("prescription_lens_type")
 
-  iopRight Int?
-  iopLeft  Int?
+  // Intraocular pressure
+  iopRight Int? @map("iop_right")
+  iopLeft  Int? @map("iop_left")
 
-  eyeHealthRightAnterior  String?
-  eyeHealthRightPosterior String?
-  eyeHealthRightNotes     String?
-  eyeHealthLeftAnterior   String?
-  eyeHealthLeftPosterior  String?
-  eyeHealthLeftNotes      String?
+  // Eye health
+  eyeHealthRightAnterior  String? @map("eye_health_right_anterior")
+  eyeHealthRightPosterior String? @map("eye_health_right_posterior")
+  eyeHealthRightNotes     String? @map("eye_health_right_notes")
+  eyeHealthLeftAnterior   String? @map("eye_health_left_anterior")
+  eyeHealthLeftPosterior  String? @map("eye_health_left_posterior")
+  eyeHealthLeftNotes      String? @map("eye_health_left_notes")
 
   diagnosis            String[] @default([])
   notes                String?
-  nextVisitRecommended DateTime? @db.Date
+  nextVisitRecommended DateTime? @db.Date @map("next_visit_recommended")
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   patient       Patient       @relation(fields: [patientId], references: [id])
   practitioner  User          @relation(fields: [practitionerId], references: [id])
@@ -263,53 +285,59 @@ model MedicalRecord {
 
 model ClinicalExam {
   id              String   @id @default(uuid())
-  examNumber      String   @unique
-  patientId       String
-  examinerId      String
-  medicalRecordId String?  @unique
+  examNumber      String   @unique @map("exam_number")
+  patientId       String   @map("patient_id")
+  examinerId      String   @map("examiner_id")
+  medicalRecordId String?  @unique @map("medical_record_id")
   date            DateTime @db.Date
 
-  farRightSphere   Decimal  @db.Decimal(5, 2)
-  farRightCylinder Decimal  @db.Decimal(5, 2)
-  farRightAxis     Int
-  farRightPrism    Decimal  @default(0) @db.Decimal(5, 2)
-  farRightBase     String   @default("")
-  farRightAddition Decimal? @db.Decimal(5, 2)
+  // Far vision — right eye
+  farRightSphere   Decimal  @db.Decimal(5, 2) @map("far_right_sphere")
+  farRightCylinder Decimal  @db.Decimal(5, 2) @map("far_right_cylinder")
+  farRightAxis     Int      @map("far_right_axis")
+  farRightPrism    Decimal  @default(0) @db.Decimal(5, 2) @map("far_right_prism")
+  farRightBase     String   @default("") @map("far_right_base")
+  farRightAddition Decimal? @db.Decimal(5, 2) @map("far_right_addition")
 
-  farLeftSphere    Decimal  @db.Decimal(5, 2)
-  farLeftCylinder  Decimal  @db.Decimal(5, 2)
-  farLeftAxis      Int
-  farLeftPrism     Decimal  @default(0) @db.Decimal(5, 2)
-  farLeftBase      String   @default("")
-  farLeftAddition  Decimal? @db.Decimal(5, 2)
+  // Far vision — left eye
+  farLeftSphere    Decimal  @db.Decimal(5, 2) @map("far_left_sphere")
+  farLeftCylinder  Decimal  @db.Decimal(5, 2) @map("far_left_cylinder")
+  farLeftAxis      Int      @map("far_left_axis")
+  farLeftPrism     Decimal  @default(0) @db.Decimal(5, 2) @map("far_left_prism")
+  farLeftBase      String   @default("") @map("far_left_base")
+  farLeftAddition  Decimal? @db.Decimal(5, 2) @map("far_left_addition")
 
-  nearRightSphere   Decimal? @db.Decimal(5, 2)
-  nearRightCylinder Decimal? @db.Decimal(5, 2)
-  nearRightAxis     Int?
-  nearRightPrism    Decimal? @db.Decimal(5, 2)
-  nearRightBase     String?
+  // Near vision — right eye
+  nearRightSphere   Decimal? @db.Decimal(5, 2) @map("near_right_sphere")
+  nearRightCylinder Decimal? @db.Decimal(5, 2) @map("near_right_cylinder")
+  nearRightAxis     Int?     @map("near_right_axis")
+  nearRightPrism    Decimal? @db.Decimal(5, 2) @map("near_right_prism")
+  nearRightBase     String?  @map("near_right_base")
 
-  nearLeftSphere    Decimal? @db.Decimal(5, 2)
-  nearLeftCylinder  Decimal? @db.Decimal(5, 2)
-  nearLeftAxis      Int?
-  nearLeftPrism     Decimal? @db.Decimal(5, 2)
-  nearLeftBase      String?
+  // Near vision — left eye
+  nearLeftSphere    Decimal? @db.Decimal(5, 2) @map("near_left_sphere")
+  nearLeftCylinder  Decimal? @db.Decimal(5, 2) @map("near_left_cylinder")
+  nearLeftAxis      Int?     @map("near_left_axis")
+  nearLeftPrism     Decimal? @db.Decimal(5, 2) @map("near_left_prism")
+  nearLeftBase      String?  @map("near_left_base")
 
-  pdRight     Decimal  @db.Decimal(4, 1)
-  pdLeft      Decimal  @db.Decimal(4, 1)
-  pdNearRight Decimal? @db.Decimal(4, 1)
-  pdNearLeft  Decimal? @db.Decimal(4, 1)
+  // Pupillary distance
+  pdRight     Decimal  @db.Decimal(4, 1) @map("pd_right")
+  pdLeft      Decimal  @db.Decimal(4, 1) @map("pd_left")
+  pdNearRight Decimal? @db.Decimal(4, 1) @map("pd_near_right")
+  pdNearLeft  Decimal? @db.Decimal(4, 1) @map("pd_near_left")
 
-  frameHeight Decimal @db.Decimal(5, 1)
-  frameRight  Decimal @db.Decimal(5, 1)
-  frameLeft   Decimal @db.Decimal(5, 1)
+  // Frame measurements
+  frameHeight Decimal @db.Decimal(5, 1) @map("frame_height")
+  frameRight  Decimal @db.Decimal(5, 1) @map("frame_right")
+  frameLeft   Decimal @db.Decimal(5, 1) @map("frame_left")
 
-  lensDataRight String?
-  lensDataLeft  String?
+  lensDataRight String?  @map("lens_data_right")
+  lensDataLeft  String?  @map("lens_data_left")
   observations  String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   patient       Patient        @relation(fields: [patientId], references: [id])
   examiner      User           @relation(fields: [examinerId], references: [id])
@@ -327,9 +355,11 @@ enum ProductCategory {
   frames
   lenses
   sunglasses
-  contact_lenses
+  contact_lenses @map("contact-lenses")
   accessories
   solutions
+
+  @@map("product_category")
 }
 
 enum ProductStatus {
@@ -337,6 +367,8 @@ enum ProductStatus {
   low_stock
   out_of_stock
   discontinued
+
+  @@map("product_status")
 }
 
 model Product {
@@ -344,18 +376,18 @@ model Product {
   sku          String          @unique
   name         String
   category     ProductCategory
-  brand        String
+  brand        String?
   model        String?
-  costPrice    Decimal         @db.Decimal(10, 2)
-  sellingPrice Decimal         @db.Decimal(10, 2)
+  costPrice    Decimal         @db.Decimal(10, 2) @map("cost_price")
+  sellingPrice Decimal         @db.Decimal(10, 2) @map("selling_price")
   discount     Decimal?        @db.Decimal(5, 2)
   stock        Int             @default(0)
-  minStock     Int             @default(5)
-  maxStock     Int?
+  minStock     Int             @default(0) @map("min_stock")
+  maxStock     Int?            @map("max_stock")
   status       ProductStatus   @default(in_stock)
   images       String[]        @default([])
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
 
   specifications ProductSpecification?
   supplier       ProductSupplier?
@@ -370,21 +402,21 @@ model Product {
 
 model ProductSpecification {
   id        String  @id @default(uuid())
-  productId String  @unique
+  productId String  @unique @map("product_id")
 
-  frameType  String?
-  material   String?
-  color      String?
-  lensSize   Decimal? @db.Decimal(4, 1)
-  bridge     Decimal? @db.Decimal(4, 1)
-  temple     Decimal? @db.Decimal(5, 1)
+  frameType    String?  @map("frame_type")
+  material     String?
+  color        String?
+  lensSize     Decimal? @db.Decimal(4, 1) @map("lens_size")
+  bridge       Decimal? @db.Decimal(4, 1)
+  temple       Decimal? @db.Decimal(5, 1)
 
-  lensType     String?
-  lensMaterial String?
+  lensType     String?  @map("lens_type")
+  lensMaterial String?  @map("lens_material")
   index        Decimal? @db.Decimal(3, 2)
   coatings     String[] @default([])
 
-  baseCurve Decimal? @db.Decimal(4, 2)
+  baseCurve Decimal? @db.Decimal(4, 2) @map("base_curve")
   diameter  Decimal? @db.Decimal(4, 1)
   power     String?
 
@@ -395,7 +427,7 @@ model ProductSpecification {
 
 model ProductSupplier {
   id        String  @id @default(uuid())
-  productId String  @unique
+  productId String  @unique @map("product_id")
   name      String
   contact   String?
   email     String?
@@ -410,21 +442,23 @@ enum StockMovementType {
   in
   out
   adjustment
+
+  @@map("movement_type")
 }
 
 model StockMovement {
   id            String            @id @default(uuid())
-  productId     String
-  performedById String
+  productId     String            @map("product_id")
+  performedById String            @map("performed_by_id")
   type          StockMovementType
   quantity      Int
-  previousStock Int
-  newStock      Int
+  previousStock Int               @map("previous_stock")
+  newStock      Int               @map("new_stock")
   reason        String
   reference     String?
   notes         String?
   date          DateTime          @db.Date
-  createdAt     DateTime          @default(now())
+  createdAt     DateTime          @default(now()) @map("created_at")
 
   product     Product @relation(fields: [productId], references: [id])
   performedBy User    @relation(fields: [performedById], references: [id])
@@ -444,6 +478,8 @@ enum PaymentMethod {
   transfer
   check
   mixed
+
+  @@map("payment_method")
 }
 
 enum SaleStatus {
@@ -451,30 +487,33 @@ enum SaleStatus {
   completed
   cancelled
   refunded
+
+  @@map("sale_status")
 }
 
 model Sale {
   id                   String        @id @default(uuid())
-  saleNumber           String        @unique
-  patientId            String
-  soldById             String
-  medicalRecordId      String?
+  saleNumber           String        @unique @map("sale_number")
+  patientId            String        @map("patient_id")
+  soldById             String        @map("sold_by_id")
+  medicalRecordId      String?       @map("medical_record_id")
   date                 DateTime      @db.Date
   subtotal             Decimal       @db.Decimal(10, 2)
   discount             Decimal       @default(0) @db.Decimal(10, 2)
   tax                  Decimal       @db.Decimal(10, 2)
   total                Decimal       @db.Decimal(10, 2)
-  paymentMethod        PaymentMethod
-  prescriptionRequired Boolean       @default(false)
+  paymentMethod        PaymentMethod @map("payment_method")
+  prescriptionRequired Boolean       @default(false) @map("prescription_required")
   status               SaleStatus    @default(pending)
   notes                String?
-  warrantyExpiryDate   DateTime?     @db.Date
-  warrantyTerms        String?
-  completedAt          DateTime?
-  cancelledAt          DateTime?
-  refundedAt           DateTime?
-  createdAt            DateTime      @default(now())
-  updatedAt            DateTime      @updatedAt
+  warrantyExpiryDate   DateTime?     @db.Date @map("warranty_expiry_date")
+  warrantyTerms        String?       @map("warranty_terms")
+  cancellationReason   String?       @map("cancellation_reason")
+  completedAt          DateTime?     @map("completed_at")
+  cancelledAt          DateTime?     @map("cancelled_at")
+  refundedAt           DateTime?     @map("refunded_at")
+  createdAt            DateTime      @default(now()) @map("created_at")
+  updatedAt            DateTime      @updatedAt @map("updated_at")
 
   patient       Patient        @relation(fields: [patientId], references: [id])
   soldBy        User           @relation(fields: [soldById], references: [id])
@@ -490,12 +529,12 @@ model Sale {
 
 model SaleItem {
   id          String  @id @default(uuid())
-  saleId      String
-  productId   String
-  productName String
-  productSku  String
+  saleId      String  @map("sale_id")
+  productId   String  @map("product_id")
+  productName String  @map("product_name")
+  productSku  String  @map("product_sku")
   quantity    Int
-  unitPrice   Decimal @db.Decimal(10, 2)
+  unitPrice   Decimal @db.Decimal(10, 2) @map("unit_price")
   discount    Decimal @default(0) @db.Decimal(5, 2)
   subtotal    Decimal @db.Decimal(10, 2)
   total       Decimal @db.Decimal(10, 2)
@@ -508,11 +547,11 @@ model SaleItem {
 
 model Payment {
   id        String        @id @default(uuid())
-  saleId    String
+  saleId    String        @map("sale_id")
   method    PaymentMethod
   amount    Decimal       @db.Decimal(10, 2)
   reference String?
-  createdAt DateTime      @default(now())
+  createdAt DateTime      @default(now()) @map("created_at")
 
   sale Sale @relation(fields: [saleId], references: [id], onDelete: Cascade)
 
@@ -530,15 +569,46 @@ model ClinicSettings {
   address   String?
   city      String?
   state     String?
-  zipCode   String?
+  zipCode   String?  @map("zip_code")
   phone     String?
   email     String?
   website   String?
   logo      String?
-  taxRate   Decimal  @default(0.16) @db.Decimal(4, 2)
-  currency  String   @default("MXN")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  taxRate       Decimal  @default(0.16) @db.Decimal(4, 2) @map("tax_rate")
+  currency      String   @default("MXN")
+  businessHours Json?    @map("business_hours")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   @@map("clinic_settings")
+}
+
+// ─────────────────────────────────────────
+// PUBLIC PORTAL — RESERVAS ONLINE
+// ─────────────────────────────────────────
+
+enum BookingStatus {
+  pending
+  confirmed
+  cancelled
+
+  @@map("booking_status")
+}
+
+model PublicBooking {
+  id            String        @id @default(uuid())
+  name          String
+  phone         String
+  email         String?
+  serviceType   String        @map("service_type")
+  preferredDate DateTime      @db.Date @map("preferred_date")
+  preferredTime String?       @map("preferred_time")
+  notes         String?
+  status        BookingStatus @default(pending)
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([preferredDate])
+  @@map("public_bookings")
 }

@@ -16,7 +16,7 @@ export class AuthService {
       where: { email: dto.email },
     });
 
-    if (!user || !(await bcrypt.compare(dto.password, user.password))) {
+    if (!user || !(await bcrypt.compare(dto.password, user.passwordHash))) {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
@@ -27,7 +27,7 @@ export class AuthService {
     const payload = { sub: user.id, email: user.email };
     const token = this.jwtService.sign(payload);
 
-    const { password: _, ...userWithoutPassword } = user;
+    const { passwordHash: _, ...userWithoutPassword } = user;
     return { access_token: token, user: userWithoutPassword };
   }
 
@@ -39,7 +39,7 @@ export class AuthService {
         email: true,
         name: true,
         role: true,
-        avatar: true,
+        avatarUrl: true,
         phone: true,
         status: true,
         createdAt: true,

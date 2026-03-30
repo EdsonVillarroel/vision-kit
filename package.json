@@ -5,15 +5,19 @@
   "description": "Vision Kit - Sistema de gestión para ópticas (monorepo)",
   "workspaces": [
     "apps/frontend",
-    "apps/backend"
+    "apps/backend",
+    "apps/landing"
   ],
   "scripts": {
     "frontend": "npm run dev --workspace=apps/frontend",
     "backend": "npm run start:dev --workspace=apps/backend",
+    "landing": "npm run dev --workspace=apps/landing",
     "dev": "concurrently \"npm run frontend\" \"npm run backend\"",
+    "dev:all": "concurrently \"npm run frontend\" \"npm run backend\" \"npm run landing\"",
     "build:frontend": "npm run build --workspace=apps/frontend",
     "build:backend": "npm run build --workspace=apps/backend",
-    "build": "npm run build:frontend && npm run build:backend",
+    "build:landing": "npm run build --workspace=apps/landing",
+    "build": "npm run build:frontend && npm run build:backend && npm run build:landing",
     "lint": "npm run lint --workspaces --if-present",
     "db:migrate": "npm run db:migrate --workspace=apps/backend",
     "db:generate": "npm run db:generate --workspace=apps/backend",

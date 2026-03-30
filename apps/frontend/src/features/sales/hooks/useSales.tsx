@@ -3,7 +3,7 @@ import { salesService } from '../services/salesService';
 import type { Sale, SaleFormData } from '../types';
 import { useSnackbar } from '../../../components/Snackbar';
 
-export const useSales = () => {
+export const useSales = (dateFrom?: string, dateTo?: string) => {
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -13,14 +13,14 @@ export const useSales = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await salesService.getAll();
+      const data = await salesService.getAll({ dateFrom, dateTo });
       setSales(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar ventas');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [dateFrom, dateTo]);
 
   useEffect(() => {
     fetchSales();

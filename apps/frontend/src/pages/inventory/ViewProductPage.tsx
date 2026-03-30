@@ -1,17 +1,14 @@
 import { useParams } from 'react-router-dom';
 import { useProduct } from '../../features/inventory/hooks/useInventory';
 import { ProductDetails } from '../../features/inventory/components/ProductDetails';
+import { SkeletonDetailCard } from '../../components/ui/Skeleton';
 
 export const ViewProductPage = () => {
   const { id } = useParams<{ id: string }>();
   const { product, loading, error } = useProduct(id!);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <SkeletonDetailCard />;
   }
 
   if (error || !product) {

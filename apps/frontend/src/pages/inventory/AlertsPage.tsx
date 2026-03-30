@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useLowStockProducts, useInventory } from '../../features/inventory/hooks/useInventory';
+import { SkeletonPageWithStats } from '../../components/ui/Skeleton';
 
 export const AlertsPage = () => {
   const navigate = useNavigate();
@@ -12,11 +13,7 @@ export const AlertsPage = () => {
   const loading = loadingLowStock || loadingAll;
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <SkeletonPageWithStats statCount={3} tableRows={6} tableCols={5} />;
   }
 
   return (

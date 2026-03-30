@@ -16,7 +16,7 @@ export class UpdateUserDto {
 
   @IsOptional()
   @IsString()
-  avatar?: string;
+  avatarUrl?: string;
 
   @IsOptional()
   @IsEnum(UserStatus)

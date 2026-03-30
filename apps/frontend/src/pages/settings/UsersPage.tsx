@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { SkeletonPageWithStats } from '../../components/ui/Skeleton';
 import { useNavigate } from 'react-router-dom';
 import { usePermissions } from '../../features/auth/hooks/usePermissions';
 import { userService } from '../../features/users/services/userService';
@@ -43,7 +44,9 @@ export const UsersPage: React.FC = () => {
 
   const handleToggleStatus = async (userId: string) => {
     try {
-      const updatedUser = await userService.toggleStatus(userId);
+      const user = users.find(u => u.id === userId);
+      if (!user) return;
+      const updatedUser = await userService.toggleStatus(userId, user.status);
       setUsers(users.map(u => u.id === userId ? updatedUser : u));
     } catch (error: any) {
       alert(error.message);
@@ -97,11 +100,8 @@ export const UsersPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="p-6 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando usuarios...</p>
-        </div>
+      <div className="p-6">
+        <SkeletonPageWithStats statCount={0} tableRows={5} tableCols={5} />
       </div>
     );
   }

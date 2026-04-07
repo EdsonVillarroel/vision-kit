@@ -125,8 +125,24 @@ export const LensesPage = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {lenses.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
-                    No se encontraron lentes
+                  <td colSpan={6} className="px-6 py-16 text-center">
+                    <div className="flex flex-col items-center">
+                      <div className="text-5xl mb-3">🔬</div>
+                      <p className="text-base font-semibold text-gray-900 mb-1">
+                        {search || lensType ? 'Sin resultados' : 'Sin lentes en inventario'}
+                      </p>
+                      <p className="text-sm text-gray-500 mb-5">
+                        {search || lensType
+                          ? 'Prueba ajustando los filtros de búsqueda.'
+                          : 'Agrega lentes oftálmicos o de contacto al inventario.'}
+                      </p>
+                      <button
+                        onClick={() => navigate('/inventory/new')}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+                      >
+                        + Agregar producto
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ) : (

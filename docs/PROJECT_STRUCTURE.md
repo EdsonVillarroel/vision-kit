@@ -1,21 +1,31 @@
 # Vision Kit — Project Structure
 
-> **MANTENIMIENTO:** Actualizar este archivo cada vez que se agregue/elimine/mueva:
-> un feature, una página, una ruta, un componente, un módulo backend, o cualquier
-> archivo estructural. Ver tabla de auto-actualización en `CLAUDE.md`.
+> **Propósito:** Árbol completo del monorepo con descripción de cada app, feature, página,
+> ruta y módulo. Es la guía de orientación para entender dónde vive cada pieza del sistema.
+>
+> **Etapa de lectura:** Consultar al inicio de tareas que involucren navegación entre archivos,
+> creación de nuevos módulos/features, o cuando se necesite ubicar un componente o servicio.
+>
+> **MANTENIMIENTO:** Actualizar cuando se agregue/elimine/mueva un feature, página, ruta, componente,
+> módulo backend o archivo estructural. Eliminar secciones que ya no reflejen el código real.
+
+---
 
 ## Monorepo
 
 ```
 vision-kit/                         ← npm workspaces root
 ├── apps/
-│   ├── frontend/                   ← @vision-kit/frontend
-│   └── backend/                    ← @vision-kit/backend
+│   ├── frontend/                   ← @vision-kit/frontend  (panel interno, puerto 5173)
+│   ├── backend/                    ← @vision-kit/backend   (NestJS API, puerto 3000)
+│   └── landing/                    ← @vision-kit/landing   (portal público, puerto 5174)
 ├── docs/
 │   ├── PROJECT_STRUCTURE.md        ← este archivo
 │   ├── DATABASE_STRUCTURE.md       ← Prisma schema + ERD
 │   └── API_ENDPOINTS.md            ← endpoints documentados
-├── CLAUDE.md                       ← contexto rápido para Claude (auto-load)
+├── CLAUDE.md                       ← contexto maestro (auto-load)
+├── DECISIONS.md                    ← decisiones de arquitectura con su razón
+├── Tools.md                        ← tareas completadas + pendientes por sesión
 └── package.json                    ← workspaces + scripts raíz
 ```
 
@@ -26,112 +36,93 @@ vision-kit/                         ← npm workspaces root
 ```
 apps/frontend/
 ├── src/
-│   ├── assets/
-│   │
-│   ├── components/                 ← Globales reutilizables
+│   ├── components/
+│   │   ├── ErrorBoundary.tsx       ← class component, wrappea toda la app en App.tsx
+│   │   ├── ThemeSelector.tsx       ← toggle dark/light
 │   │   ├── Snackbar/
-│   │   │   ├── SnackbarContext.tsx  ← Toast (success/error/info/warning)
+│   │   │   ├── SnackbarContext.tsx  ← toast global (success/error/info/warning)
 │   │   │   └── index.ts
-│   │   ├── ThemeSelector.tsx       ← Toggle dark/light
-│   │   └── ui/                     ← Design system
+│   │   └── ui/                     ← design system
 │   │       ├── Badge.tsx
-│   │       ├── Button.tsx
+│   │       ├── Button.tsx          ← variantes: primary, secondary, outline, danger, warning
 │   │       ├── Card.tsx
+│   │       ├── ConfirmModal.tsx    ← modal de confirmación (danger/warning/default)
 │   │       ├── Input.tsx
+│   │       ├── Skeleton.tsx        ← 7 variantes de loading skeleton
 │   │       ├── StatCard.tsx
 │   │       ├── Table.tsx
 │   │       └── index.ts
 │   │
-│   ├── features/                   ← Módulos de negocio
+│   ├── features/
 │   │   ├── auth/
-│   │   │   ├── components/
-│   │   │   │   ├── LoginForm.tsx
-│   │   │   │   └── LoginPage.tsx
-│   │   │   ├── hooks/
-│   │   │   │   ├── useAuth.tsx         ← login/logout/currentUser
-│   │   │   │   └── usePermissions.tsx  ← verificar permisos por rol
-│   │   │   ├── services/
-│   │   │   │   └── authService.ts      ← mock → reemplazar con POST /auth/login
-│   │   │   ├── types/
-│   │   │   │   └── index.ts            ← UserRole, User, Permission, ROLE_PERMISSIONS
+│   │   │   ├── components/         ← LoginForm, LoginPage
+│   │   │   ├── hooks/              ← useAuth (login/logout/currentUser/updateUser), usePermissions
+│   │   │   ├── services/           ← authService → POST /auth/login, GET /auth/me
+│   │   │   ├── types/              ← UserRole, User, Permission, ROLE_PERMISSIONS
 │   │   │   └── index.ts
 │   │   │
 │   │   ├── patients/
-│   │   │   ├── components/
-│   │   │   │   ├── PatientDetails.tsx
-│   │   │   │   ├── PatientForm.tsx
-│   │   │   │   ├── PatientSearch.tsx
-│   │   │   │   ├── PatientStatusBadge.tsx
-│   │   │   │   └── PatientsList.tsx
-│   │   │   ├── hooks/usePatients.tsx
-│   │   │   ├── services/patientService.ts   ← mock → /patients
-│   │   │   ├── types/index.ts              ← Patient, PatientStatus
+│   │   │   ├── components/         ← PatientDetails, PatientForm, PatientSearch, PatientStatusBadge, PatientsList
+│   │   │   ├── hooks/              ← usePatients
+│   │   │   ├── services/           ← patientService → /patients
+│   │   │   ├── types/              ← Patient, PatientStatus
 │   │   │   └── index.ts
 │   │   │
 │   │   ├── medical-records/
-│   │   │   ├── components/
-│   │   │   │   ├── MedicalRecordDetails.tsx
-│   │   │   │   ├── MedicalRecordForm.tsx
-│   │   │   │   └── MedicalRecordsList.tsx
-│   │   │   ├── hooks/useMedicalRecords.tsx
-│   │   │   ├── services/medicalRecordService.ts  ← mock → /medical-records
-│   │   │   ├── types/index.ts   ← MedicalRecord, EyeMeasurement, VisualAcuity
+│   │   │   ├── components/         ← MedicalRecordDetails, MedicalRecordForm, MedicalRecordsList
+│   │   │   ├── hooks/              ← useMedicalRecords
+│   │   │   ├── services/           ← medicalRecordService → /medical-records
+│   │   │   ├── types/              ← MedicalRecord, EyeMeasurement, VisualAcuity
 │   │   │   └── index.ts
 │   │   │
 │   │   ├── clinical-exams/
-│   │   │   ├── components/
-│   │   │   │   ├── ClinicalExamForm.tsx
-│   │   │   │   └── ClinicalExamsList.tsx
-│   │   │   ├── hooks/useClinicalExams.tsx
-│   │   │   ├── services/clinicalExamService.ts  ← mock → /clinical-exams
-│   │   │   ├── types/index.ts   ← ClinicalExam, EyeMeasurement, PupillaryDistance
+│   │   │   ├── components/         ← ClinicalExamForm, ClinicalExamsList
+│   │   │   ├── hooks/              ← useClinicalExams
+│   │   │   ├── services/           ← clinicalExamService → /clinical-exams
+│   │   │   ├── types/              ← ClinicalExam, EyeMeasurement, PupillaryDistance
 │   │   │   └── index.ts
 │   │   │
 │   │   ├── appointments/
-│   │   │   ├── components/
-│   │   │   │   ├── AppointmentCalendarView.tsx
-│   │   │   │   └── AppointmentsList.tsx
-│   │   │   ├── hooks/useAppointments.tsx
-│   │   │   ├── services/appointmentService.ts  ← mock → /appointments
-│   │   │   ├── types/index.ts   ← Appointment, AppointmentType, TimeSlot
+│   │   │   ├── components/         ← AppointmentCalendarView, AppointmentsList
+│   │   │   ├── hooks/              ← useAppointments
+│   │   │   ├── services/           ← appointmentService → /appointments
+│   │   │   ├── types/              ← Appointment, AppointmentType, TimeSlot
 │   │   │   └── index.ts
 │   │   │
 │   │   ├── inventory/
-│   │   │   ├── components/
-│   │   │   │   ├── InventoryList.tsx
-│   │   │   │   ├── ProductDetails.tsx
-│   │   │   │   ├── ProductForm.tsx
-│   │   │   │   ├── StockAdjustment.tsx
-│   │   │   │   └── index.ts
-│   │   │   ├── hooks/useInventory.tsx
-│   │   │   ├── services/inventoryService.ts  ← mock → /inventory
-│   │   │   ├── types/index.ts   ← Product, ProductCategory, StockMovement
+│   │   │   ├── components/         ← InventoryList, ProductDetails, ProductForm, StockAdjustment
+│   │   │   ├── hooks/              ← useInventory
+│   │   │   ├── services/           ← inventoryService → /inventory
+│   │   │   ├── types/              ← Product, ProductCategory, StockMovement
 │   │   │   └── index.ts
 │   │   │
 │   │   ├── sales/
-│   │   │   ├── components/
-│   │   │   │   ├── SaleDetails.tsx
-│   │   │   │   ├── SaleForm.tsx
-│   │   │   │   └── SalesList.tsx
-│   │   │   ├── hooks/useSales.tsx
-│   │   │   ├── services/salesService.ts  ← mock → /sales
-│   │   │   ├── types/index.ts   ← Sale, SaleItem, PaymentMethod, SalesSummary
+│   │   │   ├── components/         ← SaleDetails, SaleForm, SalesList
+│   │   │   ├── hooks/              ← useSales, useSalesSummary
+│   │   │   ├── services/           ← salesService → /sales
+│   │   │   ├── types/              ← Sale, SaleItem, PaymentMethod, SalesSummary
 │   │   │   └── index.ts
 │   │   │
 │   │   ├── users/
-│   │   │   ├── services/userService.ts   ← mock → /users
-│   │   │   ├── types/index.ts
+│   │   │   ├── services/           ← userService → /users
+│   │   │   ├── types/              ← UserFormData
 │   │   │   └── index.ts
 │   │   │
+│   │   ├── settings/
+│   │   │   ├── services/           ← settingsService → /settings
+│   │   │   └── types/              ← BusinessHours, DaySchedule
+│   │   │
 │   │   └── layout/
-│   │       ├── components/
-│   │       │   ├── MainLayout.tsx        ← wrapper sidebar + contenido
-│   │       │   └── Sidebar.tsx           ← menú lateral colapsable
-│   │       ├── hooks/useSidebar.tsx
-│   │       ├── types/index.ts
+│   │       ├── components/         ← MainLayout, Sidebar
+│   │       ├── hooks/              ← useSidebar
+│   │       ├── types/              ← NavItem
 │   │       └── index.ts
 │   │
-│   ├── pages/                      ← Una página por ruta
+│   ├── lib/
+│   │   ├── api.ts                  ← cliente HTTP con JWT Bearer automático
+│   │   └── uploadService.ts        ← upload avatar y product-images a Supabase Storage
+│   │
+│   ├── pages/
 │   │   ├── dashboard/DashboardPage.tsx
 │   │   ├── patients/
 │   │   │   ├── PatientsPage.tsx
@@ -151,7 +142,7 @@ apps/frontend/
 │   │   │   └── EditClinicalExamPage.tsx
 │   │   ├── inventory/
 │   │   │   ├── InventoryListPage.tsx
-│   │   │   ├── InventoryPage.tsx
+│   │   │   ├── InventoryPage.tsx       ← stats generales
 │   │   │   ├── FramesPage.tsx
 │   │   │   ├── LensesPage.tsx
 │   │   │   ├── StockControlPage.tsx
@@ -162,7 +153,7 @@ apps/frontend/
 │   │   │   └── AdjustStockPage.tsx
 │   │   ├── sales/
 │   │   │   ├── SalesListPage.tsx
-│   │   │   ├── SalesPage.tsx           ← reportes
+│   │   │   ├── SalesPage.tsx           ← reportes + filtros
 │   │   │   ├── NewSalePage.tsx
 │   │   │   └── ViewSalePage.tsx
 │   │   └── settings/
@@ -172,24 +163,44 @@ apps/frontend/
 │   │       ├── ClinicPage.tsx
 │   │       └── AppearancePage.tsx
 │   │
-│   ├── routes/index.tsx            ← Definición de todas las rutas
+│   ├── routes/index.tsx            ← todas las rutas con React.lazy + Suspense
 │   ├── theme/
 │   │   ├── ThemeContext.tsx
-│   │   ├── themes.ts               ← variables CSS por tema
+│   │   ├── themes.ts               ← variables CSS por tema (dark/light)
 │   │   └── index.ts
-│   ├── App.tsx                     ← Root component (providers + router)
+│   ├── App.tsx                     ← root: ErrorBoundary + providers + router
 │   └── main.tsx
 │
 ├── index.html
-├── package.json                    ← @vision-kit/frontend
-├── vite.config.ts                  ← base: '/vision-kit/'
+├── package.json
+├── vite.config.ts
 ├── tailwind.config.js
-├── tsconfig.json
-├── tsconfig.app.json
-├── tsconfig.node.json
-├── eslint.config.js
-└── postcss.config.js
+└── tsconfig.json
 ```
+
+---
+
+## Landing — apps/landing/
+
+Portal público de Visión 20/20 HD. Consume la Public API del backend (sin JWT).
+
+```
+apps/landing/
+├── src/
+│   ├── lib/api.ts                  ← publicApi: getCatalog, getProduct, getClinicInfo, createBooking
+│   ├── pages/
+│   │   ├── HomePage.tsx            ← link-in-bio: logo, categorías, WhatsApp, redes
+│   │   ├── CatalogPage.tsx         ← grid paginado + chips categoría + búsqueda debounce
+│   │   ├── ProductPage.tsx         ← galería con dots, specs, CTA WhatsApp + reserva
+│   │   └── BookingPage.tsx         ← formulario completo → POST /public/bookings
+│   ├── App.tsx
+│   └── main.tsx
+├── index.html
+├── package.json
+└── vite.config.ts
+```
+
+**Variable de entorno:** `VITE_API_URL` (default: `http://localhost:3000/api/v1`)
 
 ---
 
@@ -198,130 +209,68 @@ apps/frontend/
 ```
 apps/backend/
 ├── src/
-│   ├── main.ts                     ← bootstrap, ValidationPipe, CORS, prefix 'api/v1'
-│   ├── app.module.ts               ← importa todos los módulos
-│   │
-│   ├── prisma/
-│   │   ├── prisma.module.ts        ← @Global(), exporta PrismaService
-│   │   └── prisma.service.ts       ← extends PrismaClient, connect/disconnect
-│   │
-│   ├── auth/
-│   │   ├── auth.module.ts
-│   │   ├── auth.controller.ts      ← POST /auth/login, GET /auth/me
-│   │   ├── auth.service.ts         ← login con bcrypt + JWT
-│   │   ├── jwt.strategy.ts         ← valida Bearer token
-│   │   ├── jwt-auth.guard.ts       ← guard de autenticación
-│   │   ├── roles.guard.ts          ← guard de autorización por rol
-│   │   ├── roles.decorator.ts      ← @Roles('admin', 'manager')
-│   │   └── dto/login.dto.ts
-│   │
-│   ├── users/
-│   │   ├── users.module.ts
-│   │   ├── users.controller.ts     ← GET/POST/PATCH/DELETE /users
-│   │   ├── users.service.ts        ← CRUD, nunca expone password
-│   │   └── dto/
-│   │       ├── create-user.dto.ts
-│   │       └── update-user.dto.ts
-│   │
-│   ├── patients/
-│   │   ├── patients.module.ts
-│   │   ├── patients.controller.ts  ← /patients + /patients/:id/medical-records|sales
-│   │   ├── patients.service.ts     ← CRUD + search + getMedicalHistory + getSales
-│   │   └── dto/
-│   │       ├── create-patient.dto.ts   ← con insurance y emergencyContact anidados
-│   │       └── update-patient.dto.ts   ← PartialType + status + warningReason
-│   │
-│   ├── appointments/
-│   │   ├── appointments.module.ts
-│   │   ├── appointments.controller.ts  ← /appointments + /appointments/slots
-│   │   ├── appointments.service.ts     ← CRUD + calcEndTime + getAvailableSlots
-│   │   └── dto/
-│   │       ├── create-appointment.dto.ts
-│   │       └── update-appointment.dto.ts  ← + status + cancellationReason
-│   │
-│   ├── medical-records/
-│   │   ├── medical-records.module.ts
-│   │   ├── medical-records.controller.ts  ← /medical-records?patientId=
-│   │   ├── medical-records.service.ts     ← mapea DTO anidado → columnas flat Prisma
-│   │   └── dto/create-medical-record.dto.ts
-│   │
-│   ├── clinical-exams/
-│   │   ├── clinical-exams.module.ts
-│   │   ├── clinical-exams.controller.ts   ← /clinical-exams?patientId=
-│   │   ├── clinical-exams.service.ts      ← genera examNumber automático
-│   │   └── dto/create-clinical-exam.dto.ts
-│   │
-│   ├── inventory/
-│   │   ├── inventory.module.ts
-│   │   ├── inventory.controller.ts   ← /inventory + /alerts + /:id/adjust + /:id/movements
-│   │   ├── inventory.service.ts      ← recalcula ProductStatus al ajustar stock
-│   │   └── dto/
-│   │       ├── create-product.dto.ts   ← con specifications y supplier anidados
-│   │       └── adjust-stock.dto.ts
-│   │
-│   ├── sales/
-│   │   ├── sales.module.ts
-│   │   ├── sales.controller.ts       ← /sales + /summary + /:id/status
-│   │   ├── sales.service.ts          ← calcula subtotal/tax/total, snapshot producto
-│   │   └── dto/create-sale.dto.ts    ← con SaleItemDto y PaymentDto anidados
-│   │
-│   └── settings/
-│       ├── settings.module.ts
-│       ├── settings.controller.ts    ← GET/PATCH /settings (singleton)
-│       ├── settings.service.ts       ← upsert de registro único
-│       └── dto/update-settings.dto.ts
+│   ├── main.ts                     ← bootstrap, ValidationPipe, helmet, CORS, prefix 'api/v1'
+│   ├── app.module.ts               ← importa todos los módulos + ThrottlerModule global
+│   ├── prisma/                     ← PrismaModule @Global(), PrismaService
+│   ├── auth/                       ← POST /auth/login, GET /auth/me, JWT strategy, guards, decorators
+│   ├── users/                      ← GET/POST/PATCH/DELETE /users, PATCH /users/:id/password
+│   ├── patients/                   ← /patients CRUD + /patients/:id/medical-records|sales
+│   ├── appointments/               ← /appointments CRUD + /appointments/slots
+│   ├── medical-records/            ← /medical-records CRUD, mapea DTO → columnas flat
+│   ├── clinical-exams/             ← /clinical-exams CRUD, genera examNumber automático
+│   ├── inventory/                  ← /inventory CRUD + /alerts + /:id/adjust + /:id/movements
+│   ├── sales/                      ← /sales CRUD + /summary + /:id/status (con stock revert)
+│   ├── settings/                   ← GET/PATCH /settings (singleton ClinicSettings)
+│   ├── upload/                     ← POST /upload/avatar/:userId + /upload/product-image/:productId
+│   └── public/                     ← GET /public/catalog|clinic, POST /public/bookings (sin JWT)
 │
 ├── prisma/
-│   ├── schema.prisma               ← schema completo (ver DATABASE_STRUCTURE.md)
-│   └── seed.ts                     ← 4 usuarios + clinic settings
+│   ├── schema.prisma               ← fuente de verdad del schema
+│   └── seed.ts                     ← 4 usuarios + clinic settings + 5 pacientes + 8 productos + citas
 │
-├── nest-cli.json
-├── tsconfig.json
-├── package.json                    ← @vision-kit/backend
-├── .env.example
-└── .gitignore
+└── package.json
 ```
 
 ---
 
-## Rutas del frontend
+## Rutas del frontend (panel interno)
 
-| Path | Página | Descripción |
-|------|--------|-------------|
-| `/` | redirect | → `/dashboard` |
-| `/dashboard` | DashboardPage | Métricas y resumen |
-| `/patients` | PatientsPage | Lista |
-| `/patients/new` | NewPatientPage | Crear |
-| `/patients/:id` | ViewPatientPage | Ver |
-| `/patients/:id/edit` | EditPatientPage | Editar |
-| `/appointments` | AppointmentsPage | Agenda / calendario |
-| `/medical-records` | MedicalRecordsPage | Lista |
-| `/medical-records/new` | NewMedicalRecordPage | Crear |
-| `/medical-records/:id` | ViewMedicalRecordPage | Ver |
-| `/medical-records/:id/edit` | EditMedicalRecordPage | Editar |
-| `/clinical-exams` | ClinicalExamsListPage | Lista |
-| `/clinical-exams/new` | NewClinicalExamPage | Crear |
-| `/clinical-exams/:id` | ClinicalExamDetailsPage | Ver |
-| `/clinical-exams/:id/edit` | EditClinicalExamPage | Editar |
-| `/sales` | SalesListPage | Lista |
-| `/sales/new` | NewSalePage | Nueva venta (POS) |
-| `/sales/reports` | SalesPage | Reportes |
-| `/sales/:id` | ViewSalePage | Ver venta |
-| `/inventory` | InventoryListPage | Lista general |
-| `/inventory/new` | NewProductPage | Crear producto |
-| `/inventory/frames` | FramesPage | Filtro armazones |
-| `/inventory/lenses` | LensesPage | Filtro lentes |
-| `/inventory/stock` | StockControlPage | Control de stock |
-| `/inventory/alerts` | AlertsPage | Alertas stock bajo |
-| `/inventory/:id` | ViewProductPage | Ver producto |
-| `/inventory/:id/edit` | EditProductPage | Editar |
-| `/inventory/:id/adjust` | AdjustStockPage | Ajustar stock |
-| `/settings/profile` | ProfilePage | Mi perfil |
-| `/settings/users` | UsersPage | Gestión de usuarios |
-| `/settings/users/new` | UserFormPage | Crear usuario |
-| `/settings/users/:id/edit` | UserFormPage | Editar usuario |
-| `/settings/clinic` | ClinicPage | Datos de la óptica |
-| `/settings/appearance` | AppearancePage | Tema dark/light |
+| Path | Página |
+|------|--------|
+| `/` | → `/dashboard` |
+| `/dashboard` | DashboardPage |
+| `/patients` | PatientsPage |
+| `/patients/new` | NewPatientPage |
+| `/patients/:id` | ViewPatientPage |
+| `/patients/:id/edit` | EditPatientPage |
+| `/appointments` | AppointmentsPage |
+| `/medical-records` | MedicalRecordsPage |
+| `/medical-records/new` | NewMedicalRecordPage |
+| `/medical-records/:id` | ViewMedicalRecordPage |
+| `/medical-records/:id/edit` | EditMedicalRecordPage |
+| `/clinical-exams` | ClinicalExamsListPage |
+| `/clinical-exams/new` | NewClinicalExamPage |
+| `/clinical-exams/:id` | ClinicalExamDetailsPage |
+| `/clinical-exams/:id/edit` | EditClinicalExamPage |
+| `/sales` | SalesListPage |
+| `/sales/new` | NewSalePage |
+| `/sales/reports` | SalesPage |
+| `/sales/:id` | ViewSalePage |
+| `/inventory` | InventoryListPage |
+| `/inventory/new` | NewProductPage |
+| `/inventory/frames` | FramesPage |
+| `/inventory/lenses` | LensesPage |
+| `/inventory/stock` | StockControlPage |
+| `/inventory/alerts` | AlertsPage |
+| `/inventory/:id` | ViewProductPage |
+| `/inventory/:id/edit` | EditProductPage |
+| `/inventory/:id/adjust` | AdjustStockPage |
+| `/settings/profile` | ProfilePage |
+| `/settings/users` | UsersPage |
+| `/settings/users/new` | UserFormPage |
+| `/settings/users/:id/edit` | UserFormPage |
+| `/settings/clinic` | ClinicPage |
+| `/settings/appearance` | AppearancePage |
 
 ---
 
@@ -329,55 +278,12 @@ apps/backend/
 
 | Permiso | admin | manager | optician |
 |---------|:-----:|:-------:|:--------:|
-| Ver ventas | ✅ | ✅ | ✅ |
-| Crear ventas | ✅ | ✅ | ✅ |
-| Ver reportes | ✅ | ✅ | ❌ |
+| Ver/crear ventas | ✅ | ✅ | ✅ |
+| Ver reportes de ventas | ✅ | ✅ | ❌ |
 | Ver/crear pacientes | ✅ | ✅ | ✅ |
 | Eliminar pacientes | ✅ | ✅ | ❌ |
 | Ver inventario | ✅ | ✅ | ✅ |
 | Crear/editar inventario | ✅ | ✅ | ❌ |
-| Ver historiales | ✅ | ✅ | ✅ |
-| Crear historiales | ✅ | ✅ | ✅ |
-| Ver/crear usuarios | ✅ | ✅ | ❌ |
-| Eliminar/editar usuarios | ✅ | ❌ | ❌ |
-| Cambiar configuración | ✅ | ❌ | ❌ |
-
----
-
-## Convenciones de código
-
-### Frontend
-- Archivos: PascalCase para `.tsx`, camelCase para `.ts`
-- Cada feature exporta solo lo público desde `index.ts`
-- Tipos siempre en `types/index.ts` del feature
-- Los hooks encapsulan estado + llamadas al service
-- Los componentes solo consumen hooks, nunca llaman services directamente
-- Tema: CSS variables `--color-*` con TailwindCSS
-
-### Backend
-- DTOs con `class-validator`: `@IsString()`, `@IsOptional()`, etc.
-- Updates usan `PartialType` de `@nestjs/mapped-types`
-- Nunca exponer `password` en respuestas — usar `select` de Prisma
-- `JwtAuthGuard` en todos los controllers; `RolesGuard` + `@Roles()` solo cuando se necesita rol específico
-- Al ajustar stock: recalcular `ProductStatus` automáticamente
-- Snapshots en `SaleItem`: guardar `productName` y `productSku` al momento de venta
-
-### Cómo agregar un nuevo feature
-
-**Frontend:**
-1. Crear `apps/frontend/src/features/<nombre>/` con la estructura estándar
-2. Agregar tipos en `types/index.ts`
-3. Crear el service (mock primero, luego conectar al backend)
-4. Crear hook que use el service
-5. Crear componentes que usen el hook
-6. Crear páginas en `apps/frontend/src/pages/<nombre>/`
-7. Agregar rutas en `apps/frontend/src/routes/index.tsx`
-8. Agregar al sidebar en `apps/frontend/src/features/layout/components/Sidebar.tsx`
-
-**Backend:**
-1. Crear `apps/backend/src/<nombre>/` con module, controller, service, dto/
-2. Crear DTOs con validación
-3. Implementar service con Prisma
-4. Implementar controller con guards
-5. Importar el módulo en `apps/backend/src/app.module.ts`
-6. Si hay nuevas tablas: agregar al `prisma/schema.prisma` y ejecutar `npm run db:migrate`
+| Ver historiales / exámenes | ✅ | ✅ | ✅ |
+| Gestionar usuarios | ✅ | 👁️ ver | ❌ |
+| Configuración clínica | ✅ | ❌ | ❌ |

@@ -103,8 +103,24 @@ export const FramesPage = () => {
       {/* Products Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {frames.length === 0 ? (
-          <div className="col-span-full text-center py-12 text-gray-500">
-            No se encontraron armazones
+          <div className="col-span-full">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col items-center justify-center py-16 px-6 text-center">
+              <div className="text-6xl mb-4">👓</div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                {search || status ? 'Sin resultados' : 'Sin armazones en inventario'}
+              </h3>
+              <p className="text-sm text-gray-500 mb-6 max-w-xs">
+                {search || status
+                  ? 'Prueba ajustando los filtros de búsqueda.'
+                  : 'Agrega armazones y gafas de sol al inventario para verlos aquí.'}
+              </p>
+              <button
+                onClick={() => navigate('/inventory/new')}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+              >
+                + Agregar producto
+              </button>
+            </div>
           </div>
         ) : (
           frames.map((product) => (

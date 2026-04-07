@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import type { Sale, SaleStatus, PaymentMethod } from '../types';
 import { Button } from '../../../components/ui/Button';
 import { useSales } from '../hooks/useSales';
+import { useSnackbar } from '../../../components/Snackbar/SnackbarContext';
 
 interface SaleDetailsProps {
   sale: Sale;
@@ -11,9 +12,11 @@ interface SaleDetailsProps {
 export const SaleDetails: React.FC<SaleDetailsProps> = ({ sale }) => {
   const navigate = useNavigate();
   const { cancelSale, refundSale } = useSales();
+  const { showError } = useSnackbar();
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showRefundModal, setShowRefundModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
+  const [cancelError, setCancelError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const getStatusColor = (status: SaleStatus) => {
@@ -49,16 +52,17 @@ export const SaleDetails: React.FC<SaleDetailsProps> = ({ sale }) => {
 
   const handleCancel = async () => {
     if (!cancelReason.trim()) {
-      alert('Por favor ingrese un motivo de cancelación');
+      setCancelError('Por favor ingrese un motivo de cancelación');
       return;
     }
+    setCancelError('');
     setLoading(true);
     try {
       await cancelSale(sale.id, cancelReason);
       setShowCancelModal(false);
       navigate('/sales');
     } catch (error) {
-      alert('Error al cancelar la venta');
+      showError('Error al cancelar la venta');
     } finally {
       setLoading(false);
     }
@@ -66,19 +70,32 @@ export const SaleDetails: React.FC<SaleDetailsProps> = ({ sale }) => {
 
   const handleRefund = async () => {
     if (!cancelReason.trim()) {
-      alert('Por favor ingrese un motivo de reembolso');
+      setCancelError('Por favor ingrese un motivo de reembolso');
       return;
     }
+    setCancelError('');
     setLoading(true);
     try {
       await refundSale(sale.id, cancelReason);
       setShowRefundModal(false);
       navigate('/sales');
     } catch (error) {
-      alert('Error al procesar el reembolso');
+      showError('Error al procesar el reembolso');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleOpenCancel = () => {
+    setCancelReason('');
+    setCancelError('');
+    setShowCancelModal(true);
+  };
+
+  const handleOpenRefund = () => {
+    setCancelReason('');
+    setCancelError('');
+    setShowRefundModal(true);
   };
 
   return (
@@ -106,12 +123,12 @@ export const SaleDetails: React.FC<SaleDetailsProps> = ({ sale }) => {
             🖨️ Imprimir
           </Button>
           {sale.status === 'completed' && (
-            <Button variant="secondary" onClick={() => setShowRefundModal(true)}>
+            <Button variant="secondary" onClick={handleOpenRefund}>
               💰 Reembolso
             </Button>
           )}
           {sale.status === 'pending' && (
-            <Button variant="secondary" onClick={() => setShowCancelModal(true)}>
+            <Button variant="secondary" onClick={handleOpenCancel}>
               ❌ Cancelar
             </Button>
           )}
@@ -340,30 +357,36 @@ export const SaleDetails: React.FC<SaleDetailsProps> = ({ sale }) => {
 
       {/* Cancel Modal */}
       {showCancelModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Cancelar Venta</h3>
-            <p className="text-gray-600 mb-4">¿Está seguro de que desea cancelar esta venta?</p>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">Cancelar Venta</h3>
+            <p className="text-sm text-gray-500 mb-4">¿Está seguro de que desea cancelar esta venta?</p>
             <textarea
               value={cancelReason}
-              onChange={(e) => setCancelReason(e.target.value)}
+              onChange={(e) => { setCancelReason(e.target.value); setCancelError(''); }}
               placeholder="Motivo de la cancelación..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 mb-4"
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 mb-1 ${cancelError ? 'border-red-400' : 'border-gray-300'}`}
               rows={3}
             />
-            <div className="flex gap-3 justify-end">
+            {cancelError && (
+              <p className="text-xs text-red-600 mb-3">{cancelError}</p>
+            )}
+            <div className="flex gap-3 justify-end mt-3">
               <Button
                 variant="secondary"
                 onClick={() => setShowCancelModal(false)}
                 disabled={loading}
+                className="w-auto px-5 py-2.5"
               >
                 Cerrar
               </Button>
               <Button
+                variant="danger"
                 onClick={handleCancel}
-                disabled={loading}
+                isLoading={loading}
+                className="w-auto px-5 py-2.5"
               >
-                {loading ? 'Cancelando...' : 'Confirmar Cancelación'}
+                Confirmar Cancelación
               </Button>
             </div>
           </div>
@@ -372,30 +395,36 @@ export const SaleDetails: React.FC<SaleDetailsProps> = ({ sale }) => {
 
       {/* Refund Modal */}
       {showRefundModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Procesar Reembolso</h3>
-            <p className="text-gray-600 mb-4">¿Está seguro de que desea procesar el reembolso de esta venta?</p>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">Procesar Reembolso</h3>
+            <p className="text-sm text-gray-500 mb-4">¿Está seguro de que desea procesar el reembolso de esta venta?</p>
             <textarea
               value={cancelReason}
-              onChange={(e) => setCancelReason(e.target.value)}
+              onChange={(e) => { setCancelReason(e.target.value); setCancelError(''); }}
               placeholder="Motivo del reembolso..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 mb-4"
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 mb-1 ${cancelError ? 'border-red-400' : 'border-gray-300'}`}
               rows={3}
             />
-            <div className="flex gap-3 justify-end">
+            {cancelError && (
+              <p className="text-xs text-red-600 mb-3">{cancelError}</p>
+            )}
+            <div className="flex gap-3 justify-end mt-3">
               <Button
                 variant="secondary"
                 onClick={() => setShowRefundModal(false)}
                 disabled={loading}
+                className="w-auto px-5 py-2.5"
               >
                 Cerrar
               </Button>
               <Button
+                variant="warning"
                 onClick={handleRefund}
-                disabled={loading}
+                isLoading={loading}
+                className="w-auto px-5 py-2.5"
               >
-                {loading ? 'Procesando...' : 'Confirmar Reembolso'}
+                Confirmar Reembolso
               </Button>
             </div>
           </div>

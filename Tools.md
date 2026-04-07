@@ -1,5 +1,10 @@
 # Vision Kit — Tools.md
-# Herramientas disponibles y lo que se puede hacer
+
+> **Propósito:** Kanban de tareas del proyecto. Registra lo completado por sesión y
+> las tareas pendientes o en progreso. Sirve como bitácora de avance del desarrollo.
+>
+> **Etapa de lectura:** Consultar al iniciar una sesión para retomar contexto de trabajo
+> previo, o al planificar nuevas tareas para evitar duplicar esfuerzo.
 
 ---
 
@@ -201,12 +206,25 @@ PATCH  /api/v1/settings            ← admin
 - [ ] **Notificaciones** → recordatorios de citas (email/SMS via servicio externo)
 - [ ] **Exportar reportes** → PDF de ventas, historial clínico
 
+### Completado en sesión 9 ✅
+- [x] **`ConfirmModal` reutilizable** → `components/ui/ConfirmModal.tsx` con variantes danger/warning/default; exportado desde `ui/index.ts`
+- [x] **Variantes `danger` y `warning` en `Button`** → añadidas al type union y al mapa de estilos
+- [x] **`window.confirm` / `window.alert` eliminados** → `UsersPage` usa `ConfirmModal` + `useSnackbar`; `SaleDetails` usa `useSnackbar` + error inline; `SaleForm.addPayment` usa `setError` inline
+- [x] **`SkeletonPageWithStats` en `UsersPage`** → corregido `statCount={0}` → `statCount={4}` para que coincida con las 4 stat cards reales
+- [x] **Empty states pulidos** → `FramesPage` y `LensesPage` con card+icono+mensaje contextual+CTA "Agregar producto"
+
+### Completado en sesión 10 ✅
+- [x] **Consistencia de temas en spinners** → todos los `border-blue-600` en spinners reemplazados por `border-theme-primary border-t-transparent` (7 archivos: `App.tsx`, `AppointmentsList`, `AppointmentCalendarView`, `InventoryList`, `MedicalRecordsList`, `PatientSearch`, `routes/index.tsx`)
+- [x] **`ConfirmModal` en `ClinicalExamsList` y `PatientsList`** → reemplazado patrón inline (Confirmar/Cancelar en fila) por `ConfirmModal` con variante `danger`, estado `isDeleting` y backdrop click para cerrar
+
+### Completado en sesión 11 ✅
+- [x] **`PageLoader` mejorado** → reemplazado spinner inline por `SkeletonPageWithStats` (statCount=4, tableRows=8) en `routes/index.tsx` — reduce CLS en navegación inicial
+- [x] **Refresh token automático** → `POST /auth/refresh` en backend (re-firma nuevo JWT con el token actual válido) + interceptor en `api.ts` que reintenta petición tras 401 (serializado para múltiples peticiones concurrentes) + renovación proactiva en `useAuth.tsx` si el token expira en menos de 1 día
+
+### Endpoints actualizados
+- **Total endpoints: 48** → añadido `POST /auth/refresh`
+
 ### Prioridad MEDIA — Mejoras técnicas pendientes
-- [ ] **Refresh token** → el JWT dura 7d pero no hay renovación automática
-- [ ] **`confirm()` nativo** → `UsersPage` y otros usan `window.confirm` / `window.alert`; reemplazar con modal de confirmación propio
-- [ ] **Consistencia de temas en spinners** → `ClinicalExamDetailsPage` y `EditClinicalExamPage` usaban `border-theme-primary`; revisar si otros componentes usan variables CSS de tema correctamente
-- [ ] **`SkeletonPageWithStats` en UsersPage** → se renderiza sin stat cards (`statCount={0}`); considerar un skeleton más fiel al layout real (header + filtros + tabla)
-- [ ] **Empty states pulidos** → páginas como `AlertsPage`, `FramesPage`, `LensesPage` muestran estado vacío con texto plano; considerar ilustración o card con CTA
 
 ### Prioridad BAJA — Nice to have
 - [ ] Tests E2E del backend

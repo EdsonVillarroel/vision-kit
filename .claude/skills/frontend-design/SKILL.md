@@ -40,3 +40,27 @@ Interpret creatively and make unexpected choices that feel genuinely designed fo
 **IMPORTANT**: Match implementation complexity to the aesthetic vision. Maximalist designs need elaborate code with extensive animations and effects. Minimalist or refined designs need restraint, precision, and careful attention to spacing, typography, and subtle details. Elegance comes from executing the vision well.
 
 Remember: Claude is capable of extraordinary creative work. Don't hold back, show what can truly be created when thinking outside the box and committing fully to a distinctive vision.
+
+## Vision Kit — Design System Context
+
+When working on components for this project, respect the existing system:
+
+**Framework:** React 19 + TailwindCSS v4 (CSS-first config, sin tailwind.config.js)
+
+**CSS Variables del tema** (responden a dark/light switch):
+```css
+--theme-primary           /* color principal de acento */
+--theme-dark-primary      /* texto oscuro primario */
+--theme-light-primary     /* fondo claro de acento */
+--theme-secondary-text    /* texto secundario */
+--theme-divider           /* bordes / separadores */
+--theme-accent            /* acento secundario */
+--theme-text-icons        /* texto/iconos sobre fondo primario */
+```
+
+Uso: `className="text-theme-dark-primary bg-theme-light-primary border-theme-primary/20"`
+
+**Componentes existentes del design system** (en `components/ui/`):
+`Button` (primary/secondary/outline/danger/warning), `Input`, `Card`, `Badge`, `StatCard`, `Table`, `Skeleton` (7 variantes), `ConfirmModal`
+
+**Tono visual del proyecto:** Clean, profesional, médico/óptica. Preferir elegancia funcional sobre expresionismo. Glassmorphism sutil está bien. Evitar colores saturados o playful — es un panel interno de gestión clínica.

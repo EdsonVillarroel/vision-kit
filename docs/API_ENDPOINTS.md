@@ -1,5 +1,12 @@
 # Vision Kit — API Endpoints
 
+> **Propósito:** Documentación exhaustiva de todos los endpoints REST del backend.
+> Incluye rutas, métodos HTTP, parámetros, body esperado y ejemplos de respuesta.
+> Es la referencia principal para integrar el frontend con el backend.
+>
+> **Etapa de lectura:** Consultar bajo demanda al agregar, modificar o consumir endpoints.
+> También útil al revisar contratos de API durante code review.
+>
 > **MANTENIMIENTO:** Actualizar este archivo cada vez que se agregue/modifique/elimine
 > un endpoint en cualquier controller del backend. Actualizar también el contador
 > "Total endpoints" al final y en `CLAUDE.md`. Los ejemplos de body deben mantenerse
@@ -20,6 +27,7 @@ Authorization: Bearer <token>
 |--------|----------|-------|-------------|
 | `POST` | `/auth/login` | Público | Login y obtención de token JWT |
 | `GET` | `/auth/me` | Todos | Obtener usuario autenticado actual |
+| `POST` | `/auth/refresh` | Todos | Renovar access token (requiere JWT válido) |
 
 ### POST `/auth/login`
 ```json

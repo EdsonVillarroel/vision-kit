@@ -9,6 +9,14 @@ interface BackendAuthResponse {
 }
 
 export const authService = {
+  refreshToken: async (): Promise<{ access_token: string } | null> => {
+    try {
+      return await api.post<{ access_token: string }>('/auth/refresh');
+    } catch {
+      return null;
+    }
+  },
+
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
     const data = await api.post<BackendAuthResponse>('/auth/login', credentials);
     return {

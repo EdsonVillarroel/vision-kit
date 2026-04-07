@@ -1,14 +1,18 @@
 # Vision Kit — Contexto para Claude
 
-> **INSTRUCCIÓN PERMANENTE:** Este archivo se carga automáticamente en cada conversación.
-> Léelo siempre al inicio. Después de cualquier cambio estructural al proyecto,
+> **Propósito:** Archivo de instrucciones permanentes del proyecto Vision Kit para Claude Code.
+> Describe la arquitectura, convenciones, stack tecnológico y reglas de mantenimiento
+> del monorepo. Es la fuente de verdad operativa para el asistente.
+>
+> **Etapa de lectura:** Se carga automáticamente al inicio de **cada conversación** (project instructions).
+> Léelo siempre antes de ejecutar cualquier tarea. Después de cualquier cambio estructural,
 > actualiza este archivo y el doc correspondiente en `docs/` antes de terminar la tarea.
 
 ---
 
-## Reglas de auto-actualización
+## Reglas de mantenimiento de documentación
 
-Estas reglas son **obligatorias** — aplicarlas al final de cada tarea que modifique el proyecto:
+### Tabla de actualización obligatoria
 
 | Si el cambio afecta... | Actualizar... |
 |------------------------|---------------|
@@ -20,14 +24,23 @@ Estas reglas son **obligatorias** — aplicarlas al final de cada tarea que modi
 | Nueva dependencia npm | sección Tech Stack de este archivo |
 | Nuevo comando útil | sección Comandos clave de este archivo |
 | Cambio de rol/permiso | tabla Roles y permisos de este archivo + `docs/PROJECT_STRUCTURE.md` |
+| Decisión de arquitectura no obvia | `DECISIONS.md` |
 | Feedback o corrección del usuario | crear/actualizar archivo en `memory/` |
 
-### Protocolo al terminar una tarea
+### Protocolo por prompt — ejecutar al terminar cada respuesta
 
-1. **Identificar** qué categorías de la tabla anterior aplican al trabajo hecho
-2. **Actualizar** los archivos correspondientes (no posponer, hacerlo en la misma conversación)
-3. **Si aprendí algo nuevo sobre las preferencias del usuario** → guardar en `memory/`
-4. **Si el cambio es menor** (bug fix, texto, estilos) → no es necesario actualizar docs
+1. **¿Modifiqué código?** → Revisar si alguna fila de la tabla anterior aplica
+2. **¿Actualizar?** → Hacerlo en la misma respuesta, no posponer
+3. **¿Quedó algo obsoleto en un doc?** → Eliminarlo en el mismo update (no acumular deuda documental)
+4. **¿Aprendí algo sobre preferencias del usuario?** → Guardar en `memory/`
+5. **Cambio menor** (bug fix, texto, estilos locales) → no es necesario actualizar docs
+
+### Reglas de limpieza — qué NO debe estar en los docs
+
+- **`PROJECT_STRUCTURE.md`**: sin comentarios `← mock`, sin listas de archivos modificados (eso es git)
+- **`AGENT.md`**: solo decisiones no obvias y gotchas; sin narrativa por sesión ni listas de "archivos modificados"
+- **`CLAUDE.md`**: sin historial de cambios; solo estado actual del proyecto
+- **`Tools.md`**: las secciones "Completado en sesión X" son válidas como kanban, pero si crecen demasiado, condensar las sesiones antiguas en una línea
 
 ---
 
@@ -143,7 +156,7 @@ Cada módulo en `apps/backend/src/<modulo>/` tiene:
 
 **Seguridad:** `helmet` (headers HTTP) + `@nestjs/throttler` (10/seg · 100/min · 1000/h global; `POST /public/bookings` con límite propio 2/10s · 3/min). CORS multi-origen via `CORS_ORIGINS` (separados por coma).
 
-**Total endpoints:** 41 — ver `docs/API_ENDPOINTS.md`
+**Total endpoints:** 48 — ver `docs/API_ENDPOINTS.md`
 
 ---
 
@@ -212,11 +225,12 @@ Cada módulo en `apps/backend/src/<modulo>/` tiene:
 
 | Archivo | Contenido |
 |---------|-----------|
-| `docs/PROJECT_STRUCTURE.md` | Árbol completo, rutas, convenciones |
-| `docs/DATABASE_STRUCTURE.md` | Prisma schema + ERD + mapeos + migraciones |
-| `docs/API_ENDPOINTS.md` | 40 endpoints con body/params/respuestas |
-| `AGENT.md` | Misiones cumplidas, decisiones tomadas, historial de sesiones |
-| `Tools.md` | Stack activo, endpoints disponibles, próximos pasos pendientes |
+| `docs/PROJECT_STRUCTURE.md` | Árbol completo (3 apps), rutas, roles |
+| `docs/DATABASE_STRUCTURE.md` | Prisma schema + ERD + mapeos + historial de migraciones |
+| `docs/API_ENDPOINTS.md` | 47 endpoints con body/params/respuestas |
+| `DECISIONS.md` | Decisiones de arquitectura con razonamiento — leer antes de cambios estructurales |
+| `AGENT.md` | Gotchas técnicos y decisiones condensadas |
+| `Tools.md` | Tareas completadas por sesión + pendientes actuales |
 
 ---
 

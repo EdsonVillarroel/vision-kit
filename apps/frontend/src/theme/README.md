@@ -1,5 +1,12 @@
 # Sistema de Temas - VisionKit
 
+> **Propósito:** Documenta el sistema de temas dinámico (dark/light) del panel frontend.
+> Describe las CSS variables disponibles, cómo aplicar el tema en componentes y la
+> convención para agregar nuevos tokens de color o espaciado.
+>
+> **Etapa de lectura:** Consultar al crear o modificar componentes que usen variables de tema,
+> o al extender la paleta de colores y tokens del design system.
+
 Este directorio contiene el sistema de temas dinámico de la aplicación VisionKit.
 
 ## Estructura

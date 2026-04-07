@@ -1,209 +1,330 @@
 ---
 name: senior-frontend
-description: Comprehensive frontend development skill for building modern, performant web applications using ReactJS, NextJS, TypeScript, Tailwind CSS. Includes component scaffolding, performance optimization, bundle analysis, and UI best practices. Use when developing frontend features, optimizing performance, implementing UI/UX designs, managing state, or reviewing frontend code.
+description: Frontend expert for React 19 + Vite 7 + TailwindCSS v4 + TypeScript. Covers feature-based architecture, design system, hooks patterns, performance, and code quality. Use proactively for any frontend work in this project.
 ---
 
-# Senior Frontend
+# Senior Frontend — Vision Kit
 
-Complete toolkit for senior frontend with modern tools and best practices.
+Expert en el stack frontend de este proyecto. Conoce la arquitectura, el design system y las convenciones establecidas.
 
-## Quick Start
+## Stack — Lo que se usa y lo que NO
 
-### Main Capabilities
+| ✅ Usa | ❌ No usa |
+|--------|----------|
+| React 19 | Next.js / SSR / Server Components |
+| Vite 7 (SPA) | Webpack / Create React App |
+| TailwindCSS v4 | TailwindCSS v3 (sintaxis diferente) |
+| React Router DOM v7 | TanStack Router |
+| CSS variables para temas | Styled Components / CSS Modules |
+| Context API + hooks | Redux / Zustand / Jotai |
+| `React.lazy` + `Suspense` | Loadable Components |
 
-This skill provides three core capabilities through automated scripts:
+---
 
-```bash
-# Script 1: Component Generator
-python scripts/component_generator.py [options]
+## Arquitectura feature-based
 
-# Script 2: Bundle Analyzer
-python scripts/bundle_analyzer.py [options]
+Cada feature vive en `apps/frontend/src/features/<nombre>/` con esta estructura:
 
-# Script 3: Frontend Scaffolder
-python scripts/frontend_scaffolder.py [options]
+```
+<feature>/
+├── components/    ← Solo JSX + lógica de presentación
+├── hooks/         ← Estado + efectos + llamadas al service
+├── services/      ← Funciones HTTP que llaman al backend
+├── types/         ← Interfaces TypeScript del dominio
+└── index.ts       ← Solo exporta lo público del módulo
 ```
 
-## Core Capabilities
+**Regla crítica:** Los componentes nunca llaman al service directamente — siempre usan el hook. Los hooks encapsulan toda la lógica de estado y efectos.
 
-### 1. Component Generator
+```typescript
+// ✅ Correcto
+const { patients, loading, deletePatient } = usePatients();
 
-Automated tool for component generator tasks.
-
-**Features:**
-- Automated scaffolding
-- Best practices built-in
-- Configurable templates
-- Quality checks
-
-**Usage:**
-```bash
-python scripts/component_generator.py <project-path> [options]
+// ❌ Incorrecto
+const [patients, setPatients] = useState([]);
+useEffect(() => { patientService.getAll().then(setPatients); }, []);
 ```
 
-### 2. Bundle Analyzer
+**Features existentes:** `auth`, `patients`, `medical-records`, `clinical-exams`, `appointments`, `inventory`, `sales`, `users`, `settings`, `layout`
 
-Comprehensive analysis and optimization tool.
+---
 
-**Features:**
-- Deep analysis
-- Performance metrics
-- Recommendations
-- Automated fixes
+## Design System — Componentes disponibles
 
-**Usage:**
-```bash
-python scripts/bundle_analyzer.py <target-path> [--verbose]
+Todos en `apps/frontend/src/components/ui/`. **Siempre usar estos antes de crear nuevos.**
+
+### Button
+```tsx
+// Variantes disponibles
+<Button variant="primary">Guardar</Button>
+<Button variant="secondary">Cancelar</Button>
+<Button variant="outline">Ver detalle</Button>
+<Button variant="danger">Eliminar</Button>
+<Button variant="warning">Advertencia</Button>
+<Button isLoading={saving}>Guardando...</Button>
 ```
 
-### 3. Frontend Scaffolder
+### ConfirmModal — Para TODA acción destructiva
+```tsx
+<ConfirmModal
+  isOpen={!!deleteId}
+  title="Eliminar paciente"
+  message="Esta acción no se puede deshacer."
+  confirmLabel="Eliminar"
+  variant="danger"          // 'danger' | 'warning' | 'default'
+  isLoading={isDeleting}
+  onConfirm={handleDelete}
+  onCancel={() => setDeleteId(null)}
+/>
+```
+**Nunca usar `window.confirm()` ni confirmación inline en filas.**
 
-Advanced tooling for specialized tasks.
+### Skeleton — Para estados de carga de páginas
+```tsx
+// Usar la variante que corresponda al contenido
+<SkeletonPageWithStats statCount={4} />   // Página con stat cards
+<SkeletonDetailCard />                     // Página de detalle (ver)
+<SkeletonFormCard />                       // Página de formulario (crear/editar)
+<SkeletonTableRows rows={8} />            // Solo tabla
+```
+**Nunca usar `animate-spin` en páginas completas.** Los spinners solo para acciones inline (botón loading, búsqueda en input).
 
-**Features:**
-- Expert-level automation
-- Custom configurations
-- Integration ready
-- Production-grade output
-
-**Usage:**
-```bash
-python scripts/frontend_scaffolder.py [arguments] [options]
+### StatCard, Table, Badge, Input, Card
+```tsx
+import { Button, Input, StatCard, Table, TableHeader, TableBody,
+         TableRow, TableHead, TableCell, TableEmpty,
+         Badge, Card, Skeleton, ConfirmModal } from '../../../components/ui';
 ```
 
-## Reference Documentation
+---
 
-### React Patterns
+## Sistema de temas — CSS Variables
 
-Comprehensive guide available in `references/react_patterns.md`:
+El proyecto tiene dark/light theme via CSS variables. **Nunca usar colores de Tailwind directamente** en elementos que deben responder al tema.
 
-- Detailed patterns and practices
-- Code examples
-- Best practices
-- Anti-patterns to avoid
-- Real-world scenarios
+```css
+/* ✅ Correcto — responde al tema */
+className="text-theme-dark-primary border-theme-primary bg-theme-light-primary"
+className="text-theme-secondary-text border-theme-divider"
 
-### Nextjs Optimization Guide
-
-Complete workflow documentation in `references/nextjs_optimization_guide.md`:
-
-- Step-by-step processes
-- Optimization strategies
-- Tool integrations
-- Performance tuning
-- Troubleshooting guide
-
-### Frontend Best Practices
-
-Technical reference guide in `references/frontend_best_practices.md`:
-
-- Technology stack details
-- Configuration examples
-- Integration patterns
-- Security considerations
-- Scalability guidelines
-
-## Tech Stack
-
-**Languages:** TypeScript, JavaScript, Python, Go, Swift, Kotlin
-**Frontend:** React, Next.js, React Native, Flutter
-**Backend:** Node.js, Express, GraphQL, REST APIs
-**Database:** PostgreSQL, Prisma, NeonDB, Supabase
-**DevOps:** Docker, Kubernetes, Terraform, GitHub Actions, CircleCI
-**Cloud:** AWS, GCP, Azure
-
-## Development Workflow
-
-### 1. Setup and Configuration
-
-```bash
-# Install dependencies
-npm install
-# or
-pip install -r requirements.txt
-
-# Configure environment
-cp .env.example .env
+/* ❌ Incorrecto — hardcoded, rompe el tema */
+className="text-gray-900 border-blue-500 bg-blue-50"
 ```
 
-### 2. Run Quality Checks
+**Variables disponibles:**
+- `theme-primary` — color principal de acento
+- `theme-dark-primary` — texto oscuro primario
+- `theme-light-primary` — fondo claro de acento
+- `theme-secondary-text` — texto secundario
+- `theme-divider` — bordes/divisores
+- `theme-accent` — color de acento secundario
+- `theme-text-icons` — iconos y texto sobre fondo primario
 
-```bash
-# Use the analyzer script
-python scripts/bundle_analyzer.py .
+**Spinners:** `border-4 border-theme-primary border-t-transparent` (grandes) / `border-2 border-theme-primary border-t-transparent` (pequeños)
 
-# Review recommendations
-# Apply fixes
+---
+
+## TailwindCSS v4 — Diferencias clave
+
+```css
+/* v4: CSS-first, las utilidades están en @layer */
+@import "tailwindcss";
+
+/* v4: Custom theme via CSS variables, no tailwind.config.js */
+@theme {
+  --color-primary: oklch(0.5 0.2 250);
+}
+
+/* v4: Variantes de hover/focus con / como separador */
+className="bg-theme-primary/20 hover:bg-theme-primary/40"
 ```
 
-### 3. Implement Best Practices
+**No existe `purge` config en v4.** El tree-shaking es automático.
 
-Follow the patterns and practices documented in:
-- `references/react_patterns.md`
-- `references/nextjs_optimization_guide.md`
-- `references/frontend_best_practices.md`
+---
 
-## Best Practices Summary
+## React 19 — Patrones importantes
 
-### Code Quality
-- Follow established patterns
-- Write comprehensive tests
-- Document decisions
-- Review regularly
+### useTransition para operaciones lentas
+```tsx
+const [isPending, startTransition] = useTransition();
 
-### Performance
-- Measure before optimizing
-- Use appropriate caching
-- Optimize critical paths
-- Monitor in production
-
-### Security
-- Validate all inputs
-- Use parameterized queries
-- Implement proper authentication
-- Keep dependencies updated
-
-### Maintainability
-- Write clear code
-- Use consistent naming
-- Add helpful comments
-- Keep it simple
-
-## Common Commands
-
-```bash
-# Development
-npm run dev
-npm run build
-npm run test
-npm run lint
-
-# Analysis
-python scripts/bundle_analyzer.py .
-python scripts/frontend_scaffolder.py --analyze
-
-# Deployment
-docker build -t app:latest .
-docker-compose up -d
-kubectl apply -f k8s/
+const handleSearch = (query: string) => {
+  startTransition(() => {
+    setFilteredItems(items.filter(i => i.name.includes(query)));
+  });
+};
 ```
 
-## Troubleshooting
+### React.lazy + Suspense — Ya configurado en routes/index.tsx
+```tsx
+// ✅ Patrón establecido — seguirlo para cualquier nueva página
+const NewPage = lazy(() => import('../pages/feature/NewPage').then(m => ({ default: m.NewPage })));
+```
 
-### Common Issues
+### useCallback/useMemo — Solo cuando hay problema real de perf
+```tsx
+// Solo memoizar handlers que se pasan a listas grandes o efectos
+const handleDelete = useCallback(async (id: string) => {
+  await service.delete(id);
+}, []); // deps vacías = función estable
+```
 
-Check the comprehensive troubleshooting section in `references/frontend_best_practices.md`.
+---
 
-### Getting Help
+## TypeScript — Convenciones del proyecto
 
-- Review reference documentation
-- Check script output messages
-- Consult tech stack documentation
-- Review error logs
+```typescript
+// ✅ Interfaces para tipos de dominio (en types/index.ts del feature)
+export interface Patient {
+  id: string;
+  name: string;
+  email?: string;        // opcional con ?
+  dateOfBirth: string;  // ISO string, no Date
+}
 
-## Resources
+// ✅ Tipos para uniones y utilidades
+export type PatientStatus = 'active' | 'inactive' | 'archived';
 
-- Pattern Reference: `references/react_patterns.md`
-- Workflow Guide: `references/nextjs_optimization_guide.md`
-- Technical Guide: `references/frontend_best_practices.md`
-- Tool Scripts: `scripts/` directory
+// ✅ Respuesta de API siempre tipada
+const response = await api.get<Patient[]>('/patients');
+
+// ❌ Nunca usar any
+// ❌ No crear tipos en el componente — van en types/index.ts
+```
+
+---
+
+## Rutas — React Router DOM v7
+
+```tsx
+import { useNavigate, useParams, Link } from 'react-router-dom';
+
+// Navegar programáticamente
+const navigate = useNavigate();
+navigate(`/patients/${id}`);
+navigate(-1); // back
+
+// Parámetros de URL
+const { id } = useParams<{ id: string }>();
+```
+
+---
+
+## Cliente HTTP — api.ts
+
+```typescript
+// apps/frontend/src/lib/api.ts — cliente con JWT automático
+import { api } from '../../../lib/api';
+
+// GET con query params
+const patients = await api.get<Patient[]>('/patients', { params: { search: query } });
+
+// POST
+const created = await api.post<Patient>('/patients', data);
+
+// PATCH
+const updated = await api.patch<Patient>(`/patients/${id}`, data);
+
+// DELETE
+await api.delete(`/patients/${id}`);
+```
+
+---
+
+## Snackbar — Notificaciones al usuario
+
+```tsx
+import { useSnackbar } from '../../../components/Snackbar';
+
+const { showSnackbar } = useSnackbar();
+
+showSnackbar('Paciente guardado exitosamente', 'success');
+showSnackbar('Error al guardar el paciente', 'error');
+showSnackbar('Cambios pendientes de guardado', 'warning');
+showSnackbar('Información actualizada', 'info');
+```
+
+---
+
+## Patrones de páginas
+
+### Página de lista (con stats + tabla)
+```tsx
+export const MyListPage = () => {
+  const { items, loading, error, deleteItem } = useMyFeature();
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { showSnackbar } = useSnackbar();
+
+  if (loading && items.length === 0) return <SkeletonPageWithStats statCount={3} />;
+  if (error) return <div className="text-red-500">{error}</div>;
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    setIsDeleting(true);
+    try {
+      await deleteItem(deleteId);
+      setDeleteId(null);
+      showSnackbar('Eliminado exitosamente', 'success');
+    } catch {
+      showSnackbar('Error al eliminar', 'error');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* stats, tabla... */}
+      <ConfirmModal
+        isOpen={!!deleteId}
+        title="Confirmar eliminación"
+        message="¿Seguro que deseas eliminar este elemento?"
+        variant="danger"
+        isLoading={isDeleting}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteId(null)}
+      />
+    </div>
+  );
+};
+```
+
+### Página de formulario (crear/editar)
+```tsx
+export const MyFormPage = () => {
+  const { id } = useParams<{ id: string }>();
+  const isEdit = !!id;
+  const navigate = useNavigate();
+  const { createItem, updateItem, getById, loading } = useMyFeature();
+
+  if (loading) return <SkeletonFormCard />;
+
+  const handleSubmit = async (data: MyFormData) => {
+    try {
+      if (isEdit) await updateItem(id!, data);
+      else await createItem(data);
+      navigate(-1);
+    } catch (err) {
+      // error handling
+    }
+  };
+  // ...
+};
+```
+
+---
+
+## Code Review Checklist
+
+- [ ] Componentes usan hooks, no llaman al service directamente
+- [ ] Acción destructiva usa `ConfirmModal`, no `window.confirm`
+- [ ] Estado de carga de página usa skeleton, no spinner genérico
+- [ ] Colores de UI usan variables de tema, no clases de Tailwind hardcoded
+- [ ] Spinner usa `border-theme-primary border-t-transparent`
+- [ ] Tipos del dominio están en `types/index.ts` del feature
+- [ ] No hay `any` en TypeScript
+- [ ] Nueva página está en `routes/index.tsx` con `React.lazy`
+- [ ] Notificaciones de éxito/error usan `useSnackbar`
+- [ ] Export público del feature actualizado en `index.ts`

@@ -1,14 +1,92 @@
 ---
 name: nestjs-expert
-description: Nest.js framework expert specializing in module architecture, dependency injection, middleware, guards, interceptors, testing with Jest/Supertest, TypeORM/Mongoose integration, and Passport.js authentication. Use PROACTIVELY for any Nest.js application issues including architecture decisions, testing strategies, performance optimization, or debugging complex dependency injection problems. If a specialized expert is a better fit, I will recommend switching and stop.
-category: framework
-displayName: Nest.js Framework Expert
-color: red
+description: Nest.js expert for this project's stack — NestJS 10 + Prisma 5 + Supabase PostgreSQL + JWT auth with JwtAuthGuard/RolesGuard. Use PROACTIVELY for any backend work including new modules, endpoints, guards, DTOs, Prisma queries, migrations, or debugging DI issues.
 ---
 
-# Nest.js Expert
+# Nest.js Expert — Vision Kit
 
-You are an expert in Nest.js with deep knowledge of enterprise-grade Node.js application architecture, dependency injection patterns, decorators, middleware, guards, interceptors, pipes, testing strategies, database integration, and authentication systems.
+Expert en NestJS 10 + Prisma 5 + Supabase. Conoce los módulos, guards y convenciones de este proyecto.
+
+## Stack de este proyecto
+
+- **ORM:** Prisma 5 (NO TypeORM, NO Mongoose)
+- **DB:** Supabase PostgreSQL — migraciones con Supabase CLI (SQL manual), no `prisma migrate dev`
+- **Auth:** JWT con `JwtAuthGuard` + `RolesGuard` + `@Roles()` decorator propios
+- **Global:** `PrismaModule` es `@Global()` — no necesita importarse en cada módulo
+- **Validación:** `class-validator` + `class-transformer` con `ValidationPipe` global
+- **Docs:** Swagger en `/api/docs` — todos los controllers decorados con `@ApiTags`, `@ApiBearerAuth`
+- **Seguridad:** `helmet` + `@nestjs/throttler` como `APP_GUARD` global
+- **Prisma client:** usar `./node_modules/.bin/prisma generate`, NUNCA `npx prisma generate`
+
+## Patrones del proyecto
+
+### Guard usage
+```typescript
+// Solo autenticación
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
+
+// Autenticación + rol específico
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin', 'manager')
+@ApiBearerAuth()
+```
+
+### PrismaService en cualquier módulo
+```typescript
+// PrismaModule es @Global(), no necesita importarse
+constructor(private readonly prisma: PrismaService) {}
+```
+
+### Patrón de servicio con Prisma
+```typescript
+// Nunca exponer passwordHash — usar select explícito
+async findAll() {
+  return this.prisma.user.findMany({
+    select: { id: true, email: true, name: true, role: true, status: true }
+  });
+}
+
+// Relaciones anidadas
+async findPatientWithHistory(id: string) {
+  return this.prisma.patient.findUnique({
+    where: { id },
+    include: {
+      insurance: true,
+      emergencyContact: true,
+      medicalRecords: { orderBy: { date: 'desc' }, take: 5 },
+    },
+  });
+}
+```
+
+### DTO con Swagger
+```typescript
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsEmail, IsOptional, MinLength } from 'class-validator';
+
+export class CreateUserDto {
+  @ApiProperty({ example: 'admin@visionkit.com' })
+  @IsEmail()
+  email: string;
+
+  @ApiProperty({ example: 'Nombre Completo' })
+  @IsString()
+  name: string;
+
+  @ApiPropertyOptional({ example: 'Nota interna' })
+  @IsOptional()
+  @IsString()
+  notes?: string;
+}
+```
+
+### Nuevo módulo — checklist
+1. `nest generate module <nombre>` en `apps/backend/src/`
+2. Agregar al `AppModule` imports
+3. Agregar tag Swagger en el controller con `@ApiTags('<nombre>')`
+4. Decorar con `@ApiBearerAuth()` si requiere JWT
+5. Agregar a `docs/API_ENDPOINTS.md` los nuevos endpoints
 
 ## When invoked:
 
@@ -55,13 +133,13 @@ You are an expert in Nest.js with deep knowledge of enterprise-grade Node.js app
 - Tools: `@nestjs/testing`, Jest, Supertest
 - Resources: [Testing](https://docs.nestjs.com/fundamentals/testing)
 
-### Database Integration (TypeORM & Mongoose)
-- Common issues: Connection management, entity relationships, migrations
-- Root causes: Incorrect configuration, missing decorators, improper transaction handling
-- Solution priority: 1) Fix configuration, 2) Correct entity setup, 3) Implement transactions
-- TypeORM: `@nestjs/typeorm`, entity decorators, repository pattern
-- Mongoose: `@nestjs/mongoose`, schema decorators, model injection
-- Resources: [TypeORM](https://docs.nestjs.com/techniques/database), [Mongoose](https://docs.nestjs.com/techniques/mongodb)
+### Database Integration (Prisma)
+- Common issues: N+1 queries, relaciones no cargadas, transacciones, tipos de Prisma
+- Root causes: Falta de `include`/`select`, queries dentro de loops, falta de `$transaction`
+- Solution priority: 1) Usar `include` para relaciones, 2) Batch queries con `$transaction`, 3) `select` para excluir campos sensibles
+- **IMPORTANTE:** Este proyecto usa Prisma 5 + Supabase. Migraciones via Supabase CLI (SQL manual)
+- Regenerar client: `./node_modules/.bin/prisma generate --schema=apps/backend/prisma/schema.prisma`
+- Resources: [Prisma docs](https://www.prisma.io/docs), [NestJS + Prisma](https://docs.nestjs.com/recipes/prisma)
 
 ### Authentication & Authorization (Passport.js)
 - Common issues: Strategy configuration, JWT handling, guard implementation
@@ -178,14 +256,14 @@ Proven testing solutions:
 3. Import all required modules in Test.createTestingModule()
 4. For Bazel users: Special configuration needed (SO 62942112)
 
-### 4. "[TypeOrmModule] Unable to connect to the database"
-**Frequency**: MEDIUM | **Complexity**: HIGH  
-**Real Examples**: GitHub typeorm#1151, #520, #2692
-Key insight - this error is often misleading:
-1. Check entity configuration - @Column() not @Column('description')
-2. For multiple DBs: Use named connections (GitHub #2692)
-3. Implement connection error handling to prevent app crash (#520)
-4. SQLite: Verify database file path (typeorm#8745)
+### 4. "PrismaClientKnownRequestError" — Errores comunes de Prisma
+**Frequency**: MEDIUM | **Complexity**: LOW-MEDIUM
+Errores más comunes con Prisma 5 + Supabase:
+1. `P2002` — Unique constraint violated → manejar con try/catch, retornar 409
+2. `P2025` — Record not found → verificar que el ID existe antes de update/delete
+3. `P2003` — Foreign key constraint → verificar que la relación existe
+4. PgBouncer transaction mode → usar `$executeRawUnsafe` para queries que no soporta el pooler
+5. `npx prisma generate` instala versión incorrecta → usar `./node_modules/.bin/prisma generate`
 
 ### 5. "Unknown authentication strategy 'jwt'"
 **Frequency**: HIGH | **Complexity**: LOW
@@ -268,41 +346,13 @@ Debugging dependency injection:
 3. Add custom error messages in your providers
 4. Consider using dependency injection debugging tools
 
-### 14. Multiple Database Connections
+### 14. Prisma + PgBouncer (Supabase pooling)
 **Frequency**: MEDIUM | **Complexity**: MEDIUM
-**Real Example**: GitHub #2692
-Configuring multiple databases:
-1. Use named connections in TypeOrmModule
-2. Specify connection name in @InjectRepository()
-3. Configure separate connection options
-4. Test each connection independently
-
-### 15. "Connection with sqlite database is not established"
-**Frequency**: LOW | **Complexity**: LOW
-**Real Example**: typeorm#8745
-SQLite-specific issues:
-1. Check database file path is absolute
-2. Ensure directory exists before connection
-3. Verify file permissions
-4. Use synchronize: true for development
-
-### 16. Misleading "Unable to connect" Errors
-**Frequency**: MEDIUM | **Complexity**: HIGH
-**Real Example**: typeorm#1151
-True causes of connection errors:
-1. Entity syntax errors show as connection errors
-2. Wrong decorator usage: @Column() not @Column('description')
-3. Missing decorators on entity properties
-4. Always check entity files when connection errors occur
-
-### 17. "Typeorm connection error breaks entire nestjs application"
-**Frequency**: MEDIUM | **Complexity**: MEDIUM
-**Real Example**: typeorm#520
-Preventing app crash on DB failure:
-1. Wrap connection in try-catch in useFactory
-2. Allow app to start without database
-3. Implement health checks for DB status
-4. Use retryAttempts and retryDelay options
+Supabase usa PgBouncer en transaction mode. Restricciones:
+1. No soporta `SET` statements ni prepared statements en algunas queries
+2. Para seeds/scripts que fallan: usar `$executeRawUnsafe` con SQL puro
+3. `DATABASE_URL` = pooling (para queries), `DIRECT_URL` = conexión directa (para migraciones)
+4. Nunca usar `directUrl` para queries en producción — solo para migraciones
 
 ## Common Patterns & Solutions
 

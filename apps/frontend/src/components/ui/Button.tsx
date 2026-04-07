@@ -2,7 +2,7 @@ import clsx from 'clsx';
 import React from 'react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'outline';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'outline' | 'danger' | 'warning';
   isLoading?: boolean;
 }
 
@@ -20,7 +20,9 @@ export const Button: React.FC<ButtonProps> = ({
     primary: "bg-theme-primary hover:bg-theme-dark-primary text-theme-text-icons shadow-md hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] before:absolute before:inset-0 before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition-opacity",
     secondary: "bg-theme-light-primary text-theme-primary border-2 border-theme-primary/20 hover:bg-theme-primary hover:text-theme-text-icons shadow-sm hover:shadow-lg hover:border-theme-primary active:scale-[0.98]",
     ghost: "bg-transparent text-theme-primary hover:bg-theme-light-primary active:scale-[0.98]",
-    outline: "bg-transparent border-2 border-theme-primary/30 text-theme-primary hover:bg-theme-light-primary hover:border-theme-primary active:scale-[0.98]"
+    outline: "bg-transparent border-2 border-theme-primary/30 text-theme-primary hover:bg-theme-light-primary hover:border-theme-primary active:scale-[0.98]",
+    danger: "bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]",
+    warning: "bg-yellow-500 hover:bg-yellow-600 text-white shadow-md hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]",
   };
 
   return (

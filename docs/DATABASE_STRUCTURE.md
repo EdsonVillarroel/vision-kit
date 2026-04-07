@@ -1,5 +1,11 @@
 # Vision Kit — Database Structure
 
+> **Propósito:** Documentación del schema Prisma, modelos, relaciones, enums y mapeos de tablas.
+> Complementa el schema con contexto de negocio, ERD conceptual e historial de migraciones.
+>
+> **Etapa de lectura:** Consultar al trabajar con queries Prisma, crear migraciones, diseñar
+> nuevos modelos o entender relaciones entre entidades de la base de datos.
+>
 > **MANTENIMIENTO:** Actualizar este archivo cada vez que se modifique `apps/backend/prisma/schema.prisma`.
 > El schema en `prisma/schema.prisma` es la fuente de verdad — este doc debe reflejarlo siempre.
 

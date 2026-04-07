@@ -5,6 +5,7 @@ import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { StatCard } from '../../../components/ui/StatCard';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '../../../components/ui/Table';
+import { ConfirmModal } from '../../../components/ui/ConfirmModal';
 import { PatientStatusBadge } from './PatientStatusBadge';
 
 export const PatientsList = () => {
@@ -21,12 +22,18 @@ export const PatientsList = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!deleteConfirm) return;
+    setIsDeleting(true);
     try {
-      await deletePatient(id);
+      await deletePatient(deleteConfirm);
       setDeleteConfirm(null);
     } catch (err) {
       console.error('Error deleting patient:', err);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -234,29 +241,12 @@ export const PatientsList = () => {
                       >
                         Editar
                       </Link>
-                      {deleteConfirm === patient.id ? (
-                        <span className="inline-flex gap-2">
-                          <button
-                            onClick={() => handleDelete(patient.id)}
-                            className="text-red-600 hover:text-red-800 font-semibold transition-colors duration-300"
-                          >
-                            Confirmar
-                          </button>
-                          <button
-                            onClick={() => setDeleteConfirm(null)}
-                            className="text-theme-secondary-text hover:text-theme-primary-text font-semibold transition-colors duration-300"
-                          >
-                            Cancelar
-                          </button>
-                        </span>
-                      ) : (
-                        <button
-                          onClick={() => setDeleteConfirm(patient.id)}
-                          className="text-red-600 hover:text-red-800 font-semibold transition-colors duration-300"
-                        >
-                          Eliminar
-                        </button>
-                      )}
+                      <button
+                        onClick={() => setDeleteConfirm(patient.id)}
+                        className="text-red-600 hover:text-red-800 font-semibold transition-colors duration-300"
+                      >
+                        Eliminar
+                      </button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -265,6 +255,17 @@ export const PatientsList = () => {
           )}
         </TableBody>
       </Table>
+
+      <ConfirmModal
+        isOpen={!!deleteConfirm}
+        title="Eliminar paciente"
+        message="¿Estás seguro de que deseas eliminar este paciente? Se eliminarán también sus registros asociados. Esta acción no se puede deshacer."
+        confirmLabel="Eliminar"
+        variant="danger"
+        isLoading={isDeleting}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteConfirm(null)}
+      />
     </div>
   );
 };

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useClinicalExams } from '../hooks/useClinicalExams';
-import { Button, Input, StatCard, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '../../../components/ui';
+import { Button, Input, StatCard, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty, ConfirmModal } from '../../../components/ui';
 
 export const ClinicalExamsList = () => {
   const { exams, loading, error, searchExams, fetchExams, deleteExam } = useClinicalExams();
@@ -17,12 +17,18 @@ export const ClinicalExamsList = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!deleteConfirm) return;
+    setIsDeleting(true);
     try {
-      await deleteExam(id);
+      await deleteExam(deleteConfirm);
       setDeleteConfirm(null);
     } catch (err) {
       console.error('Error deleting exam:', err);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -202,29 +208,12 @@ export const ClinicalExamsList = () => {
                     >
                       Editar
                     </Link>
-                    {deleteConfirm === exam.id ? (
-                      <span className="inline-flex gap-2">
-                        <button
-                          onClick={() => handleDelete(exam.id)}
-                          className="text-red-600 hover:text-red-800 font-semibold transition-colors duration-300"
-                        >
-                          Confirmar
-                        </button>
-                        <button
-                          onClick={() => setDeleteConfirm(null)}
-                          className="text-theme-secondary-text hover:text-theme-primary-text font-semibold transition-colors duration-300"
-                        >
-                          Cancelar
-                        </button>
-                      </span>
-                    ) : (
-                      <button
-                        onClick={() => setDeleteConfirm(exam.id)}
-                        className="text-red-600 hover:text-red-800 font-semibold transition-colors duration-300"
-                      >
-                        Eliminar
-                      </button>
-                    )}
+                    <button
+                      onClick={() => setDeleteConfirm(exam.id)}
+                      className="text-red-600 hover:text-red-800 font-semibold transition-colors duration-300"
+                    >
+                      Eliminar
+                    </button>
                   </div>
                 </TableCell>
               </TableRow>
@@ -232,6 +221,17 @@ export const ClinicalExamsList = () => {
           )}
         </TableBody>
       </Table>
+
+      <ConfirmModal
+        isOpen={!!deleteConfirm}
+        title="Eliminar examen clínico"
+        message="¿Estás seguro de que deseas eliminar este examen? Esta acción no se puede deshacer."
+        confirmLabel="Eliminar"
+        variant="danger"
+        isLoading={isDeleting}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteConfirm(null)}
+      />
     </div>
   );
 };

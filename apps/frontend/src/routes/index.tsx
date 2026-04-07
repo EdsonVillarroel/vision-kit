@@ -1,4 +1,5 @@
 import { lazy, Suspense } from 'react';
+import { SkeletonPageWithStats } from '../components/ui';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
 // ─── Lazy imports por feature ─────────────────────────────────────────────────
@@ -44,11 +45,7 @@ const EditClinicalExamPage    = lazy(() => import('../pages/clinical-exams').the
 const ClinicalExamDetailsPage = lazy(() => import('../pages/clinical-exams').then(m => ({ default: m.ClinicalExamDetailsPage })));
 
 // ─── Fallback de carga ────────────────────────────────────────────────────────
-const PageLoader = () => (
-  <div className="flex items-center justify-center h-64">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-  </div>
-);
+const PageLoader = () => <SkeletonPageWithStats statCount={4} tableRows={8} />;
 
 export const AppRoutes = () => {
   return (

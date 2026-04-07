@@ -25,4 +25,13 @@ export class AuthController {
   me(@Req() req: any) {
     return this.authService.me(req.user.id);
   }
+
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Renovar access token', description: 'Renueva el JWT si el token actual es válido' })
+  @ApiResponse({ status: 200, description: 'Nuevo access_token emitido' })
+  @UseGuards(JwtAuthGuard)
+  @Post('refresh')
+  refresh(@Req() req: any) {
+    return this.authService.refresh(req.user.id, req.user.email);
+  }
 }

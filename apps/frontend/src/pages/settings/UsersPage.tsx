@@ -1,32 +1,34 @@
 import React, { useEffect, useState } from 'react';
 import { SkeletonPageWithStats } from '../../components/ui/Skeleton';
+import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { useNavigate } from 'react-router-dom';
 import { usePermissions } from '../../features/auth/hooks/usePermissions';
 import { userService } from '../../features/users/services/userService';
+import { useSnackbar } from '../../components/Snackbar/SnackbarContext';
 import type { User, UserRole } from '../../features/auth/types';
 import { Button } from '../../components/ui/Button';
 
 export const UsersPage: React.FC = () => {
   const navigate = useNavigate();
   const permissions = usePermissions();
+  const { showError, showSuccess } = useSnackbar();
+
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [filter, setFilter] = useState<{
     role?: UserRole;
     status?: 'active' | 'inactive';
     search: string;
-  }>({
-    search: ''
-  });
+  }>({ search: '' });
 
-  // Verificar permisos
   useEffect(() => {
     if (!permissions.canViewUsers) {
       navigate('/');
     }
   }, [permissions, navigate]);
 
-  // Cargar usuarios
   useEffect(() => {
     const loadUsers = async () => {
       setIsLoading(true);
@@ -48,21 +50,24 @@ export const UsersPage: React.FC = () => {
       if (!user) return;
       const updatedUser = await userService.toggleStatus(userId, user.status);
       setUsers(users.map(u => u.id === userId ? updatedUser : u));
+      showSuccess(updatedUser.status === 'active' ? 'Usuario activado' : 'Usuario desactivado');
     } catch (error: any) {
-      alert(error.message);
+      showError(error.message ?? 'Error al cambiar estado del usuario');
     }
   };
 
-  const handleDelete = async (userId: string) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar este usuario?')) {
-      return;
-    }
-
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
     try {
-      await userService.delete(userId);
-      setUsers(users.filter(u => u.id !== userId));
+      await userService.delete(deleteTarget.id);
+      setUsers(users.filter(u => u.id !== deleteTarget.id));
+      showSuccess(`Usuario "${deleteTarget.name}" eliminado`);
+      setDeleteTarget(null);
     } catch (error: any) {
-      alert(error.message);
+      showError(error.message ?? 'Error al eliminar usuario');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -101,7 +106,7 @@ export const UsersPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="p-6">
-        <SkeletonPageWithStats statCount={0} tableRows={5} tableCols={5} />
+        <SkeletonPageWithStats statCount={4} tableRows={5} tableCols={5} />
       </div>
     );
   }
@@ -300,7 +305,7 @@ export const UsersPage: React.FC = () => {
                         )}
                         {permissions.canDeleteUser && (
                           <button
-                            onClick={() => handleDelete(user.id)}
+                            onClick={() => setDeleteTarget(user)}
                             className="text-red-600 hover:text-red-900"
                           >
                             Eliminar
@@ -315,6 +320,16 @@ export const UsersPage: React.FC = () => {
           </table>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={deleteTarget !== null}
+        title="Eliminar usuario"
+        message={`¿Estás seguro de que deseas eliminar a "${deleteTarget?.name}"? Esta acción no se puede deshacer.`}
+        confirmLabel="Eliminar"
+        isLoading={isDeleting}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 };

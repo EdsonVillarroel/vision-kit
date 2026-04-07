@@ -139,13 +139,13 @@ export const SaleForm: React.FC<SaleFormProps> = ({ onSubmit }) => {
   const addPayment = () => {
     const amount = parseFloat(currentPayment.amount);
     if (isNaN(amount) || amount <= 0) {
-      alert('Ingrese un monto válido');
+      setError('Ingrese un monto válido');
       return;
     }
 
     const totalPayments = payments.reduce((sum, p) => sum + p.amount, 0);
     if (totalPayments + amount > totals.total) {
-      alert('El total de pagos excede el monto de la venta');
+      setError('El total de pagos excede el monto de la venta');
       return;
     }
 

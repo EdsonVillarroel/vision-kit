@@ -1,0 +1,13 @@
+node_modules/
+dist/
+build/
+.git/
+apps/*/dist/
+apps/*/build/
+apps/frontend/.vite/
+apps/backend/dist/
+coverage/
+*.log
+*.lock
+supabase/.branches/
+supabase/.temp/

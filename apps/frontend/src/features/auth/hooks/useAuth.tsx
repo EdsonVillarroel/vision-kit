@@ -23,6 +23,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     const initAuth = async () => {
       try {
+        // Renovación proactiva: refrescar si el token expira en menos de 1 día
+        const token = localStorage.getItem('auth_token');
+        if (token) {
+          try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const expiresAt: number = payload.exp * 1000;
+            const oneDayMs = 24 * 60 * 60 * 1000;
+            if (expiresAt - Date.now() < oneDayMs) {
+              const res = await authService.refreshToken();
+              if (res?.access_token) {
+                localStorage.setItem('auth_token', res.access_token);
+              }
+            }
+          } catch {
+            // token malformado → dejar que falle en getUser()
+          }
+        }
+
         const user = await authService.getUser();
         if (user) {
           setUser(user);

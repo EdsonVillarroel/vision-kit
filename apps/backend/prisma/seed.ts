@@ -8,6 +8,8 @@ const prisma = new PrismaClient({
   },
 });
 
+const DEFAULT_TENANT_ID = '00000000-0000-4000-a000-000000000001';
+
 async function main() {
   console.log('🌱 Seeding database...');
 
@@ -164,7 +166,7 @@ async function main() {
   const createdPatients: string[] = [];
   for (const { emergencyContact, insurance, ...patient } of patientsData) {
     const existing = await prisma.patient.findUnique({
-      where: { identificationId: patient.identificationId },
+      where: { tenantId_identificationId: { tenantId: DEFAULT_TENANT_ID, identificationId: patient.identificationId } },
     });
     if (existing) {
       createdPatients.push(existing.id);
@@ -355,7 +357,7 @@ async function main() {
 
   const createdProducts: string[] = [];
   for (const { specifications, supplier, ...product } of productsData) {
-    const existing = await prisma.product.findUnique({ where: { sku: product.sku } });
+    const existing = await prisma.product.findUnique({ where: { tenantId_sku: { tenantId: DEFAULT_TENANT_ID, sku: product.sku } } });
     if (existing) {
       createdProducts.push(existing.id);
       console.log(`⏭️  Product already exists: ${product.name}`);

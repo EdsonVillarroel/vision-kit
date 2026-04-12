@@ -9,10 +9,130 @@ datasource db {
 }
 
 // ─────────────────────────────────────────
+// MULTI-TENANT
+// ─────────────────────────────────────────
+
+enum TenantStatus {
+  active
+  suspended
+  cancelled
+
+  @@map("tenant_status")
+}
+
+model Tenant {
+  id             String       @id @default(uuid())
+  name           String
+  slug           String       @unique
+  logoUrl        String?      @map("logo_url")
+  primaryColor   String       @default("#6366f1") @map("primary_color")
+  secondaryColor String       @default("#4f46e5") @map("secondary_color")
+  accentColor    String       @default("#818cf8") @map("accent_color")
+  domain         String?
+  status         TenantStatus @default(active)
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  users           User[]
+  patients        Patient[]
+  appointments    Appointment[]
+  medicalRecords  MedicalRecord[]
+  clinicalExams   ClinicalExam[]
+  products        Product[]
+  stockMovements  StockMovement[]
+  sales           Sale[]
+  saleItems       SaleItem[]
+  payments        Payment[]
+  settings        ClinicSettings[]
+  publicBookings  PublicBooking[]
+  subscriptions   Subscription[]
+
+  @@map("tenants")
+}
+
+enum BillingPeriod {
+  monthly
+  yearly
+
+  @@map("billing_period")
+}
+
+model SubscriptionPlan {
+  id            String        @id @default(uuid())
+  name          String
+  slug          String        @unique
+  price         Decimal       @db.Decimal(10, 2)
+  currency      String        @default("BOB")
+  billingPeriod BillingPeriod @default(monthly) @map("billing_period")
+  maxUsers      Int           @map("max_users")
+  maxPatients   Int           @map("max_patients")
+  maxProducts   Int           @map("max_products")
+  maxStorageMb  Int           @map("max_storage_mb")
+  features      Json          @default("{}")
+  isActive      Boolean       @default(true) @map("is_active")
+  sortOrder     Int           @default(0) @map("sort_order")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  subscriptions Subscription[]
+
+  @@map("subscription_plans")
+}
+
+enum SubscriptionStatus {
+  active
+  past_due
+  cancelled
+  trial
+
+  @@map("subscription_status")
+}
+
+model Subscription {
+  id           String             @id @default(uuid())
+  tenantId     String             @map("tenant_id")
+  planId       String             @map("plan_id")
+  status       SubscriptionStatus @default(active)
+  startedAt    DateTime           @default(now()) @map("started_at")
+  expiresAt    DateTime?          @map("expires_at")
+  cancelledAt  DateTime?          @map("cancelled_at")
+  paymentNotes String?            @map("payment_notes")
+  createdAt    DateTime           @default(now()) @map("created_at")
+  updatedAt    DateTime           @updatedAt @map("updated_at")
+
+  tenant Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  plan   SubscriptionPlan @relation(fields: [planId], references: [id])
+
+  @@index([tenantId])
+  @@index([status])
+  @@map("subscriptions")
+}
+
+enum PlatformAdminStatus {
+  active
+  inactive
+
+  @@map("platform_admin_status")
+}
+
+model PlatformAdmin {
+  id           String              @id @default(uuid())
+  email        String              @unique
+  passwordHash String              @map("password_hash")
+  name         String
+  status       PlatformAdminStatus @default(active)
+  createdAt    DateTime            @default(now()) @map("created_at")
+  updatedAt    DateTime            @updatedAt @map("updated_at")
+
+  @@map("platform_admins")
+}
+
+// ─────────────────────────────────────────
 // USERS & AUTH
 // ─────────────────────────────────────────
 
 enum UserRole {
+  super_admin
   admin
   manager
   optician
@@ -31,6 +151,7 @@ enum UserStatus {
 // NestJS manages auth independently (passwordHash).
 model User {
   id           String     @id @default(uuid())
+  tenantId     String     @default(dbgenerated()) @map("tenant_id")
   email        String     @unique
   passwordHash String     @map("password_hash")
   name         String
@@ -41,12 +162,14 @@ model User {
   createdAt    DateTime   @default(now()) @map("created_at")
   updatedAt    DateTime   @updatedAt @map("updated_at")
 
+  tenant         Tenant          @relation(fields: [tenantId], references: [id])
   appointments   Appointment[]   @relation("PractitionerAppointments")
   sales          Sale[]
   medicalRecords MedicalRecord[]
   clinicalExams  ClinicalExam[]
   stockMovements StockMovement[]
 
+  @@index([tenantId])
   @@map("profiles")
 }
 
@@ -72,7 +195,8 @@ enum PatientStatus {
 
 model Patient {
   id                String        @id @default(uuid())
-  identificationId  String        @unique @map("identification_id")
+  tenantId          String        @default(dbgenerated()) @map("tenant_id")
+  identificationId  String        @map("identification_id")
   firstName         String        @map("first_name")
   lastName          String        @map("last_name")
   dateOfBirth       DateTime?     @db.Date @map("date_of_birth")
@@ -94,6 +218,7 @@ model Patient {
   createdAt         DateTime      @default(now()) @map("created_at")
   updatedAt         DateTime      @updatedAt @map("updated_at")
 
+  tenant           Tenant           @relation(fields: [tenantId], references: [id])
   insurance        PatientInsurance?
   emergencyContact PatientEmergencyContact?
   appointments     Appointment[]
@@ -101,6 +226,8 @@ model Patient {
   clinicalExams    ClinicalExam[]
   sales            Sale[]
 
+  @@unique([tenantId, identificationId])
+  @@index([tenantId])
   @@index([identificationId])
   @@index([lastName, firstName])
   @@index([status])
@@ -159,7 +286,8 @@ enum AppointmentStatus {
 
 model Appointment {
   id                 String            @id @default(uuid())
-  appointmentNumber  String            @unique @map("appointment_number")
+  tenantId           String            @default(dbgenerated()) @map("tenant_id")
+  appointmentNumber  String            @map("appointment_number")
   patientId          String            @map("patient_id")
   practitionerId     String            @map("practitioner_id")
   date               DateTime          @db.Date
@@ -181,10 +309,13 @@ model Appointment {
   createdAt          DateTime          @default(now()) @map("created_at")
   updatedAt          DateTime          @updatedAt @map("updated_at")
 
+  tenant        Tenant         @relation(fields: [tenantId], references: [id])
   patient       Patient        @relation(fields: [patientId], references: [id])
   practitioner  User           @relation("PractitionerAppointments", fields: [practitionerId], references: [id])
   medicalRecord MedicalRecord? @relation(fields: [medicalRecordId], references: [id])
 
+  @@unique([tenantId, appointmentNumber])
+  @@index([tenantId])
   @@index([patientId])
   @@index([practitionerId])
   @@index([date])
@@ -207,6 +338,7 @@ enum ExamType {
 
 model MedicalRecord {
   id             String   @id @default(uuid())
+  tenantId       String   @default(dbgenerated()) @map("tenant_id")
   patientId      String   @map("patient_id")
   practitionerId String   @map("practitioner_id")
   date           DateTime @db.Date
@@ -268,12 +400,14 @@ model MedicalRecord {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  tenant        Tenant        @relation(fields: [tenantId], references: [id])
   patient       Patient       @relation(fields: [patientId], references: [id])
   practitioner  User          @relation(fields: [practitionerId], references: [id])
   appointments  Appointment[]
   sales         Sale[]
   clinicalExam  ClinicalExam?
 
+  @@index([tenantId])
   @@index([patientId])
   @@index([date])
   @@map("medical_records")
@@ -285,7 +419,8 @@ model MedicalRecord {
 
 model ClinicalExam {
   id              String   @id @default(uuid())
-  examNumber      String   @unique @map("exam_number")
+  tenantId        String   @default(dbgenerated()) @map("tenant_id")
+  examNumber      String   @map("exam_number")
   patientId       String   @map("patient_id")
   examinerId      String   @map("examiner_id")
   medicalRecordId String?  @unique @map("medical_record_id")
@@ -339,10 +474,13 @@ model ClinicalExam {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  tenant        Tenant         @relation(fields: [tenantId], references: [id])
   patient       Patient        @relation(fields: [patientId], references: [id])
   examiner      User           @relation(fields: [examinerId], references: [id])
   medicalRecord MedicalRecord? @relation(fields: [medicalRecordId], references: [id])
 
+  @@unique([tenantId, examNumber])
+  @@index([tenantId])
   @@index([patientId])
   @@map("clinical_exams")
 }
@@ -373,7 +511,8 @@ enum ProductStatus {
 
 model Product {
   id           String          @id @default(uuid())
-  sku          String          @unique
+  tenantId     String          @default(dbgenerated()) @map("tenant_id")
+  sku          String
   name         String
   category     ProductCategory
   brand        String?
@@ -389,11 +528,14 @@ model Product {
   createdAt    DateTime        @default(now()) @map("created_at")
   updatedAt    DateTime        @updatedAt @map("updated_at")
 
+  tenant         Tenant               @relation(fields: [tenantId], references: [id])
   specifications ProductSpecification?
   supplier       ProductSupplier?
   stockMovements StockMovement[]
   saleItems      SaleItem[]
 
+  @@unique([tenantId, sku])
+  @@index([tenantId])
   @@index([category])
   @@index([status])
   @@index([sku])
@@ -448,6 +590,7 @@ enum StockMovementType {
 
 model StockMovement {
   id            String            @id @default(uuid())
+  tenantId      String            @default(dbgenerated()) @map("tenant_id")
   productId     String            @map("product_id")
   performedById String            @map("performed_by_id")
   type          StockMovementType
@@ -460,9 +603,11 @@ model StockMovement {
   date          DateTime          @db.Date
   createdAt     DateTime          @default(now()) @map("created_at")
 
+  tenant      Tenant  @relation(fields: [tenantId], references: [id])
   product     Product @relation(fields: [productId], references: [id])
   performedBy User    @relation(fields: [performedById], references: [id])
 
+  @@index([tenantId])
   @@index([productId])
   @@index([date])
   @@map("stock_movements")
@@ -493,7 +638,8 @@ enum SaleStatus {
 
 model Sale {
   id                   String        @id @default(uuid())
-  saleNumber           String        @unique @map("sale_number")
+  tenantId             String        @default(dbgenerated()) @map("tenant_id")
+  saleNumber           String        @map("sale_number")
   patientId            String        @map("patient_id")
   soldById             String        @map("sold_by_id")
   medicalRecordId      String?       @map("medical_record_id")
@@ -515,12 +661,15 @@ model Sale {
   createdAt            DateTime      @default(now()) @map("created_at")
   updatedAt            DateTime      @updatedAt @map("updated_at")
 
+  tenant        Tenant         @relation(fields: [tenantId], references: [id])
   patient       Patient        @relation(fields: [patientId], references: [id])
   soldBy        User           @relation(fields: [soldById], references: [id])
   medicalRecord MedicalRecord? @relation(fields: [medicalRecordId], references: [id])
   items         SaleItem[]
   payments      Payment[]
 
+  @@unique([tenantId, saleNumber])
+  @@index([tenantId])
   @@index([patientId])
   @@index([date])
   @@index([status])
@@ -529,6 +678,7 @@ model Sale {
 
 model SaleItem {
   id          String  @id @default(uuid())
+  tenantId    String  @default(dbgenerated()) @map("tenant_id")
   saleId      String  @map("sale_id")
   productId   String  @map("product_id")
   productName String  @map("product_name")
@@ -539,22 +689,27 @@ model SaleItem {
   subtotal    Decimal @db.Decimal(10, 2)
   total       Decimal @db.Decimal(10, 2)
 
+  tenant  Tenant  @relation(fields: [tenantId], references: [id])
   sale    Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id])
 
+  @@index([tenantId])
   @@map("sale_items")
 }
 
 model Payment {
   id        String        @id @default(uuid())
+  tenantId  String        @default(dbgenerated()) @map("tenant_id")
   saleId    String        @map("sale_id")
   method    PaymentMethod
   amount    Decimal       @db.Decimal(10, 2)
   reference String?
   createdAt DateTime      @default(now()) @map("created_at")
 
-  sale Sale @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  tenant Tenant  @relation(fields: [tenantId], references: [id])
+  sale   Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
 
+  @@index([tenantId])
   @@map("payments")
 }
 
@@ -564,6 +719,7 @@ model Payment {
 
 model ClinicSettings {
   id        String   @id @default(uuid())
+  tenantId  String   @default(dbgenerated()) @map("tenant_id")
   name      String
   rfc       String?
   address   String?
@@ -573,13 +729,19 @@ model ClinicSettings {
   phone     String?
   email     String?
   website   String?
-  logo      String?
+  logo         String?
+  primaryColor String?  @map("primary_color")
+  accentColor  String?  @map("accent_color")
   taxRate       Decimal  @default(0.16) @db.Decimal(4, 2) @map("tax_rate")
   currency      String   @default("MXN")
   businessHours Json?    @map("business_hours")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
+  tenant Tenant  @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId])
+  @@index([tenantId])
   @@map("clinic_settings")
 }
 
@@ -597,6 +759,7 @@ enum BookingStatus {
 
 model PublicBooking {
   id            String        @id @default(uuid())
+  tenantId      String        @default(dbgenerated()) @map("tenant_id")
   name          String
   phone         String
   email         String?
@@ -608,6 +771,9 @@ model PublicBooking {
   createdAt     DateTime      @default(now()) @map("created_at")
   updatedAt     DateTime      @updatedAt @map("updated_at")
 
+  tenant Tenant  @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
   @@index([status])
   @@index([preferredDate])
   @@map("public_bookings")

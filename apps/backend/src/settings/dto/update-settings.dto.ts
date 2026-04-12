@@ -11,6 +11,8 @@ export class UpdateSettingsDto {
   @IsOptional() @IsString() email?: string;
   @IsOptional() @IsString() website?: string;
   @IsOptional() @IsString() logo?: string;
+  @IsOptional() @IsString() primaryColor?: string;
+  @IsOptional() @IsString() accentColor?: string;
   @IsOptional() @IsNumber() taxRate?: number;
   @IsOptional() @IsString() currency?: string;
   @IsOptional() @IsObject() businessHours?: Record<string, { open: string; close: string; closed: boolean }>;

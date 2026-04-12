@@ -1,79 +1,15 @@
 import { Link } from 'react-router-dom';
+import { useTenant } from '../context/TenantContext';
 
-/* ── Palette ── */
+/* ── Static palette (non-brand) ── */
 const C = {
-  text:    '#2c2118',
-  muted:   '#9e8a6e',
-  border:  '#f0e8d8',
-  pale:    '#fdf0d5',
-  brand:   '#c17d2a',
-  card:    '#ffffff',
+  text:   '#2c2118',
+  muted:  '#9e8a6e',
+  border: '#f0e8d8',
+  card:   '#ffffff',
 } as const;
 
-/* ── Data ── */
-const CATEGORIES = [
-  {
-    label: 'Monturas Hombre',
-    href: '/catalogo?category=frames&gender=hombre',
-    icon: (
-      <svg viewBox="0 0 48 28" fill="none" stroke={C.brand} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="32" height="20">
-        <rect x="1" y="6" width="18" height="15" rx="7" />
-        <rect x="29" y="6" width="18" height="15" rx="7" />
-        <line x1="19" y1="13.5" x2="29" y2="13.5" />
-        <line x1="1" y1="13.5" x2="0" y2="8" />
-        <line x1="47" y1="13.5" x2="48" y2="8" />
-      </svg>
-    ),
-  },
-  {
-    label: 'Monturas Mujer',
-    href: '/catalogo?category=frames&gender=mujer',
-    icon: (
-      <svg viewBox="0 0 48 28" fill="none" stroke={C.brand} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="32" height="20">
-        <path d="M1 13.5C1 9.358 4.358 6 8.5 6h5C17.642 6 21 9.358 21 13.5S17.642 21 13.5 21h-5C4.358 21 1 17.642 1 13.5z" />
-        <path d="M27 13.5C27 9.358 30.358 6 34.5 6h5C43.642 6 47 9.358 47 13.5S43.642 21 39.5 21h-5C30.358 21 27 17.642 27 13.5z" />
-        <line x1="21" y1="13.5" x2="27" y2="13.5" />
-        <line x1="1" y1="13.5" x2="0" y2="8" />
-        <line x1="47" y1="13.5" x2="48" y2="8" />
-        {/* Cat-eye tips */}
-        <path d="M13.5 6 Q18 3 21 6" fill="none" />
-        <path d="M39.5 6 Q44 3 47 6" fill="none" />
-      </svg>
-    ),
-  },
-  {
-    label: 'Niños',
-    href: '/catalogo?category=frames&gender=ninos',
-    icon: (
-      <svg viewBox="0 0 48 28" fill="none" stroke={C.brand} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="32" height="20">
-        <rect x="2" y="5" width="17" height="17" rx="8.5" />
-        <rect x="29" y="5" width="17" height="17" rx="8.5" />
-        <line x1="19" y1="13.5" x2="29" y2="13.5" />
-        <line x1="2" y1="13.5" x2="0" y2="8" />
-        <line x1="46" y1="13.5" x2="48" y2="8" />
-        {/* Star sparkle */}
-        <path d="M24 1 L24.5 2.5 L26 3 L24.5 3.5 L24 5 L23.5 3.5 L22 3 L23.5 2.5 Z" fill={C.brand} stroke="none" />
-      </svg>
-    ),
-  },
-  {
-    label: 'Sol Hombre',
-    href: '/catalogo?category=sunglasses',
-    icon: (
-      <svg viewBox="0 0 48 28" fill="none" stroke={C.brand} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="32" height="20">
-        <rect x="1" y="6" width="18" height="15" rx="5" />
-        <rect x="29" y="6" width="18" height="15" rx="5" />
-        <line x1="19" y1="13.5" x2="29" y2="13.5" />
-        <line x1="1" y1="13.5" x2="0" y2="8" />
-        <line x1="47" y1="13.5" x2="48" y2="8" />
-        {/* Tinted fill */}
-        <rect x="2" y="7" width="16" height="13" rx="4" fill={C.pale} stroke="none" opacity="0.6"/>
-        <rect x="30" y="7" width="16" height="13" rx="4" fill={C.pale} stroke="none" opacity="0.6"/>
-      </svg>
-    ),
-  },
-];
-
+/* ── Social links (specific to this tenant's real accounts) ── */
 const SOCIAL = [
   {
     label: 'Facebook',
@@ -127,29 +63,99 @@ function track(cat: string, label: string) {
 }
 
 export default function HomePage() {
+  const { clinicInfo, brandColor, path } = useTenant();
+
+  const pale = `${brandColor}22`; // ~13% opacity tint for icon backgrounds
+
+  const clinicName = clinicInfo?.name ?? 'Visión 20/20 HD';
+  const logoSrc    = clinicInfo?.logo ?? '/logo.png';
+  const phone      = clinicInfo?.phone?.replace(/\D/g, '') ?? '59168803830';
+  const address    = clinicInfo?.address
+    ? `${clinicInfo.address}${clinicInfo.city ? `, ${clinicInfo.city}` : ''}`
+    : 'Calle Sucre #60, Santa Cruz - Bolivia';
+
+  const waHref = `https://wa.me/${phone}?text=${encodeURIComponent('👋 Hola! Me gustaría más información sobre sus servicios 👓')}`;
+
+  const categories = [
+    {
+      label: 'Monturas Hombre',
+      href: `${path('catalogo')}?category=frames&gender=hombre`,
+      icon: (
+        <svg viewBox="0 0 48 28" fill="none" stroke={brandColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="32" height="20">
+          <rect x="1" y="6" width="18" height="15" rx="7" />
+          <rect x="29" y="6" width="18" height="15" rx="7" />
+          <line x1="19" y1="13.5" x2="29" y2="13.5" />
+          <line x1="1" y1="13.5" x2="0" y2="8" />
+          <line x1="47" y1="13.5" x2="48" y2="8" />
+        </svg>
+      ),
+    },
+    {
+      label: 'Monturas Mujer',
+      href: `${path('catalogo')}?category=frames&gender=mujer`,
+      icon: (
+        <svg viewBox="0 0 48 28" fill="none" stroke={brandColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="32" height="20">
+          <path d="M1 13.5C1 9.358 4.358 6 8.5 6h5C17.642 6 21 9.358 21 13.5S17.642 21 13.5 21h-5C4.358 21 1 17.642 1 13.5z" />
+          <path d="M27 13.5C27 9.358 30.358 6 34.5 6h5C43.642 6 47 9.358 47 13.5S43.642 21 39.5 21h-5C30.358 21 27 17.642 27 13.5z" />
+          <line x1="21" y1="13.5" x2="27" y2="13.5" />
+          <line x1="1" y1="13.5" x2="0" y2="8" />
+          <line x1="47" y1="13.5" x2="48" y2="8" />
+          <path d="M13.5 6 Q18 3 21 6" fill="none" />
+          <path d="M39.5 6 Q44 3 47 6" fill="none" />
+        </svg>
+      ),
+    },
+    {
+      label: 'Niños',
+      href: `${path('catalogo')}?category=frames&gender=ninos`,
+      icon: (
+        <svg viewBox="0 0 48 28" fill="none" stroke={brandColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="32" height="20">
+          <rect x="2" y="5" width="17" height="17" rx="8.5" />
+          <rect x="29" y="5" width="17" height="17" rx="8.5" />
+          <line x1="19" y1="13.5" x2="29" y2="13.5" />
+          <line x1="2" y1="13.5" x2="0" y2="8" />
+          <line x1="46" y1="13.5" x2="48" y2="8" />
+          <path d="M24 1 L24.5 2.5 L26 3 L24.5 3.5 L24 5 L23.5 3.5 L22 3 L23.5 2.5 Z" fill={brandColor} stroke="none" />
+        </svg>
+      ),
+    },
+    {
+      label: 'Sol',
+      href: `${path('catalogo')}?category=sunglasses`,
+      icon: (
+        <svg viewBox="0 0 48 28" fill="none" stroke={brandColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="32" height="20">
+          <rect x="1" y="6" width="18" height="15" rx="5" />
+          <rect x="29" y="6" width="18" height="15" rx="5" />
+          <line x1="19" y1="13.5" x2="29" y2="13.5" />
+          <line x1="1" y1="13.5" x2="0" y2="8" />
+          <line x1="47" y1="13.5" x2="48" y2="8" />
+          <rect x="2" y="7" width="16" height="13" rx="4" fill={pale} stroke="none" opacity="0.6" />
+          <rect x="30" y="7" width="16" height="13" rx="4" fill={pale} stroke="none" opacity="0.6" />
+        </svg>
+      ),
+    },
+  ];
+
   return (
     <div style={{ maxWidth: 420, margin: '0 auto', minHeight: '100dvh', padding: '0 16px 32px' }}>
 
       {/* ── PROFILE ── */}
       <section className="anim-0" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 36, paddingBottom: 20, gap: 10 }}>
-        {/* Logo */}
         <div style={{
           width: 108, height: 108, borderRadius: '50%',
           border: `3px solid ${C.border}`,
-          boxShadow: '0 4px 20px rgba(193,125,42,0.13)',
+          boxShadow: `0 4px 20px ${brandColor}22`,
           overflow: 'hidden',
           background: C.card,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          <img src="/logo.png" alt="Visión 20/20 HD" style={{ width: 96, height: 96, objectFit: 'contain' }} />
+          <img src={logoSrc} alt={clinicName} style={{ width: 96, height: 96, objectFit: 'contain' }} />
         </div>
 
-        {/* Name */}
         <h1 style={{ fontWeight: 800, fontSize: 26, color: C.text, textAlign: 'center', lineHeight: 1.2 }}>
-          Visión 20/20 HD
+          {clinicName}
         </h1>
 
-        {/* Tagline */}
         <p style={{ fontSize: 13, color: C.muted, fontWeight: 500 }}>
           Ver Bien, Sentirte Bien
         </p>
@@ -157,12 +163,10 @@ export default function HomePage() {
 
       {/* ── CATALOG ── */}
       <section className="anim-1" style={{ marginBottom: 20 }}>
-        <h2 style={{ fontSize: 14, fontWeight: 600, color: C.text, marginBottom: 12 }}>
-          Catálogo
-        </h2>
+        <h2 style={{ fontSize: 14, fontWeight: 600, color: C.text, marginBottom: 12 }}>Catálogo</h2>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          {CATEGORIES.map(({ label, href, icon }) => (
+          {categories.map(({ label, href, icon }) => (
             <Link
               key={label}
               to={href}
@@ -179,10 +183,9 @@ export default function HomePage() {
                 color: C.text,
               }}
             >
-              {/* Icon container */}
               <div style={{
                 width: 56, height: 56, borderRadius: 14,
-                background: C.pale,
+                background: pale,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
                 {icon}
@@ -198,7 +201,7 @@ export default function HomePage() {
       {/* ── WHATSAPP ── */}
       <div className="anim-2" style={{ marginBottom: 24 }}>
         <a
-          href="https://wa.me/59168803830?text=%F0%9F%91%8B%20Hola!%20Me%20gustar%C3%ADa%20m%C3%A1s%20informaci%C3%B3n%20sobre%20sus%20servicios%20%F0%9F%91%93"
+          href={waHref}
           target="_blank"
           rel="noreferrer"
           onClick={() => track('social', 'WhatsApp')}
@@ -223,9 +226,7 @@ export default function HomePage() {
 
       {/* ── SOCIAL ── */}
       <section className="anim-3" style={{ marginBottom: 28 }}>
-        <h2 style={{ fontSize: 14, fontWeight: 600, color: C.text, marginBottom: 12 }}>
-          Síguenos
-        </h2>
+        <h2 style={{ fontSize: 14, fontWeight: 600, color: C.text, marginBottom: 12 }}>Síguenos</h2>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
           {SOCIAL.map(({ label, href, iconBg, iconColor, icon }) => (
@@ -246,7 +247,6 @@ export default function HomePage() {
                 color: C.text,
               }}
             >
-              {/* Icon circle */}
               <div style={{
                 width: 46, height: 46, borderRadius: '50%',
                 background: iconBg,
@@ -255,9 +255,7 @@ export default function HomePage() {
               }}>
                 {icon}
               </div>
-              <span style={{ fontSize: 11, fontWeight: 600, textAlign: 'center' }}>
-                {label}
-              </span>
+              <span style={{ fontSize: 11, fontWeight: 600, textAlign: 'center' }}>{label}</span>
             </a>
           ))}
         </div>
@@ -265,10 +263,7 @@ export default function HomePage() {
 
       {/* ── FOOTER ── */}
       <footer className="anim-4" style={{ textAlign: 'center' }}>
-        <p style={{ fontSize: 11, color: '#b0a090', lineHeight: 1.7 }}>
-          Calle Sucre #60 entre Av. 24 de Septiembre y calle libertad<br />
-          Santa Cruz - Bolivia
-        </p>
+        <p style={{ fontSize: 11, color: '#b0a090', lineHeight: 1.7 }}>{address}</p>
       </footer>
 
     </div>

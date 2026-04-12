@@ -18,43 +18,43 @@ import { Roles } from '../auth/roles.decorator';
 export class UsersController {
   constructor(private usersService: UsersService) {}
 
-  @ApiOperation({ summary: 'Listar usuarios — roles: admin, manager' })
-  @Roles('admin', 'manager')
+  @ApiOperation({ summary: 'Listar usuarios — roles: super_admin, admin, manager' })
+  @Roles('super_admin', 'admin', 'manager')
   @Get()
   findAll() {
     return this.usersService.findAll();
   }
 
   @ApiOperation({ summary: 'Obtener usuario por ID' })
-  @Roles('admin', 'manager')
+  @Roles('super_admin', 'admin', 'manager')
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
   }
 
-  @ApiOperation({ summary: 'Crear usuario — rol: admin' })
+  @ApiOperation({ summary: 'Crear usuario — roles: super_admin, admin' })
   @ApiResponse({ status: 409, description: 'Email ya registrado' })
-  @Roles('admin')
+  @Roles('super_admin', 'admin')
   @Post()
   create(@Body() dto: CreateUserDto) {
     return this.usersService.create(dto);
   }
 
-  @ApiOperation({ summary: 'Actualizar usuario — rol: admin' })
-  @Roles('admin')
+  @ApiOperation({ summary: 'Actualizar usuario — roles: super_admin, admin' })
+  @Roles('super_admin', 'admin')
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
     return this.usersService.update(id, dto);
   }
 
-  @ApiOperation({ summary: 'Eliminar usuario — rol: admin' })
-  @Roles('admin')
+  @ApiOperation({ summary: 'Eliminar usuario — roles: super_admin, admin' })
+  @Roles('super_admin', 'admin')
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
   }
 
-  @ApiOperation({ summary: 'Cambiar contraseña — propio usuario o admin' })
+  @ApiOperation({ summary: 'Cambiar contraseña — propio usuario, admin o super_admin' })
   @ApiResponse({ status: 401, description: 'Contraseña actual incorrecta' })
   @Patch(':id/password')
   changePassword(
@@ -62,7 +62,7 @@ export class UsersController {
     @Body() dto: ChangePasswordDto,
     @Req() req: any,
   ) {
-    if (req.user.id !== id && req.user.role !== 'admin') {
+    if (req.user.id !== id && req.user.role !== 'admin' && req.user.role !== 'super_admin') {
       throw new ForbiddenException('Solo puedes cambiar tu propia contraseña');
     }
     return this.usersService.changePassword(id, dto.currentPassword, dto.newPassword);

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useSidebar } from '../hooks/useSidebar';
+import { useClinicSettings } from '../../settings/context/ClinicSettingsContext';
 import type { MenuItem } from '../types';
 import clsx from 'clsx';
 
@@ -94,6 +95,10 @@ const MenuItemComponent: React.FC<{ item: MenuItem; level?: number }> = ({ item,
 
 export const Sidebar: React.FC<SidebarProps> = ({ menuItems }) => {
   const { isOpen, isCollapsed, toggleCollapse, setIsOpen } = useSidebar();
+  const { settings } = useClinicSettings();
+  const clinicName = settings?.name ?? 'Vision Kit';
+  const clinicLogo = settings?.logo;
+  const clinicInitial = clinicName.charAt(0).toUpperCase();
 
   return (
     <>
@@ -117,15 +122,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ menuItems }) => {
         <div className="h-16 flex items-center justify-between px-4 border-b border-theme-divider/50 bg-gradient-to-r from-theme-dark-primary to-theme-primary shadow-lg backdrop-blur-sm">
           {!isCollapsed && (
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 bg-gradient-to-br from-theme-accent to-theme-primary rounded-xl flex items-center justify-center text-white font-bold shadow-lg transform hover:scale-110 transition-transform duration-300">
-                V
-              </div>
-              <h2 className="text-lg font-bold text-theme-text-icons tracking-tight">Vision Kit</h2>
+              {clinicLogo ? (
+                <img src={clinicLogo} alt={clinicName} className="w-9 h-9 rounded-xl object-cover shadow-lg" />
+              ) : (
+                <div className="w-9 h-9 bg-gradient-to-br from-theme-accent to-theme-primary rounded-xl flex items-center justify-center text-white font-bold shadow-lg transform hover:scale-110 transition-transform duration-300">
+                  {clinicInitial}
+                </div>
+              )}
+              <h2 className="text-lg font-bold text-theme-text-icons tracking-tight truncate max-w-[140px]">{clinicName}</h2>
             </div>
           )}
           {isCollapsed && (
             <div className="w-9 h-9 bg-gradient-to-br from-theme-accent to-theme-primary rounded-xl flex items-center justify-center text-white font-bold shadow-lg mx-auto transform hover:scale-110 transition-transform duration-300">
-              V
+              {clinicLogo ? (
+                <img src={clinicLogo} alt={clinicName} className="w-9 h-9 rounded-xl object-cover" />
+              ) : (
+                clinicInitial
+              )}
             </div>
           )}
           <button

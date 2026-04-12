@@ -1,26 +1,31 @@
 import { Link, useLocation } from 'react-router-dom';
-
-const NAV = [
-  { to: '/', label: 'Inicio' },
-  { to: '/catalogo', label: 'Catálogo' },
-  { to: '/reservar', label: 'Reservar cita' },
-];
+import { useTenant } from '../../context/TenantContext';
 
 export const Header = () => {
   const { pathname } = useLocation();
+  const { clinicInfo, path } = useTenant();
+
+  const clinicName = clinicInfo?.name ?? 'Visión 20/20 HD';
+  const logoSrc    = clinicInfo?.logo ?? '/logo.png';
+
+  const NAV = [
+    { to: path(),           label: 'Inicio' },
+    { to: path('catalogo'), label: 'Catálogo' },
+    { to: path('reservar'), label: 'Reservar cita' },
+  ];
 
   return (
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-[#f0e8d8]">
       <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2">
-          <img src="/logo.png" alt="Visión 20/20 HD" className="h-8 w-8 object-contain" />
-          <span className="font-bold text-[#2c2118] text-sm hidden sm:block">Visión 20/20 HD</span>
+        <Link to={path()} className="flex items-center gap-2">
+          <img src={logoSrc} alt={clinicName} className="h-8 w-8 object-contain" />
+          <span className="font-bold text-[#2c2118] text-sm hidden sm:block">{clinicName}</span>
         </Link>
 
         <nav className="flex items-center gap-1">
           {NAV.map(({ to, label }) => (
             <Link
-              key={to}
+              key={label}
               to={to}
               className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 pathname === to

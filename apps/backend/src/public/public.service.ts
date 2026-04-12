@@ -13,16 +13,22 @@ export class PublicService {
   // ── Catálogo ──────────────────────────────────────────────────────────────
 
   async getCatalog(
+    tenantSlug: string,
     category?: string,
     search?: string,
     page = 1,
     limit = 20,
   ) {
+    const tenant = await this.prisma.tenant.findUnique({ where: { slug: tenantSlug } });
+    if (!tenant) throw new NotFoundException('Óptica no encontrada');
+    if (tenant.status !== 'active') throw new NotFoundException('Óptica no disponible');
+
     const safeLimit = Math.min(Math.max(1, limit), 50);
     const safePage = Math.max(1, page);
     const skip = (safePage - 1) * safeLimit;
 
     const where: Record<string, unknown> = {
+      tenantId: tenant.id,
       status: 'in_stock',
     };
 
@@ -77,9 +83,13 @@ export class PublicService {
     };
   }
 
-  async getProductById(id: string) {
+  async getProductById(tenantSlug: string, id: string) {
+    const tenant = await this.prisma.tenant.findUnique({ where: { slug: tenantSlug } });
+    if (!tenant) throw new NotFoundException('Óptica no encontrada');
+    if (tenant.status !== 'active') throw new NotFoundException('Óptica no disponible');
+
     const product = await this.prisma.product.findFirst({
-      where: { id, status: 'in_stock' },
+      where: { id, tenantId: tenant.id, status: 'in_stock' },
       select: {
         id: true,
         sku: true,
@@ -106,8 +116,14 @@ export class PublicService {
 
   // ── Info clínica ──────────────────────────────────────────────────────────
 
-  async getClinicInfo() {
-    const settings = await this.prisma.clinicSettings.findFirst();
+  async getClinicInfo(tenantSlug: string) {
+    const tenant = await this.prisma.tenant.findUnique({ where: { slug: tenantSlug } });
+    if (!tenant) throw new NotFoundException('Óptica no encontrada');
+    if (tenant.status !== 'active') throw new NotFoundException('Óptica no disponible');
+
+    const settings = await this.prisma.clinicSettings.findFirst({
+      where: { tenantId: tenant.id },
+    });
     if (!settings) throw new NotFoundException('Información de la clínica no disponible');
 
     // Exponer solo campos seguros — sin id, taxRate, currency, rfc
@@ -119,13 +135,19 @@ export class PublicService {
       email: settings.email,
       website: settings.website,
       logo: settings.logo,
+      primaryColor: settings.primaryColor,
+      accentColor: settings.accentColor,
       businessHours: settings.businessHours,
     };
   }
 
   // ── Reservas ──────────────────────────────────────────────────────────────
 
-  async createBooking(dto: CreateBookingDto) {
+  async createBooking(tenantSlug: string, dto: CreateBookingDto) {
+    const tenant = await this.prisma.tenant.findUnique({ where: { slug: tenantSlug } });
+    if (!tenant) throw new NotFoundException('Óptica no encontrada');
+    if (tenant.status !== 'active') throw new NotFoundException('Óptica no disponible');
+
     // Validar que la fecha no sea pasada
     const requested = new Date(dto.preferredDate);
     requested.setHours(0, 0, 0, 0);
@@ -138,6 +160,7 @@ export class PublicService {
 
     const booking = await this.prisma.publicBooking.create({
       data: {
+        tenantId: tenant.id,
         name: dto.name,
         phone: dto.phone,
         email: dto.email ?? null,

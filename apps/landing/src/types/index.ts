@@ -63,6 +63,8 @@ export interface ClinicInfo {
   email?: string;
   website?: string;
   logo?: string;
+  primaryColor?: string;
+  accentColor?: string;
   businessHours?: BusinessHours;
 }
 

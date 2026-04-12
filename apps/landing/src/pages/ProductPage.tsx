@@ -2,14 +2,13 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { TopBar } from '../components/layout/TopBar';
 import { Spinner } from '../components/ui/Spinner';
+import { useTenant } from '../context/TenantContext';
 import { publicApi } from '../lib/api';
 import type { Product } from '../types';
 
-const WA_BASE = 'https://wa.me/59168803830?text=';
-
-function buildWaMessage(product: Product): string {
+function buildWaMessage(product: Product, phone: string): string {
   const text = `Hola! Me interesa *${product.name}* (Bs. ${product.sellingPrice.toLocaleString()}). ¿Está disponible?`;
-  return WA_BASE + encodeURIComponent(text);
+  return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
 }
 
 /* Spec field label mapping */
@@ -49,6 +48,7 @@ const WaIcon = () => (
 );
 
 export default function ProductPage() {
+  const { tenantSlug, clinicInfo, path } = useTenant();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [product, setProduct] = useState<Product | null>(null);
@@ -56,11 +56,13 @@ export default function ProductPage() {
   const [error, setError] = useState('');
   const [imgIdx, setImgIdx] = useState(0);
 
+  const phone = clinicInfo?.phone?.replace(/\D/g, '') ?? '59168803830';
+
   useEffect(() => {
     if (!id) return;
     setLoading(true);
     publicApi
-      .getProduct(id)
+      .getProduct(tenantSlug, id)
       .then(setProduct)
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
@@ -85,7 +87,7 @@ export default function ProductPage() {
           <p style={{ fontSize: 40, marginBottom: 12 }}>😕</p>
           <p style={{ fontWeight: 600, fontSize: 14, color: '#2c2118' }}>Producto no disponible</p>
           <button
-            onClick={() => navigate('/catalogo')}
+            onClick={() => navigate(path('catalogo'))}
             style={{ marginTop: 16, color: '#c17d2a', background: 'none', border: 'none', fontSize: 13, cursor: 'pointer' }}
           >
             ← Volver al catálogo
@@ -96,7 +98,7 @@ export default function ProductPage() {
   }
 
   const images = product.images?.length ? product.images : [];
-  const waHref = buildWaMessage(product);
+  const waHref = buildWaMessage(product, phone);
 
   /* Specs & measures */
   const specs = product.specifications
@@ -262,7 +264,7 @@ export default function ProductPage() {
           <WaIcon /> Reservar por WhatsApp
         </a>
         <Link
-          to="/catalogo"
+          to={path('catalogo')}
           style={{ fontSize: 13, color: '#9e8a6e', fontWeight: 500, textDecoration: 'none' }}
         >
           Volver al catálogo

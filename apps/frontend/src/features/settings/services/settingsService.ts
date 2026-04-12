@@ -23,6 +23,8 @@ export interface ClinicSettings {
   taxRate?: number;
   currency?: string;
   businessHours?: BusinessHours;
+  primaryColor?: string;
+  accentColor?: string;
 }
 
 export const DEFAULT_BUSINESS_HOURS: BusinessHours = {

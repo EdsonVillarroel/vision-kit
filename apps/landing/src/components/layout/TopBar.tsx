@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useTenant } from '../../context/TenantContext';
 
 interface Props {
   title: string;
@@ -8,6 +9,8 @@ const C = { text: '#2c2118', border: '#f0e8d8', muted: '#9e8a6e' } as const;
 
 export const TopBar = ({ title }: Props) => {
   const navigate = useNavigate();
+  const { clinicInfo } = useTenant();
+  const logoSrc = clinicInfo?.logo ?? '/logo.png';
 
   return (
     <header style={{
@@ -44,7 +47,7 @@ export const TopBar = ({ title }: Props) => {
       </span>
 
       {/* Logo */}
-      <img src="/logo.png" alt="logo" style={{ width: 34, height: 34, objectFit: 'contain', flexShrink: 0 }} />
+      <img src={logoSrc} alt="logo" style={{ width: 34, height: 34, objectFit: 'contain', flexShrink: 0 }} />
     </header>
   );
 };

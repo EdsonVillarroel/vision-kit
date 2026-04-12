@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
 import { Spinner } from '../components/ui/Spinner';
+import { useTenant } from '../context/TenantContext';
 import { publicApi } from '../lib/api';
 import type { BookingConfirmation, CreateBookingPayload } from '../types';
 
@@ -30,6 +31,9 @@ function minDate(): string {
 }
 
 export default function BookingPage() {
+  const { tenantSlug, clinicInfo, path } = useTenant();
+  const phone = clinicInfo?.phone?.replace(/\D/g, '') ?? '59168803830';
+  const waConfirmHref = `https://wa.me/${phone}?text=${encodeURIComponent('Hola! Acabo de enviar una reserva online y quisiera confirmar.')}`;
   const [searchParams] = useSearchParams();
   const preService = searchParams.get('service') ?? '';
 
@@ -64,7 +68,7 @@ export default function BookingPage() {
     setErrorMsg('');
 
     try {
-      const result = await publicApi.createBooking({
+      const result = await publicApi.createBooking(tenantSlug, {
         ...form,
         email: form.email || undefined,
         preferredTime: form.preferredTime || undefined,
@@ -110,11 +114,11 @@ export default function BookingPage() {
               </div>
             </div>
             <div className="flex flex-col gap-2">
-              <Link to="/" className="py-3 rounded-2xl bg-[#c17d2a] text-white font-bold hover:bg-[#9a621e] transition-colors">
+              <Link to={path()} className="py-3 rounded-2xl bg-[#c17d2a] text-white font-bold hover:bg-[#9a621e] transition-colors">
                 Volver al inicio
               </Link>
               <a
-                href="https://wa.me/59168803830?text=Hola!%20Acabo%20de%20enviar%20una%20reserva%20online%20y%20quisiera%20confirmar."
+                href={waConfirmHref}
                 target="_blank"
                 rel="noreferrer"
                 className="py-3 rounded-2xl bg-[#25D366] text-white font-bold hover:bg-[#1ebe5d] transition-colors flex items-center justify-center gap-2"

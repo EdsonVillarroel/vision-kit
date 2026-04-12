@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { salesService } from '../services/salesService';
-import type { Sale, SaleFormData } from '../types';
+import type { Sale, SaleFormData, SalesSummary } from '../types';
 import { useSnackbar } from '../../../components/Snackbar';
 
 export const useSales = (dateFrom?: string, dateTo?: string) => {
@@ -126,7 +126,7 @@ export const useSale = (id: string) => {
 };
 
 export const useSalesSummary = (dateFrom?: string, dateTo?: string) => {
-  const [summary, setSummary] = useState<any>(null);
+  const [summary, setSummary] = useState<SalesSummary | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

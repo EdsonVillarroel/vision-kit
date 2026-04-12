@@ -32,33 +32,40 @@
 ## Diagrama de Entidades (ERD)
 
 ```
-profiles (User) ──────────────────────────────────────────────┐
+tenants ──────────────────────────────────────────────────────┐
  │                                                              │
- ├─< appointments (practitioner)                                │
- ├─< sales (soldBy)                                             │
- ├─< medical_records (practitioner)                             │
- ├─< clinical_exams (examiner)                                  │
- └─< stock_movements (performedBy)                              │
-                                                                │
-patients ───────────────────────────────────────────────────┐  │
- ├─< appointments                                            │  │
- ├─< medical_records                                         │  │
- ├─< clinical_exams                                          │  │
- ├─< sales                                                   │  │
- ├── patient_insurances (1:1)                                │  │
- └── patient_emergency_contacts (1:1)                        │  │
-                                                             │  │
-sales ───────────────────────────────────────────────────┐  │  │
- ├─< sale_items >── products                             │  │  │
- ├─< payments                                            │  │  │
- └── medical_records? (opcional)                         │  │  │
-                                                         │  │  │
-products ────────────────────────────────────────────┐  │  │  │
- ├─< stock_movements                                 │  │  │  │
- ├── product_specifications (1:1)                    │  │  │  │
- └── product_suppliers (1:1)                         │  │  │  │
-                                                    │  │  │  │
-medical_records ── clinical_exams (1:1 opcional)     │  │  │  │
+ ├─< subscriptions >── subscription_plans                       │
+ │                                                              │
+ ├─< profiles (User) ──────────────────────────────────────┐  │
+ │    ├─< appointments (practitioner)                        │  │
+ │    ├─< sales (soldBy)                                     │  │
+ │    ├─< medical_records (practitioner)                     │  │
+ │    ├─< clinical_exams (examiner)                          │  │
+ │    └─< stock_movements (performedBy)                      │  │
+ │                                                           │  │
+ ├─< patients ──────────────────────────────────────────┐   │  │
+ │    ├─< appointments                                   │   │  │
+ │    ├─< medical_records                                │   │  │
+ │    ├─< clinical_exams                                 │   │  │
+ │    ├─< sales                                          │   │  │
+ │    ├── patient_insurances (1:1)                       │   │  │
+ │    └── patient_emergency_contacts (1:1)               │   │  │
+ │                                                       │   │  │
+ ├─< sales ─────────────────────────────────────────┐   │   │  │
+ │    ├─< sale_items >── products                    │   │   │  │
+ │    ├─< payments                                   │   │   │  │
+ │    └── medical_records? (opcional)                │   │   │  │
+ │                                                   │   │   │  │
+ ├─< products ──────────────────────────────────┐   │   │   │  │
+ │    ├─< stock_movements                        │   │   │   │  │
+ │    ├── product_specifications (1:1)           │   │   │   │  │
+ │    └── product_suppliers (1:1)                │   │   │   │  │
+ │                                               │   │   │   │  │
+ ├─< medical_records ── clinical_exams (1:1)     │   │   │   │  │
+ ├─< clinic_settings (1:1 por tenant)            │   │   │   │  │
+ └─< public_bookings                             │   │   │   │  │
+
+platform_admins (tabla separada — sin FK a tenants)
 ```
 
 ---
@@ -67,21 +74,26 @@ medical_records ── clinical_exams (1:1 opcional)     │  │  │  │
 
 | Tabla DB | Modelo Prisma | Nota |
 |----------|---------------|------|
-| `profiles` | `User` | `@@map("profiles")` — auth NestJS con `password_hash` |
-| `patients` | `Patient` | |
-| `patient_insurances` | `PatientInsurance` | |
-| `patient_emergency_contacts` | `PatientEmergencyContact` | |
-| `appointments` | `Appointment` | Enums con `@map` (hyphens en DB) |
-| `medical_records` | `MedicalRecord` | Columnas planas (sin JSONB) |
-| `clinical_exams` | `ClinicalExam` | Columnas planas (sin JSONB) |
-| `products` | `Product` | `ProductStatus` usa underscore en DB |
-| `product_specifications` | `ProductSpecification` | |
-| `product_suppliers` | `ProductSupplier` | |
-| `stock_movements` | `StockMovement` | |
-| `sales` | `Sale` | |
-| `sale_items` | `SaleItem` | |
-| `payments` | `Payment` | |
-| `clinic_settings` | `ClinicSettings` | Singleton |
+| `tenants` | `Tenant` | Cada óptica es un tenant |
+| `subscription_plans` | `SubscriptionPlan` | Planes: Básico, Profesional, Empresarial |
+| `subscriptions` | `Subscription` | Relación tenant ↔ plan |
+| `platform_admins` | `PlatformAdmin` | Admins de la plataforma (separados de users) |
+| `profiles` | `User` | `@@map("profiles")` — tiene `tenant_id` NOT NULL |
+| `patients` | `Patient` | `@@unique([tenantId, identificationId])` |
+| `patient_insurances` | `PatientInsurance` | Sin `tenant_id` (hereda vía patient FK) |
+| `patient_emergency_contacts` | `PatientEmergencyContact` | Sin `tenant_id` (hereda vía patient FK) |
+| `appointments` | `Appointment` | `@@unique([tenantId, appointmentNumber])` |
+| `medical_records` | `MedicalRecord` | Columnas planas, `tenant_id` NOT NULL |
+| `clinical_exams` | `ClinicalExam` | `@@unique([tenantId, examNumber])` |
+| `products` | `Product` | `@@unique([tenantId, sku])` |
+| `product_specifications` | `ProductSpecification` | Sin `tenant_id` (hereda vía product FK) |
+| `product_suppliers` | `ProductSupplier` | Sin `tenant_id` (hereda vía product FK) |
+| `stock_movements` | `StockMovement` | `tenant_id` NOT NULL |
+| `sales` | `Sale` | `@@unique([tenantId, saleNumber])` |
+| `sale_items` | `SaleItem` | `tenant_id` NOT NULL |
+| `payments` | `Payment` | `tenant_id` NOT NULL |
+| `clinic_settings` | `ClinicSettings` | `@@unique([tenantId])` — uno por tenant |
+| `public_bookings` | `PublicBooking` | `tenant_id` NOT NULL |
 
 ---
 
@@ -131,6 +143,15 @@ enum ProductStatus {
   out_of_stock
   discontinued
 }
+
+// ── Multi-Tenant Enums ──
+enum TenantStatus { active, suspended, cancelled }
+enum BillingPeriod { monthly, yearly }
+enum SubscriptionStatus { active, past_due, cancelled, trial }
+enum PlatformAdminStatus { active, inactive }
+
+// UserRole ahora incluye super_admin (antes de admin)
+enum UserRole { super_admin, admin, manager, optician }
 ```
 
 ---
@@ -185,6 +206,18 @@ npx prisma studio                     # GUI para explorar datos
 | `InventoryModule` | `products`, `product_specifications`, `product_suppliers`, `stock_movements` |
 | `SalesModule` | `sales`, `sale_items`, `payments` |
 | `SettingsModule` | `clinic_settings` |
+| `PublicModule` | `products`, `clinic_settings`, `public_bookings` |
+| *(pendiente)* | `tenants`, `subscriptions`, `subscription_plans`, `platform_admins` |
+
+---
+
+## Historial de migraciones multi-tenant
+
+| Migración | Descripción |
+|-----------|-------------|
+| `012_multi_tenant_foundation` | Crea tablas `tenants`, `subscription_plans`, `subscriptions`, `platform_admins`; agrega `tenant_id` nullable a 12 tablas de negocio; agrega `super_admin` al enum `user_role` |
+| `013_backfill_tenant_not_null` | Inserta tenant default (Visión 20/20 HD), 3 planes, suscripción, platform admin; backfill `tenant_id` en todas las tablas; `ALTER COLUMN SET NOT NULL`; reemplaza unique constraints globales por tenant-scoped; agrega DEFAULT para compatibilidad |
+| `014_clinic_settings_colors` | Agrega `primary_color` y `accent_color` a `clinic_settings` para branding por tenant |
 
 ---
 

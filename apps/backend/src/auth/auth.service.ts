@@ -24,15 +24,15 @@ export class AuthService {
       throw new UnauthorizedException('Usuario inactivo');
     }
 
-    const payload = { sub: user.id, email: user.email };
+    const payload = { sub: user.id, email: user.email, tenantId: user.tenantId, role: user.role };
     const token = this.jwtService.sign(payload);
 
     const { passwordHash: _, ...userWithoutPassword } = user;
     return { access_token: token, user: userWithoutPassword };
   }
 
-  async refresh(userId: string, email: string) {
-    const payload = { sub: userId, email };
+  async refresh(userId: string, email: string, tenantId: string, role: string) {
+    const payload = { sub: userId, email, tenantId, role };
     const token = this.jwtService.sign(payload);
     return { access_token: token };
   }

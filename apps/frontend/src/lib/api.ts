@@ -1,5 +1,21 @@
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api/v1';
 
+export class ApiError extends Error {
+  readonly status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
+// Callback invocado cuando el backend devuelve 402 (suscripción inactiva).
+// Registrado por App.tsx para mostrar la vista de suscripción suspendida.
+let _on402: (() => void) | null = null;
+export function setOn402Handler(handler: () => void) {
+  _on402 = handler;
+}
+
 function getToken(): string | null {
   return localStorage.getItem('auth_token');
 }
@@ -73,7 +89,8 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     } catch {
       // ignore JSON parse errors
     }
-    throw new Error(errorMessage);
+    if (res.status === 402) _on402?.();
+    throw new ApiError(errorMessage, res.status);
   }
 
   if (res.status === 204) {

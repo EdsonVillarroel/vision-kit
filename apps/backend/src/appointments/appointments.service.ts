@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { TenantPrismaService } from '../tenant/tenant-prisma.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 
@@ -10,7 +10,7 @@ const APPOINTMENT_INCLUDE = {
 
 @Injectable()
 export class AppointmentsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private tenantPrisma: TenantPrismaService) {}
 
   private generateNumber() {
     return `APT-${Date.now()}`;
@@ -23,7 +23,7 @@ export class AppointmentsService {
   }
 
   async findAll(date?: string, status?: string, practitionerId?: string) {
-    return this.prisma.appointment.findMany({
+    return this.tenantPrisma.client.appointment.findMany({
       where: {
         date: date ? new Date(date) : undefined,
         status: status as any,
@@ -35,7 +35,7 @@ export class AppointmentsService {
   }
 
   async findOne(id: string) {
-    const a = await this.prisma.appointment.findUnique({
+    const a = await this.tenantPrisma.client.appointment.findFirst({
       where: { id },
       include: APPOINTMENT_INCLUDE,
     });
@@ -45,7 +45,7 @@ export class AppointmentsService {
 
   async create(dto: CreateAppointmentDto, createdById: string) {
     const duration = dto.duration ?? 30;
-    return this.prisma.appointment.create({
+    return this.tenantPrisma.client.appointment.create({
       data: {
         appointmentNumber: this.generateNumber(),
         patientId: dto.patientId,
@@ -67,7 +67,7 @@ export class AppointmentsService {
   async update(id: string, dto: UpdateAppointmentDto) {
     await this.findOne(id);
     const duration = dto.duration;
-    return this.prisma.appointment.update({
+    return this.tenantPrisma.client.appointment.update({
       where: { id },
       data: {
         ...dto,
@@ -83,11 +83,11 @@ export class AppointmentsService {
 
   async remove(id: string) {
     await this.findOne(id);
-    return this.prisma.appointment.delete({ where: { id } });
+    return this.tenantPrisma.client.appointment.delete({ where: { id } });
   }
 
   async getAvailableSlots(date: string, practitionerId: string) {
-    const booked = await this.prisma.appointment.findMany({
+    const booked = await this.tenantPrisma.client.appointment.findMany({
       where: {
         date: new Date(date),
         practitionerId,

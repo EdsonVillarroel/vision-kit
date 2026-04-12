@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+/* Initial CSS variables for admin theme (indigo) — overridden by ThemeContext */
+:root {
+  --color-dark-primary: #312e81;
+  --color-light-primary: #e0e7ff;
+  --color-primary: #4f46e5;
+  --color-text-icons: #ffffff;
+  --color-primary-text: #0f172a;
+  --color-secondary-text: #64748b;
+  --color-accent: #8b5cf6;
+  --color-divider: #e2e8f0;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-slideIn {
+  animation: slideIn 0.3s ease-out;
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}

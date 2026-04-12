@@ -1,7 +1,8 @@
-export type UserRole = 'admin' | 'manager' | 'optician';
+export type UserRole = 'super_admin' | 'admin' | 'manager' | 'optician';
 
 export interface User {
   id: string;
+  tenantId: string;
   email: string;
   name: string;
   role: UserRole;
@@ -67,6 +68,32 @@ export interface Permission {
 }
 
 export const ROLE_PERMISSIONS: Record<UserRole, Permission> = {
+  super_admin: {
+    // Super Admin — dueño del tenant, acceso total
+    canCreateSale: true,
+    canViewSales: true,
+    canCancelSale: true,
+    canRefundSale: true,
+    canViewReports: true,
+    canCreatePatient: true,
+    canEditPatient: true,
+    canViewPatients: true,
+    canDeletePatient: true,
+    canCreateProduct: true,
+    canEditProduct: true,
+    canViewInventory: true,
+    canAdjustStock: true,
+    canDeleteProduct: true,
+    canCreateMedicalRecord: true,
+    canEditMedicalRecord: true,
+    canViewMedicalRecords: true,
+    canCreateUser: true,
+    canEditUser: true,
+    canViewUsers: true,
+    canDeleteUser: true,
+    canAccessSettings: true,
+    canEditClinicInfo: true
+  },
   admin: {
     // Admin tiene acceso total
     canCreateSale: true,

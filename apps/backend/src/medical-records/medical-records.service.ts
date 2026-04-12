@@ -1,13 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { TenantPrismaService } from '../tenant/tenant-prisma.service';
 import { CreateMedicalRecordDto } from './dto/create-medical-record.dto';
 
 @Injectable()
 export class MedicalRecordsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private tenantPrisma: TenantPrismaService) {}
 
   async findAll(patientId?: string) {
-    return this.prisma.medicalRecord.findMany({
+    return this.tenantPrisma.client.medicalRecord.findMany({
       where: { patientId },
       include: {
         patient: { select: { id: true, firstName: true, lastName: true } },
@@ -18,7 +18,7 @@ export class MedicalRecordsService {
   }
 
   async findOne(id: string) {
-    const record = await this.prisma.medicalRecord.findUnique({
+    const record = await this.tenantPrisma.client.medicalRecord.findFirst({
       where: { id },
       include: {
         patient: { select: { id: true, firstName: true, lastName: true } },
@@ -33,7 +33,7 @@ export class MedicalRecordsService {
   async create(dto: CreateMedicalRecordDto, practitionerId: string) {
     const { visualAcuity, refraction, prescription, intraocularPressure, ...rest } = dto;
 
-    return this.prisma.medicalRecord.create({
+    return this.tenantPrisma.client.medicalRecord.create({
       data: {
         patientId: rest.patientId,
         practitionerId,
@@ -75,7 +75,7 @@ export class MedicalRecordsService {
 
   async update(id: string, dto: Partial<CreateMedicalRecordDto>) {
     await this.findOne(id);
-    return this.prisma.medicalRecord.update({
+    return this.tenantPrisma.client.medicalRecord.update({
       where: { id },
       data: {
         notes: dto.notes,
@@ -89,6 +89,6 @@ export class MedicalRecordsService {
 
   async remove(id: string) {
     await this.findOne(id);
-    return this.prisma.medicalRecord.delete({ where: { id } });
+    return this.tenantPrisma.client.medicalRecord.delete({ where: { id } });
   }
 }

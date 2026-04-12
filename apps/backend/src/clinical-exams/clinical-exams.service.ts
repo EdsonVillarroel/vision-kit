@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { TenantPrismaService } from '../tenant/tenant-prisma.service';
 import { CreateClinicalExamDto } from './dto/create-clinical-exam.dto';
 
 const EXAM_INCLUDE = {
@@ -9,14 +9,14 @@ const EXAM_INCLUDE = {
 
 @Injectable()
 export class ClinicalExamsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private tenantPrisma: TenantPrismaService) {}
 
   private generateNumber() {
     return `EXM-${Date.now()}`;
   }
 
   async findAll(patientId?: string) {
-    return this.prisma.clinicalExam.findMany({
+    return this.tenantPrisma.client.clinicalExam.findMany({
       where: { patientId },
       include: EXAM_INCLUDE,
       orderBy: { date: 'desc' },
@@ -24,7 +24,7 @@ export class ClinicalExamsService {
   }
 
   async findOne(id: string) {
-    const exam = await this.prisma.clinicalExam.findUnique({
+    const exam = await this.tenantPrisma.client.clinicalExam.findFirst({
       where: { id },
       include: EXAM_INCLUDE,
     });
@@ -34,7 +34,7 @@ export class ClinicalExamsService {
 
   async create(dto: CreateClinicalExamDto, examinerId: string) {
     const { farVision, nearVision, pupillaryDistance, frameMeasurements, ...rest } = dto;
-    return this.prisma.clinicalExam.create({
+    return this.tenantPrisma.client.clinicalExam.create({
       data: {
         examNumber: this.generateNumber(),
         patientId: rest.patientId,
@@ -82,7 +82,7 @@ export class ClinicalExamsService {
 
   async update(id: string, dto: Partial<CreateClinicalExamDto>) {
     await this.findOne(id);
-    return this.prisma.clinicalExam.update({
+    return this.tenantPrisma.client.clinicalExam.update({
       where: { id },
       data: { observations: dto.observations },
       include: EXAM_INCLUDE,
@@ -91,6 +91,6 @@ export class ClinicalExamsService {
 
   async remove(id: string) {
     await this.findOne(id);
-    return this.prisma.clinicalExam.delete({ where: { id } });
+    return this.tenantPrisma.client.clinicalExam.delete({ where: { id } });
   }
 }

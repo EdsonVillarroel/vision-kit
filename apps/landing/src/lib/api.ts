@@ -46,12 +46,15 @@ async function post<T>(path: string, body: unknown): Promise<T> {
 // ── Public API ────────────────────────────────────────────────────────────
 
 export const publicApi = {
-  getCatalog(params?: {
-    category?: string;
-    search?: string;
-    page?: number;
-    limit?: number;
-  }): Promise<PaginatedProducts> {
+  getCatalog(
+    tenantSlug: string,
+    params?: {
+      category?: string;
+      search?: string;
+      page?: number;
+      limit?: number;
+    },
+  ): Promise<PaginatedProducts> {
     const qs = params
       ? '?' + new URLSearchParams(
           Object.fromEntries(
@@ -61,18 +64,18 @@ export const publicApi = {
           ),
         ).toString()
       : '';
-    return get<PaginatedProducts>(`/public/catalog${qs}`);
+    return get<PaginatedProducts>(`/public/${tenantSlug}/catalog${qs}`);
   },
 
-  getProduct(id: string): Promise<Product> {
-    return get<Product>(`/public/catalog/${id}`);
+  getProduct(tenantSlug: string, id: string): Promise<Product> {
+    return get<Product>(`/public/${tenantSlug}/catalog/${id}`);
   },
 
-  getClinicInfo(): Promise<ClinicInfo> {
-    return get<ClinicInfo>('/public/clinic');
+  getClinicInfo(tenantSlug: string): Promise<ClinicInfo> {
+    return get<ClinicInfo>(`/public/${tenantSlug}/clinic`);
   },
 
-  createBooking(data: CreateBookingPayload): Promise<BookingConfirmation> {
-    return post<BookingConfirmation>('/public/bookings', data);
+  createBooking(tenantSlug: string, data: CreateBookingPayload): Promise<BookingConfirmation> {
+    return post<BookingConfirmation>(`/public/${tenantSlug}/bookings`, data);
   },
 };

@@ -226,12 +226,125 @@ PATCH  /api/v1/settings            ← admin
 
 ### Prioridad MEDIA — Mejoras técnicas pendientes
 
-### Prioridad BAJA — Nice to have
-- [ ] Tests E2E del backend
-- [ ] CI/CD con GitHub Actions
-- [ ] Deploy del backend (Railway, Render, o Supabase Edge Functions)
-- [ ] Multi-clínica (agregar `clinic_id` a todas las tablas)
+### Multi-Tenant SaaS — Sesión 1 ✅
+- [x] **Migración 012: Multi-Tenant Foundation** → tablas `tenants`, `subscription_plans`, `subscriptions`, `platform_admins`; `tenant_id` nullable en 12 tablas de negocio; enum `super_admin` en `user_role`
+- [x] **Prisma schema actualizado** → nuevos modelos `Tenant`, `SubscriptionPlan`, `Subscription`, `PlatformAdmin`; `tenantId` (nullable) en todos los modelos de negocio
 
+### Multi-Tenant SaaS — Sesión 2 ✅
+- [x] **Migración 013: Backfill + NOT NULL** → tenant default "Visión 20/20 HD" (`00000000-0000-4000-a000-000000000001`); 3 planes (Básico Bs 150, Profesional Bs 350, Empresarial Bs 700); suscripción Profesional para tenant default; platform admin (`platform@visionkit.com`)
+- [x] **Backfill `tenant_id`** → todas las filas existentes asignadas al tenant default
+- [x] **`tenant_id` NOT NULL** → en 12 tablas de negocio
+- [x] **Unique constraints tenant-scoped** → `patients(tenant_id, identification_id)`, `products(tenant_id, sku)`, `appointments(tenant_id, appointment_number)`, `clinical_exams(tenant_id, exam_number)`, `sales(tenant_id, sale_number)`, `clinic_settings(tenant_id)`
+- [x] **DB defaults** → `tenant_id` con DEFAULT al tenant default (compatibilidad temporal hasta CLS middleware en sesión 3)
+- [x] **Prisma schema** → `tenantId` required + `@default(dbgenerated())` + `@@unique` compuestos
+- [x] **Seed actualizado** → `findUnique` con composite keys `tenantId_identificationId` y `tenantId_sku`
+- [x] **Build OK** → backend compila sin errores
+
+### Multi-Tenant SaaS — Sesión 3 ✅
+- [x] **`nestjs-cls` instalado** → dependencia nueva en `apps/backend`
+- [x] **`ClsModule` global** → `ClsModule.forRoot({ global: true, middleware: { mount: false } })` en `AppModule`
+- [x] **`apps/backend/src/tenant/` creado** → 6 archivos de infraestructura tenant
+- [x] **`tenant.constants.ts`** → `TENANT_ID_KEY` + `TENANT_SCOPED_MODELS` (16 modelos Prisma)
+- [x] **`tenant.decorator.ts`** → `@CurrentTenant()` param decorator — lee `request.tenantId`
+- [x] **`tenant-cls.middleware.ts`** → extrae tenantId del JWT (fallback: query DB por `user.tenantId`) → guarda en CLS + `req.tenantId`; soporta JWT con y sin `tenantId` en payload (Sesión 4+)
+- [x] **`tenant.guard.ts`** → `TenantGuard` verifica que el contexto tenga tenantId; también bloquea acceso cross-tenant via `params.tenantId`
+- [x] **`tenant-prisma.service.ts`** → `TenantPrismaService` con `$extends` Prisma; auto-inyecta `tenantId` en findMany/findFirst/count/create/createMany/update/updateMany/delete/deleteMany/upsert; `findUnique` excluido (ver nota en el archivo)
+- [x] **`tenant.module.ts`** → `@Global()` — exporta `TenantPrismaService`, `TenantGuard`, `TenantClsMiddleware`
+- [x] **`AppModule`** → implementa `NestModule`; registra `TenantModule`; aplica `TenantClsMiddleware` a todas las rutas
+- [x] **Build OK** → TypeScript sin errores, `nest build` limpio
+
+### Multi-Tenant SaaS — Sesión 4 ✅
+- [x] **JWT payload ampliado** → `auth.service.ts login()` y `refresh()` incluyen `tenantId` y `role` en el payload
+- [x] **`auth/jwt.strategy.ts` actualizado** → `validate()` incluye `tenantId` en el select y lo retorna en el user object
+- [x] **`auth/auth.controller.ts` actualizado** → `refresh()` pasa `req.user.tenantId` y `req.user.role` al service
+- [x] **`platform-auth/` módulo creado** → 6 archivos: `dto/platform-login.dto.ts`, `platform-jwt.strategy.ts` (strategy `'jwt-platform'`), `platform-auth.guard.ts`, `platform-auth.service.ts`, `platform-auth.controller.ts`, `platform-auth.module.ts`
+- [x] **`PlatformAuthModule` registrado** → en `AppModule` después de `AuthModule`
+- [x] **Rutas platform-auth** → `POST /platform/auth/login`, `GET /platform/auth/me`, `POST /platform/auth/refresh` — totalmente separadas de tenant auth
+- [x] **Build OK** → `nest build` sin errores
+
+### Multi-Tenant SaaS — Sesión 5 ✅
+- [x] **`platform/` módulo creado** → `platform.module.ts`, `platform.service.ts`, `platform.controller.ts` + 5 DTOs
+- [x] **Provisioning de tenants** → `POST /platform/tenants` en transacción Prisma: crea tenant + suscripción + usuario `super_admin` (password hasheado con bcrypt)
+- [x] **CRUD tenants** → `GET/PATCH /platform/tenants`, `GET /platform/tenants/:id`, `PATCH /platform/tenants/:id/suspend|activate`
+- [x] **CRUD planes** → `GET/POST /platform/plans`, `PATCH /platform/plans/:id`
+- [x] **Gestión suscripciones** → `GET /platform/subscriptions`, `PATCH /platform/subscriptions/:id` (cambio de plan, estado, fechas, notas de pago QR)
+- [x] **Stats globales** → `GET /platform/stats` — totales de tenants por estado, MRR calculado de suscripciones activas, usuarios, pacientes, nuevos este mes
+- [x] **`PlatformModule` registrado** → en `AppModule` después de `PlatformAuthModule`
+- [x] **Build OK** → `nest build` sin errores
+- [x] **Total endpoints: 58** → +12 platform-management
+
+### Multi-Tenant SaaS — Sesión 6 ✅
+- [x] **Migración services a `TenantPrismaService`** → 8 services de negocio migrados: `users`, `patients`, `appointments`, `medical-records`, `clinical-exams`, `inventory`, `sales`, `settings`
+- [x] **`findUnique` → `findFirst`** → en todos los services migrados (TenantPrismaService no inyecta tenantId en findUnique)
+- [x] **Bloqueo `super_admin` en create()** → `users.service.ts` lanza `ForbiddenException` si se intenta crear usuario con rol `super_admin`
+- [x] **`super_admin` en `@Roles()`** → `users.controller.ts` permite `super_admin` en todas las rutas admin+; `changePassword` también acepta `super_admin`
+- [x] **`public.controller.ts` con `:tenantSlug`** → rutas cambiadas a `GET/POST /public/:tenantSlug/{catalog|clinic|bookings}`
+- [x] **`public.service.ts` con tenant lookup** → cada método busca tenant por slug, verifica `status === 'active'`, aplica `tenantId` en todas las queries; usa `PrismaService` directo (sin CLS — no hay JWT en rutas públicas)
+- [x] **Build OK** → `npm run build:backend` sin errores TypeScript
+
+### Endpoints actualizados
+- **Total endpoints: 62** → rutas public ahora incluyen `:tenantSlug` (43 tenant + 4 public + 3 platform-auth + 12 platform-management)
+
+### Multi-Tenant SaaS — Sesión 7 ✅
+- [x] **`apps/admin/` creada** → nueva app React 19 + Vite 7 + TailwindCSS v4 + React Router DOM v7 + clsx para platform admins
+- [x] **Autenticación platform** → `usePlatformAuth` hook + `platformAuthService` con `platform_token` en localStorage; refresh automático al iniciar + interceptor 401 en `api.ts`
+- [x] **Feature-based modular** → 5 features: `platform-auth`, `layout`, `tenants`, `plans`, `subscriptions` + `dashboard`; misma arquitectura que `apps/frontend`
+- [x] **Design system replicado** → Button, Card, Input, Badge, StatCard, Table, Skeleton, ConfirmModal, Snackbar, ErrorBoundary — idénticos al frontend
+- [x] **Tema indigo** → CSS variables indigo/violet fijas (sin selector de tema); diferencia visualmente el panel admin del panel de óptica
+- [x] **Sidebar con branding "VK Platform Admin"** → misma lógica collapse/mobile que el frontend
+- [x] **7 páginas implementadas** → `DashboardPage` (stats globales), `TenantsPage` (tabla + filtros + suspend/activate), `NewTenantPage` (wizard 3 pasos), `ViewTenantPage` (detalle + acciones), `EditTenantPage` (form edición), `PlansPage` (CRUD planes), `SubscriptionsPage` (tabla + edit modal)
+- [x] **Code splitting** → `React.lazy` + `Suspense` en `routes/index.tsx`
+- [x] **Monorepo** → workspace `apps/admin` + script `npm run admin` (puerto 5175) + `build:admin` en root `package.json`
+- [x] **Build OK** → TypeScript limpio + Vite build 952ms (87 módulos)
+
+### Multi-Tenant SaaS — Sesión 8 ✅
+- [x] **`super_admin` en frontend** → `UserRole` incluye `'super_admin'`; `User` tiene `tenantId`; `ROLE_PERMISSIONS.super_admin` con acceso total
+- [x] **`UsersPage`** → mapas de rol/color actualizados para incluir `super_admin` (badge púrpura)
+- [x] **`ThemeContext` con brand overrides** → `setBrandColors()` en contexto; `adjustHex()` helper; brand colors persisten en `localStorage('brand-colors')` y sobrescriben el tema
+- [x] **`ClinicSettingsContext`** → nuevo contexto en `features/settings/context/`; fetch settings post-auth; llama `setBrandColors()` con `primaryColor`/`accentColor` del tenant; limpia colores en logout
+- [x] **`App.tsx`** → `ClinicSettingsProvider` wraps `AppContent` dentro de `AuthProvider`
+- [x] **`Sidebar`** → muestra nombre de clínica dinámico + logo (con fallback a inicial); usa `useClinicSettings()`
+- [x] **`AppearancePage`** → sección "Colores de Marca" con `<input type="color">` para admin/super_admin; preview en tiempo real; botón guardar → `settingsService.update()`; botón restablecer
+- [x] **Backend** → `primaryColor`/`accentColor` en `ClinicSettings` Prisma model + `UpdateSettingsDto`; migración `014_clinic_settings_colors.sql`
+- [x] **Build** → TypeScript limpio en todos los archivos nuevos (errores pre-existentes en inventory/ProfilePage no son de esta sesión)
+
+### Multi-Tenant SaaS — Sesión 9 ✅
+- [x] **Routing `/:tenantSlug/*`** → `App.tsx` usa `<Route path="/:tenantSlug" element={<TenantLayout />}>` con child routes; redirect de `*` → `/vision-2020-hd`
+- [x] **`TenantContext`** → nuevo `apps/landing/src/context/TenantContext.tsx`; `TenantLayout` usa `useParams` para leer el slug; fetch `getClinicInfo(tenantSlug)`; aplica `--brand` CSS var; expone `{ tenantSlug, clinicInfo, brandColor, isLoading, path() }`
+- [x] **API client** → todos los métodos de `publicApi` reciben `tenantSlug` como primer argumento; URLs actualizadas a `/public/:tenantSlug/...`
+- [x] **`HomePage`** → nombre, logo, color de marca dinámicos desde `useTenant()`; categorías con SVG usando `brandColor`; WA link desde `clinicInfo.phone`; dirección desde `clinicInfo.address`
+- [x] **`CatalogPage`** → `publicApi.getCatalog(tenantSlug, {...})`
+- [x] **`ProductPage`** → `publicApi.getProduct(tenantSlug, id)`; navegación con `path('catalogo')`; WA link dinámico
+- [x] **`BookingPage`** → `publicApi.createBooking(tenantSlug, data)`; link "Volver" con `path()`; WA confirm con teléfono dinámico
+- [x] **`Header`** → nav links dinámicos con `path()`; nombre y logo desde `clinicInfo`
+- [x] **`Footer`** → nombre, dirección, teléfono y WA link desde `clinicInfo`
+- [x] **`TopBar`** → logo desde `clinicInfo.logo`
+- [x] **Backend** → `getClinicInfo` retorna `primaryColor` + `accentColor`; Prisma client regenerado
+- [x] **TypeScript** → limpio con `skipLibCheck` (error vite.config.ts pre-existente de versiones en monorepo)
+
+### Multi-Tenant SaaS — Sesión 10 ✅
+- [x] **`SubscriptionGuard`** → `apps/backend/src/tenant/subscription.guard.ts`; verifica `tenant.status === 'active'` en cada request; cache in-memory 5 min por `tenantId`; rutas sin tenantId en CLS (public/platform) pasan sin verificación; devuelve HTTP 402 si suscripción inactiva
+- [x] **Registro global** → `SubscriptionGuard` exportado desde `TenantModule`; registrado como `APP_GUARD` en `AppModule` (después de `ThrottlerGuard`)
+- [x] **`ApiError` en frontend** → `apps/frontend/src/lib/api.ts` exporta clase `ApiError` con campo `status`; `setOn402Handler()` para registrar callback global
+- [x] **`SuspendedView` en `App.tsx`** → `AppContent` registra handler 402 via `setOn402Handler`; `isSuspended` state activa `SuspendedView` con mensaje, CTA WhatsApp y botón logout; se resetea al hacer logout
+- [x] **Migración 015: RLS** → `supabase/migrations/20260411060000_015_rls_tenant_isolation.sql`; habilita RLS en 16 tablas de negocio + 4 de plataforma; políticas `service_role_all` bypass para Prisma; protege acceso directo a DB
+- [x] **TypeScript** → limpio en backend y frontend (0 errores)
+
+### Próximas tareas — Prioridad ALTA
+
+- [ ] **Deploy completo** → backend en Railway/Render + frontend/landing/admin en Vercel; variables de entorno prod, CORS origins, dominio personalizado por app
+- [ ] **Notificaciones de reservas** → email vía Resend/SendGrid o WhatsApp Business API cuando llega una reserva nueva al portal público; disparar desde `public.service.ts createBooking()`
+
+### Próximas tareas — Prioridad MEDIA
+
+- [ ] **Tests de integración backend** → cubrir `TenantPrismaService`, `SubscriptionGuard` y rutas críticas (aislamiento multi-tenant, 402 en tenant suspendido)
+- [ ] **Exportar reportes** → PDF de ventas e historial clínico (librería tipo `pdfmake` o `puppeteer`)
+- [ ] **Onboarding flow** → wizard de configuración inicial para nuevos tenants (logo, colores, horarios, primer usuario)
+
+### Prioridad BAJA — Nice to have
+
+- [ ] CI/CD con GitHub Actions (build + tests en cada PR)
+ 
 ---
 
 ## Comandos de uso frecuente

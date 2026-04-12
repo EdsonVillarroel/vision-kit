@@ -212,7 +212,9 @@ apps/backend/
 │   ├── main.ts                     ← bootstrap, ValidationPipe, helmet, CORS, prefix 'api/v1'
 │   ├── app.module.ts               ← importa todos los módulos + ThrottlerModule global
 │   ├── prisma/                     ← PrismaModule @Global(), PrismaService
-│   ├── auth/                       ← POST /auth/login, GET /auth/me, JWT strategy, guards, decorators
+│   ├── auth/                       ← POST /auth/login, GET /auth/me, POST /auth/refresh — JWT strategy, guards, decorators
+│   ├── platform-auth/              ← POST /platform/auth/login, GET /platform/auth/me, POST /platform/auth/refresh — jwt-platform strategy, PlatformAuthGuard
+│   ├── platform/                   ← GET/POST/PATCH /platform/tenants|plans|subscriptions|stats — PlatformAuthGuard, usa PrismaService RAW
 │   ├── users/                      ← GET/POST/PATCH/DELETE /users, PATCH /users/:id/password
 │   ├── patients/                   ← /patients CRUD + /patients/:id/medical-records|sales
 │   ├── appointments/               ← /appointments CRUD + /appointments/slots

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ProductCategory, ProductStatus } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
+import { TenantPrismaService } from '../tenant/tenant-prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { AdjustStockDto } from './dto/adjust-stock.dto';
 
@@ -8,10 +8,10 @@ const PRODUCT_INCLUDE = { specifications: true, supplier: true };
 
 @Injectable()
 export class InventoryService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private tenantPrisma: TenantPrismaService) {}
 
   async findAll(category?: ProductCategory, status?: ProductStatus, search?: string) {
-    return this.prisma.product.findMany({
+    return this.tenantPrisma.client.product.findMany({
       where: {
         category,
         status,
@@ -29,7 +29,7 @@ export class InventoryService {
   }
 
   async findOne(id: string) {
-    const product = await this.prisma.product.findUnique({
+    const product = await this.tenantPrisma.client.product.findFirst({
       where: { id },
       include: PRODUCT_INCLUDE,
     });
@@ -38,7 +38,7 @@ export class InventoryService {
   }
 
   async getLowStock() {
-    return this.prisma.product.findMany({
+    return this.tenantPrisma.client.product.findMany({
       where: {
         status: { in: ['low_stock', 'out_of_stock'] },
       },
@@ -49,7 +49,7 @@ export class InventoryService {
 
   async create(dto: CreateProductDto) {
     const { specifications, supplier, ...data } = dto;
-    return this.prisma.product.create({
+    return this.tenantPrisma.client.product.create({
       data: {
         ...data,
         specifications: specifications ? { create: specifications } : undefined,
@@ -62,7 +62,7 @@ export class InventoryService {
   async update(id: string, dto: Partial<CreateProductDto>) {
     await this.findOne(id);
     const { specifications, supplier, ...data } = dto;
-    return this.prisma.product.update({
+    return this.tenantPrisma.client.product.update({
       where: { id },
       data: {
         ...data,
@@ -79,7 +79,7 @@ export class InventoryService {
 
   async remove(id: string) {
     await this.findOne(id);
-    return this.prisma.product.delete({ where: { id } });
+    return this.tenantPrisma.client.product.delete({ where: { id } });
   }
 
   async adjustStock(id: string, dto: AdjustStockDto, performedById: string) {
@@ -96,12 +96,12 @@ export class InventoryService {
       : newStock <= product.minStock ? 'low_stock'
       : 'in_stock';
 
-    await this.prisma.product.update({
+    await this.tenantPrisma.client.product.update({
       where: { id },
       data: { stock: newStock, status },
     });
 
-    return this.prisma.stockMovement.create({
+    return this.tenantPrisma.client.stockMovement.create({
       data: {
         productId: id,
         performedById,
@@ -118,7 +118,7 @@ export class InventoryService {
   }
 
   async getMovements(productId: string) {
-    return this.prisma.stockMovement.findMany({
+    return this.tenantPrisma.client.stockMovement.findMany({
       where: { productId },
       include: { performedBy: { select: { id: true, name: true } } },
       orderBy: { createdAt: 'desc' },

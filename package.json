@@ -6,18 +6,21 @@
   "workspaces": [
     "apps/frontend",
     "apps/backend",
-    "apps/landing"
+    "apps/landing",
+    "apps/admin"
   ],
   "scripts": {
     "frontend": "npm run dev --workspace=apps/frontend",
     "backend": "npm run start:dev --workspace=apps/backend",
     "landing": "npm run dev --workspace=apps/landing",
+    "admin": "npm run dev --workspace=apps/admin",
     "dev": "concurrently \"npm run frontend\" \"npm run backend\"",
-    "dev:all": "concurrently \"npm run frontend\" \"npm run backend\" \"npm run landing\"",
+    "dev:all": "concurrently \"npm run frontend\" \"npm run backend\" \"npm run landing\" \"npm run admin\"",
     "build:frontend": "npm run build --workspace=apps/frontend",
     "build:backend": "npm run build --workspace=apps/backend",
     "build:landing": "npm run build --workspace=apps/landing",
-    "build": "npm run build:frontend && npm run build:backend && npm run build:landing",
+    "build:admin": "npm run build --workspace=apps/admin",
+    "build": "npm run build:frontend && npm run build:backend && npm run build:landing && npm run build:admin",
     "lint": "npm run lint --workspaces --if-present",
     "db:migrate": "npm run db:migrate --workspace=apps/backend",
     "db:generate": "npm run db:generate --workspace=apps/backend",

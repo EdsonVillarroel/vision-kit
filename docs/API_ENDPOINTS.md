@@ -53,11 +53,11 @@ Authorization: Bearer <token>
 
 | Método | Endpoint | Roles | Descripción |
 |--------|----------|-------|-------------|
-| `GET` | `/users` | admin, manager | Listar todos los usuarios |
-| `GET` | `/users/:id` | admin, manager | Obtener usuario por ID |
-| `POST` | `/users` | admin | Crear nuevo usuario |
-| `PATCH` | `/users/:id` | admin | Actualizar usuario |
-| `DELETE` | `/users/:id` | admin | Eliminar usuario |
+| `GET` | `/users` | super_admin, admin, manager | Listar todos los usuarios |
+| `GET` | `/users/:id` | super_admin, admin, manager | Obtener usuario por ID |
+| `POST` | `/users` | super_admin, admin | Crear nuevo usuario (no permite rol super_admin) |
+| `PATCH` | `/users/:id` | super_admin, admin | Actualizar usuario |
+| `DELETE` | `/users/:id` | super_admin, admin | Eliminar usuario |
 
 ### POST / PATCH `/users`
 ```json
@@ -423,6 +423,42 @@ Mismos campos que POST pero todos opcionales. También acepta:
 | `GET` | `/settings` | Todos | Obtener configuración de la óptica |
 | `PATCH` | `/settings` | admin | Actualizar configuración |
 
+---
+
+## Public API (sin JWT)
+
+> Rutas públicas para el portal de la óptica. No requieren autenticación.
+> El `tenantSlug` identifica la óptica (ej: `vision-2020-hd`).
+> Rate limiting estricto en `POST /public/:tenantSlug/bookings`: 2 req/10s · 3 req/min.
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| `GET` | `/public/:tenantSlug/catalog` | Catálogo paginado de productos en stock |
+| `GET` | `/public/:tenantSlug/catalog/:id` | Detalle de un producto |
+| `GET` | `/public/:tenantSlug/clinic` | Información pública de la óptica |
+| `POST` | `/public/:tenantSlug/bookings` | Solicitar reserva de cita online |
+
+### Query params — GET `/public/:tenantSlug/catalog`
+| Param | Tipo | Descripción |
+|-------|------|-------------|
+| `category` | string | `frames \| lenses \| sunglasses \| contact-lenses \| accessories \| solutions` |
+| `search` | string | Buscar por nombre, marca o SKU |
+| `page` | number | Página (default: 1) |
+| `limit` | number | Items por página (default: 20, max: 50) |
+
+### POST `/public/:tenantSlug/bookings`
+```json
+{
+  "name": "Ana López",
+  "phone": "+591 70000000",
+  "email": "ana@email.com",       // opcional
+  "serviceType": "eye_exam",      // "eye_exam" | "frame_fitting" | "contact_lens" | "repair" | "other"
+  "preferredDate": "2026-05-01",
+  "preferredTime": "10:00",       // opcional
+  "notes": "Primera consulta"     // opcional
+}
+```
+
 ### PATCH `/settings`
 ```json
 {
@@ -526,6 +562,119 @@ PATCH  /sales/:id/status
 
 GET    /settings
 PATCH  /settings
+
+GET    /public/:tenantSlug/catalog
+GET    /public/:tenantSlug/catalog/:id
+GET    /public/:tenantSlug/clinic
+POST   /public/:tenantSlug/bookings
 ```
 
-**Total: 40 endpoints**
+**Total: 47 tenant + public endpoints** (43 tenant + 4 public)
+
+---
+
+## Platform Auth
+
+> Rutas para platform admins. Usan strategy `jwt-platform` — tokens con `type: 'platform'` en payload.
+> No comparten autenticación con los tenant users.
+
+| Método | Endpoint | Auth | Descripción |
+|--------|----------|------|-------------|
+| `POST` | `/platform/auth/login` | Público | Login para platform admins |
+| `GET` | `/platform/auth/me` | PlatformAuthGuard | Obtener platform admin autenticado |
+| `POST` | `/platform/auth/refresh` | PlatformAuthGuard | Renovar access token |
+
+### POST `/platform/auth/login`
+```json
+// Body
+{ "email": "platform@visionkit.com", "password": "123456" }
+
+// Response 200
+{
+  "access_token": "eyJhbGci...",
+  "admin": {
+    "id": "uuid",
+    "email": "platform@visionkit.com",
+    "name": "Platform Admin",
+    "status": "active"
+  }
+}
+
+// Response 401 — credenciales inválidas o admin inactivo
+```
+
+---
+
+## Platform Management
+
+> Rutas de gestión de la plataforma SaaS. Requieren `PlatformAuthGuard` (token platform).
+> Base path: `/platform`
+
+### Stats
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| `GET` | `/platform/stats` | Estadísticas globales: tenants, MRR, usuarios, pacientes |
+
+### Tenants
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| `GET` | `/platform/tenants` | Listar todos los tenants con suscripción y conteos |
+| `POST` | `/platform/tenants` | Provisionar nuevo tenant (transacción: tenant + suscripción + super_admin) |
+| `GET` | `/platform/tenants/:id` | Detalle de un tenant |
+| `PATCH` | `/platform/tenants/:id` | Actualizar datos del tenant |
+| `PATCH` | `/platform/tenants/:id/suspend` | Suspender tenant |
+| `PATCH` | `/platform/tenants/:id/activate` | Activar tenant suspendido |
+
+### Plans
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| `GET` | `/platform/plans` | Listar planes con conteo de suscriptores |
+| `POST` | `/platform/plans` | Crear nuevo plan de suscripción |
+| `PATCH` | `/platform/plans/:id` | Actualizar plan |
+
+### Subscriptions
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| `GET` | `/platform/subscriptions` | Listar todas las suscripciones |
+| `PATCH` | `/platform/subscriptions/:id` | Actualizar suscripción (plan, estado, fechas, notas) |
+
+### POST `/platform/tenants`
+```json
+// Body
+{
+  "name": "Óptica Visión Clara",
+  "slug": "vision-clara",
+  "primaryColor": "#6366f1",
+  "planId": "uuid-del-plan",
+  "superAdminEmail": "admin@visionclara.com",
+  "superAdminName": "Carlos Méndez",
+  "superAdminPassword": "password123"
+}
+
+// Response 201
+{
+  "tenant": { "id": "uuid", "name": "Óptica Visión Clara", "slug": "vision-clara", "status": "active" },
+  "subscription": { "id": "uuid", "status": "active", "planId": "uuid" },
+  "superAdmin": { "id": "uuid", "email": "admin@visionclara.com", "role": "super_admin" }
+}
+
+// Response 409 — slug o email ya en uso
+```
+
+### PATCH `/platform/subscriptions/:id`
+```json
+// Body (todos opcionales)
+{
+  "planId": "nuevo-plan-uuid",
+  "status": "active",
+  "expiresAt": "2026-12-31T00:00:00.000Z",
+  "paymentNotes": "Pago recibido vía QR el 2026-04-01"
+}
+```
+
+**Total nuevos endpoints sesión 5: 12 (platform management)**
+**Total global: 58 endpoints (43 tenant + 3 platform-auth + 12 platform-management)**

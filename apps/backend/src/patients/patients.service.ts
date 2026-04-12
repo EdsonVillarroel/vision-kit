@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { TenantPrismaService } from '../tenant/tenant-prisma.service';
 import { CreatePatientDto } from './dto/create-patient.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
 
@@ -10,10 +10,10 @@ const PATIENT_INCLUDE = {
 
 @Injectable()
 export class PatientsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private tenantPrisma: TenantPrismaService) {}
 
   async findAll(search?: string) {
-    return this.prisma.patient.findMany({
+    return this.tenantPrisma.client.patient.findMany({
       where: search
         ? {
             OR: [
@@ -31,7 +31,7 @@ export class PatientsService {
   }
 
   async findOne(id: string) {
-    const patient = await this.prisma.patient.findUnique({
+    const patient = await this.tenantPrisma.client.patient.findFirst({
       where: { id },
       include: PATIENT_INCLUDE,
     });
@@ -41,7 +41,7 @@ export class PatientsService {
 
   async create(dto: CreatePatientDto) {
     const { insurance, emergencyContact, ...data } = dto;
-    return this.prisma.patient.create({
+    return this.tenantPrisma.client.patient.create({
       data: {
         ...data,
         dateOfBirth: new Date(data.dateOfBirth),
@@ -55,7 +55,7 @@ export class PatientsService {
   async update(id: string, dto: UpdatePatientDto) {
     await this.findOne(id);
     const { insurance, emergencyContact, ...data } = dto;
-    return this.prisma.patient.update({
+    return this.tenantPrisma.client.patient.update({
       where: { id },
       data: {
         ...data,
@@ -73,12 +73,12 @@ export class PatientsService {
 
   async remove(id: string) {
     await this.findOne(id);
-    return this.prisma.patient.delete({ where: { id } });
+    return this.tenantPrisma.client.patient.delete({ where: { id } });
   }
 
   async getMedicalHistory(id: string) {
     await this.findOne(id);
-    return this.prisma.medicalRecord.findMany({
+    return this.tenantPrisma.client.medicalRecord.findMany({
       where: { patientId: id },
       orderBy: { date: 'desc' },
     });
@@ -86,7 +86,7 @@ export class PatientsService {
 
   async getSales(id: string) {
     await this.findOne(id);
-    return this.prisma.sale.findMany({
+    return this.tenantPrisma.client.sale.findMany({
       where: { patientId: id },
       include: { items: true },
       orderBy: { date: 'desc' },

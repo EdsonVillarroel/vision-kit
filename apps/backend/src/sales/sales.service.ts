@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { SaleStatus } from '@prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
+import { TenantPrismaService } from '../tenant/tenant-prisma.service';
 import { CreateSaleDto } from './dto/create-sale.dto';
 
 const SALE_INCLUDE = {
@@ -12,14 +12,14 @@ const SALE_INCLUDE = {
 
 @Injectable()
 export class SalesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private tenantPrisma: TenantPrismaService) {}
 
   private generateNumber() {
     return `VTA-${Date.now()}`;
   }
 
   async findAll(status?: SaleStatus, patientId?: string, from?: string, to?: string) {
-    return this.prisma.sale.findMany({
+    return this.tenantPrisma.client.sale.findMany({
       where: {
         status,
         patientId,
@@ -34,7 +34,7 @@ export class SalesService {
   }
 
   async findOne(id: string) {
-    const sale = await this.prisma.sale.findUnique({
+    const sale = await this.tenantPrisma.client.sale.findFirst({
       where: { id },
       include: SALE_INCLUDE,
     });
@@ -45,7 +45,7 @@ export class SalesService {
   async create(dto: CreateSaleDto, soldById: string) {
     const products = await Promise.all(
       dto.items.map((item) =>
-        this.prisma.product.findUnique({ where: { id: item.productId } }),
+        this.tenantPrisma.client.product.findFirst({ where: { id: item.productId } }),
       ),
     );
 
@@ -71,7 +71,7 @@ export class SalesService {
     const taxableBase = subtotal - discountAmt;
     const total = taxableBase + taxableBase * dto.tax;
 
-    const sale = await this.prisma.sale.create({
+    const sale = await this.tenantPrisma.client.sale.create({
       data: {
         saleNumber: this.generateNumber(),
         patientId: dto.patientId,
@@ -96,18 +96,18 @@ export class SalesService {
     // Descontar stock por cada ítem vendido
     await Promise.all(
       dto.items.map(async (item) => {
-        const product = await this.prisma.product.findUnique({ where: { id: item.productId } });
+        const product = await this.tenantPrisma.client.product.findFirst({ where: { id: item.productId } });
         if (!product) return;
         const newStock = Math.max(0, product.stock - item.quantity);
         const status =
           newStock === 0 ? 'out_of_stock'
           : newStock <= product.minStock ? 'low_stock'
           : 'in_stock';
-        await this.prisma.product.update({
+        await this.tenantPrisma.client.product.update({
           where: { id: item.productId },
           data: { stock: newStock, status },
         });
-        await this.prisma.stockMovement.create({
+        await this.tenantPrisma.client.stockMovement.create({
           data: {
             productId: item.productId,
             performedById: soldById,
@@ -124,7 +124,7 @@ export class SalesService {
     );
 
     // Actualizar visitCount y totalSpent del paciente
-    await this.prisma.patient.update({
+    await this.tenantPrisma.client.patient.update({
       where: { id: dto.patientId },
       data: {
         visitCount: { increment: 1 },
@@ -138,7 +138,7 @@ export class SalesService {
   async updateStatus(id: string, status: SaleStatus, performedById: string, reason?: string) {
     const sale = await this.findOne(id);
 
-    const updated = await this.prisma.sale.update({
+    const updated = await this.tenantPrisma.client.sale.update({
       where: { id },
       data: {
         status,
@@ -155,25 +155,25 @@ export class SalesService {
       (status === 'cancelled' || status === 'refunded') &&
       (sale.status === 'pending' || sale.status === 'completed')
     ) {
-      const saleWithItems = await this.prisma.sale.findUnique({
+      const saleWithItems = await this.tenantPrisma.client.sale.findFirst({
         where: { id },
         include: { items: true },
       });
 
       await Promise.all(
         (saleWithItems?.items ?? []).map(async (item) => {
-          const product = await this.prisma.product.findUnique({ where: { id: item.productId } });
+          const product = await this.tenantPrisma.client.product.findFirst({ where: { id: item.productId } });
           if (!product) return;
           const newStock = product.stock + item.quantity;
           const productStatus =
             newStock === 0 ? 'out_of_stock'
             : newStock <= product.minStock ? 'low_stock'
             : 'in_stock';
-          await this.prisma.product.update({
+          await this.tenantPrisma.client.product.update({
             where: { id: item.productId },
             data: { stock: newStock, status: productStatus },
           });
-          await this.prisma.stockMovement.create({
+          await this.tenantPrisma.client.stockMovement.create({
             data: {
               productId: item.productId,
               performedById,
@@ -190,7 +190,7 @@ export class SalesService {
       );
 
       // Revertir visitCount y totalSpent del paciente
-      await this.prisma.patient.update({
+      await this.tenantPrisma.client.patient.update({
         where: { id: sale.patientId },
         data: {
           visitCount: { decrement: 1 },
@@ -203,7 +203,7 @@ export class SalesService {
   }
 
   async getSummary(from: string, to: string) {
-    const sales = await this.prisma.sale.findMany({
+    const sales = await this.tenantPrisma.client.sale.findMany({
       where: {
         status: 'completed',
         date: { gte: new Date(from), lte: new Date(to) },

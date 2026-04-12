@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { TenantPrismaService } from '../tenant/tenant-prisma.service';
 import { UpdateSettingsDto } from './dto/update-settings.dto';
 
 @Injectable()
 export class SettingsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private tenantPrisma: TenantPrismaService) {}
 
   async get() {
-    const settings = await this.prisma.clinicSettings.findFirst();
+    const settings = await this.tenantPrisma.client.clinicSettings.findFirst();
     if (!settings) {
-      return this.prisma.clinicSettings.create({
+      return this.tenantPrisma.client.clinicSettings.create({
         data: { name: 'Mi Óptica' },
       });
     }
@@ -18,7 +18,7 @@ export class SettingsService {
 
   async update(dto: UpdateSettingsDto) {
     const settings = await this.get();
-    return this.prisma.clinicSettings.update({
+    return this.tenantPrisma.client.clinicSettings.update({
       where: { id: settings.id },
       data: dto,
     });

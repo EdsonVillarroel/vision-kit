@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { ProductCard } from '../components/catalog/ProductCard';
 import { TopBar } from '../components/layout/TopBar';
 import { Spinner } from '../components/ui/Spinner';
+import { useTenant } from '../context/TenantContext';
 import { publicApi } from '../lib/api';
 import type { Product } from '../types';
 
@@ -28,6 +29,7 @@ function buildTitle(category: string, gender: string): string {
 }
 
 export default function CatalogPage() {
+  const { tenantSlug } = useTenant();
   const [params] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [total, setTotal] = useState(0);
@@ -50,7 +52,7 @@ export default function CatalogPage() {
     setError('');
 
     publicApi
-      .getCatalog({ category: category || undefined, page, limit: 20 })
+      .getCatalog(tenantSlug, { category: category || undefined, page, limit: 20 })
       .then((res) => {
         if (!cancelled) {
           setProducts(res.data);

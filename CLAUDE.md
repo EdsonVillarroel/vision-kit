@@ -86,7 +86,8 @@ npm run backend        # solo NestJS (puerto 3000)
 npm run landing        # solo landing dev server (puerto 5174)
 npm run admin          # solo admin dev server (puerto 5175)
 npm run db:migrate     # aplicar migraciones Prisma
-npm run db:seed        # seed con usuarios iniciales
+npm run db:seed        # seed con usuarios, pacientes, productos, citas (Bolivia, BOB, IVA 13%)
+npm run db:seed:plans  # seed con 7 filas en subscription_plans (4 tiers × mensual/anual)
 npm run db:studio      # GUI Prisma Studio
 npm run build          # build frontend + backend
 
@@ -110,7 +111,7 @@ npx supabase db pull                  # sync schema desde remoto
 └── index.ts       ← Exports públicos del módulo
 ```
 
-**Features existentes (frontend):** `auth`, `patients`, `medical-records`, `clinical-exams`, `appointments`, `inventory`, `sales`, `users`, `layout`
+**Features existentes (frontend):** `auth`, `patients`, `medical-records`, `clinical-exams`, `appointments`, `inventory`, `sales`, `users`, `layout`, `subscription` (plan actual + `hasFeature()` + quota checks)
 
 ---
 
@@ -126,7 +127,8 @@ Panel de gestión de la plataforma SaaS. Solo accesible para `platform_admins`. 
 | `/tenants/new` | `NewTenantPage` | Wizard 3 pasos: info → plan → credenciales super_admin |
 | `/tenants/:id` | `ViewTenantPage` | Detalle: info, suscripción, uso de recursos |
 | `/tenants/:id/edit` | `EditTenantPage` | Editar nombre, colores, dominio |
-| `/plans` | `PlansPage` | CRUD de planes de suscripción |
+| `/plans` | `PlansPage` | Tabla de planes con toggle activo + link a editor |
+| `/plans/:id/edit` | `EditPlanPage` | Editor completo: info, límites, features JSON (25 flags — booleans + cuotas + selects) |
 | `/subscriptions` | `SubscriptionsPage` | Gestión de suscripciones + edit modal (plan, estado, notas QR) |
 
 **API client:** `src/lib/api.ts` → usa `platform_token`; refresh via `POST /platform/auth/refresh`
@@ -186,11 +188,11 @@ Cada módulo en `apps/backend/src/<modulo>/` tiene:
 
 **Auth platform:** strategy `'jwt-platform'`, guard `PlatformAuthGuard`. Payload: `{ sub, email, type: 'platform' }`. Separado completamente de tenant auth.
 
-**Módulos:** `auth`, `platform-auth`, `platform`, `users`, `patients`, `appointments`, `medical-records`, `clinical-exams`, `inventory`, `sales`, `settings`, `upload`, `public`, `prisma` (global).
+**Módulos:** `auth`, `platform-auth`, `platform`, `users`, `patients`, `appointments`, `medical-records`, `clinical-exams`, `inventory`, `sales`, `settings`, `subscriptions`, `upload`, `public`, `prisma` (global).
 
-**Seguridad:** `helmet` (headers HTTP) + `@nestjs/throttler` (10/seg · 100/min · 1000/h global; `POST /public/:tenantSlug/bookings` con límite propio 2/10s · 3/min). CORS multi-origen via `CORS_ORIGINS` (separados por coma). `SubscriptionGuard` (APP_GUARD global) devuelve HTTP 402 si el tenant no está `active`; rutas sin tenantId en CLS (public/platform) se saltan automáticamente. RLS habilitado en todas las tablas via migración 015.
+**Seguridad:** `helmet` (headers HTTP) + `@nestjs/throttler` (10/seg · 100/min · 1000/h global; `POST /public/:tenantSlug/bookings` con límite propio 2/10s · 3/min). CORS multi-origen via `CORS_ORIGINS` (separados por coma). `SubscriptionGuard` (APP_GUARD global) devuelve HTTP 402 si el tenant no está `active`. `PlanQuotaGuard` (por-handler con `@QuotaLimit('patients'|'products'|'sales_per_month'|'users')`) devuelve HTTP 402 + body `{ error: 'PlanQuotaExceeded', limit, current, planName }` al exceder el plan; cableado en `POST /patients`, `POST /inventory`, `POST /sales`. Rutas sin tenantId en CLS (public/platform) se saltan. RLS habilitado en todas las tablas via migración 015.
 
-**Total endpoints:** 62 (43 tenant + 4 public + 3 platform-auth + 12 platform-management) — ver `docs/API_ENDPOINTS.md`
+**Total endpoints:** 64 (43 tenant + 1 subscriptions + 4 public + 3 platform-auth + 13 platform-management) — ver `docs/API_ENDPOINTS.md`
 
 ---
 
@@ -225,7 +227,7 @@ Cada módulo en `apps/backend/src/<modulo>/` tiene:
 | Tabla DB | Modelo Prisma | Descripción |
 |----------|---------------|-------------|
 | `tenants` | `Tenant` | Cada óptica es un tenant — slug, colores, dominio |
-| `subscription_plans` | `SubscriptionPlan` | Planes: Básico (Bs 150), Profesional (Bs 350), Empresarial (Bs 700) |
+| `subscription_plans` | `SubscriptionPlan` | 4 tiers: Escaparate (free), Consultorio (Bs 249), Óptica Pro (Bs 549), Cadena (Bs 1,199) — mensual y anual (-20%). Seed en `prisma/seedPlans.ts`. |
 | `subscriptions` | `Subscription` | Relación tenant ↔ plan con estado y fechas |
 | `platform_admins` | `PlatformAdmin` | Admins de la plataforma SaaS — separados de users |
 
@@ -269,7 +271,7 @@ Cada módulo en `apps/backend/src/<modulo>/` tiene:
 
 - **URL:** `http://localhost:3000/api/docs`
 - Bearer auth persistente entre recargas (`persistAuthorization: true`)
-- 9 tags: auth, users, patients, appointments, medical-records, clinical-exams, inventory, sales, settings
+- 10 tags: auth, users, patients, appointments, medical-records, clinical-exams, inventory, sales, settings, subscriptions
 - Todos los controllers decorados con `@ApiTags`, `@ApiBearerAuth`, `@ApiOperation`
 - DTOs principales decorados con `@ApiProperty` + ejemplos reales
 
@@ -282,6 +284,7 @@ Cada módulo en `apps/backend/src/<modulo>/` tiene:
 | `docs/PROJECT_STRUCTURE.md` | Árbol completo (3 apps), rutas, roles |
 | `docs/DATABASE_STRUCTURE.md` | Prisma schema + ERD + mapeos + historial de migraciones |
 | `docs/API_ENDPOINTS.md` | 47 endpoints con body/params/respuestas |
+| `docs/BUSINESS_PLAN.md` | Plan de negocio, 4 tiers de suscripción, add-ons, roadmap 3-6 meses, métricas SaaS |
 | `DECISIONS.md` | Decisiones de arquitectura con razonamiento — leer antes de cambios estructurales |
 | `AGENT.md` | Gotchas técnicos y decisiones condensadas |
 | `Tools.md` | Tareas completadas por sesión + pendientes actuales |

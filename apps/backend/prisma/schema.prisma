@@ -732,8 +732,8 @@ model ClinicSettings {
   logo         String?
   primaryColor String?  @map("primary_color")
   accentColor  String?  @map("accent_color")
-  taxRate       Decimal  @default(0.16) @db.Decimal(4, 2) @map("tax_rate")
-  currency      String   @default("MXN")
+  taxRate       Decimal  @default(0.13) @db.Decimal(4, 2) @map("tax_rate")
+  currency      String   @default("BOB")
   businessHours Json?    @map("business_hours")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")

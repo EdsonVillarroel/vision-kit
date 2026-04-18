@@ -218,6 +218,8 @@ npx prisma studio                     # GUI para explorar datos
 | `012_multi_tenant_foundation` | Crea tablas `tenants`, `subscription_plans`, `subscriptions`, `platform_admins`; agrega `tenant_id` nullable a 12 tablas de negocio; agrega `super_admin` al enum `user_role` |
 | `013_backfill_tenant_not_null` | Inserta tenant default (Visión 20/20 HD), 3 planes, suscripción, platform admin; backfill `tenant_id` en todas las tablas; `ALTER COLUMN SET NOT NULL`; reemplaza unique constraints globales por tenant-scoped; agrega DEFAULT para compatibilidad |
 | `014_clinic_settings_colors` | Agrega `primary_color` y `accent_color` a `clinic_settings` para branding por tenant |
+| `015_rls_tenant_isolation` | Habilita RLS y políticas por `tenant_id` en todas las tablas de negocio |
+| `016_bolivianize_clinic_defaults` | Cambia defaults de `clinic_settings`: `tax_rate` 0.16→0.13 (IVA Bolivia), `currency` MXN→BOB. No toca filas existentes |
 
 ---
 

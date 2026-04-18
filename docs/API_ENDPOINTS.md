@@ -393,7 +393,7 @@ Mismos campos que POST pero todos opcionales. También acepta:
     }
   ],
   "discount": 5,                // descuento global en %, opcional
-  "tax": 0.16,                  // IVA (16%)
+  "tax": 0.13,                  // IVA Bolivia (13%)
   "paymentMethod": "card",      // "cash" | "card" | "transfer" | "check" | "mixed"
   "payments": [                 // requerido si paymentMethod = "mixed"
     { "method": "cash", "amount": 500.00 },
@@ -422,6 +422,74 @@ Mismos campos que POST pero todos opcionales. También acepta:
 |--------|----------|-------|-------------|
 | `GET` | `/settings` | Todos | Obtener configuración de la óptica |
 | `PATCH` | `/settings` | admin | Actualizar configuración |
+
+---
+
+## Subscriptions
+
+| Método | Endpoint | Roles | Descripción |
+|--------|----------|-------|-------------|
+| `GET` | `/subscriptions/current` | Todos | Suscripción activa del tenant: plan, límites y uso actual |
+
+### Respuesta — GET `/subscriptions/current`
+```json
+{
+  "subscription": {
+    "id": "uuid",
+    "status": "active",
+    "startedAt": "2026-04-01T00:00:00Z",
+    "expiresAt": null
+  },
+  "plan": {
+    "id": "uuid",
+    "slug": "optica-pro-mensual",
+    "name": "Óptica Pro (Mensual)",
+    "price": "549.00",
+    "currency": "BOB",
+    "billingPeriod": "monthly",
+    "features": {
+      "public_portal": true,
+      "email_reminders": true,
+      "whatsapp_reminders": true,
+      "whatsapp_included_messages": 500,
+      "workshop_module": true,
+      "commissions": true,
+      "advanced_reports": true,
+      "max_sales_per_month": 2000,
+      "max_branches": 1
+    }
+  },
+  "limits": {
+    "patients": 5000,
+    "products": 2000,
+    "users": 6,
+    "storageMb": 10000,
+    "salesPerMonth": 2000
+  },
+  "usage": {
+    "patients": 387,
+    "products": 145,
+    "users": 4,
+    "salesThisMonth": 218
+  }
+}
+```
+> `-1` en cualquier campo de `limits` = ilimitado.
+
+### Cuotas del plan (aplicadas por `PlanQuotaGuard`)
+Los endpoints `POST /patients`, `POST /inventory` y `POST /sales` devuelven **HTTP 402** cuando se excede el límite del plan:
+```json
+{
+  "statusCode": 402,
+  "error": "PlanQuotaExceeded",
+  "resource": "patients",
+  "current": 500,
+  "limit": 500,
+  "planSlug": "consultorio-mensual",
+  "planName": "Consultorio (Mensual)",
+  "message": "Alcanzaste el límite de 500 del plan Consultorio (Mensual). Actualizá tu plan para continuar."
+}
+```
 
 ---
 
@@ -462,18 +530,18 @@ Mismos campos que POST pero todos opcionales. También acepta:
 ### PATCH `/settings`
 ```json
 {
-  "name": "Óptica Central",
-  "rfc": "OPC123456ABC",
-  "address": "Av. Insurgentes Sur 1234",
-  "city": "Ciudad de México",
-  "state": "CDMX",
-  "zipCode": "06600",
-  "phone": "+52 55 5555 0000",
-  "email": "contacto@opticacentral.mx",
-  "website": "https://opticacentral.mx",
+  "name": "Visión 20/20 HD",
+  "rfc": "1234567890",
+  "address": "Av. Arce Nº 2345",
+  "city": "La Paz",
+  "state": "La Paz",
+  "zipCode": "0000",
+  "phone": "+591 2 244 1234",
+  "email": "contacto@vision2020hd.com",
+  "website": "https://vision2020hd.com",
   "logo": "https://cdn.../logo.png",
-  "taxRate": 0.16,
-  "currency": "MXN"
+  "taxRate": 0.13,
+  "currency": "BOB"
 }
 ```
 

@@ -38,6 +38,13 @@ export class PlatformController {
     return this.platformService.getStats();
   }
 
+  @ApiOperation({ summary: 'Métricas de negocio: MRR, ARR, churn, activation rate, volumen' })
+  @ApiResponse({ status: 200, description: 'Métricas agregadas para el dashboard del fundador' })
+  @Get('metrics')
+  getMetrics() {
+    return this.platformService.getMetrics();
+  }
+
   // ─── TENANTS ──────────────────────────────────────────────────────────────
 
   @ApiOperation({ summary: 'Listar todos los tenants' })

@@ -3,6 +3,7 @@ import { Sidebar } from './Sidebar';
 import { useSidebar } from '../hooks/useSidebar';
 import type { MenuItem } from '../types';
 import clsx from 'clsx';
+import { QuotaBanner } from '../../subscription';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -56,6 +57,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, menuItems, nav
 
         {/* Page Content */}
         <main className="pt-24 pb-8 px-4 sm:px-6 lg:px-8">
+          <QuotaBanner />
           {children}
         </main>
       </div>

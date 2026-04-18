@@ -9,6 +9,7 @@ import { Button } from './components/ui';
 
 const menuItems: MenuItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: '📊', path: '/dashboard' },
+  { id: 'metrics', label: 'Métricas', icon: '📈', path: '/metrics' },
   {
     id: 'tenants', label: 'Tenants', icon: '🏢',
     children: [

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSnackbar } from '../../../components/Snackbar';
 import { inventoryService } from '../services/inventoryService';
 import type { InventoryFilters, Product, ProductFormData, StockMovement } from '../types';
+import { handleApiError } from '../../subscription';
 
 export const useInventory = (filters?: InventoryFilters) => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -62,7 +63,7 @@ export const useInventory = (filters?: InventoryFilters) => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error al crear producto';
       setError(errorMessage);
-      showError(errorMessage);
+      if (!handleApiError(err)) showError(errorMessage);
       throw err;
     }
   };

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { salesService } from '../services/salesService';
 import type { Sale, SaleFormData, SalesSummary } from '../types';
 import { useSnackbar } from '../../../components/Snackbar';
+import { handleApiError } from '../../subscription';
 
 export const useSales = (dateFrom?: string, dateTo?: string) => {
   const [sales, setSales] = useState<Sale[]>([]);
@@ -36,7 +37,7 @@ export const useSales = (dateFrom?: string, dateTo?: string) => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error al crear venta';
       setError(errorMessage);
-      showError(errorMessage);
+      if (!handleApiError(err)) showError(errorMessage);
       throw err;
     }
   };

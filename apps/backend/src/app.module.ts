@@ -20,6 +20,7 @@ import { SettingsModule } from './settings/settings.module';
 import { UploadModule } from './upload/upload.module';
 import { PublicModule } from './public/public.module';
 import { PlatformModule } from './platform/platform.module';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { PlatformModule } from './platform/platform.module';
     SettingsModule,
     UploadModule,
     PublicModule,
+    SubscriptionsModule,
   ],
   providers: [
     // ThrottlerGuard aplicado globalmente a TODAS las rutas

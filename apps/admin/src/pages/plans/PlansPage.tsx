@@ -1,62 +1,69 @@
-import React, { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { usePlans } from '../../features/plans';
-import { Button, Badge, Input, Card, SkeletonPageWithStats, StatCard } from '../../components/ui';
+import type { SubscriptionPlan } from '../../features/plans';
+import {
+  Badge,
+  SkeletonPageWithStats,
+  StatCard,
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+  TableEmpty,
+} from '../../components/ui';
 import { useSnackbar } from '../../components/Snackbar';
-import type { CreatePlanData, SubscriptionPlan, UpdatePlanData } from '../../features/plans';
+
+// Formateo de montos en Bolivianos con separador es-BO.
+const priceFmt = new Intl.NumberFormat('es-BO', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+// `-1` = ilimitado en la DB; lo renderizamos como ∞ en la UI.
+const limitLabel = (value: number | null | undefined): string => {
+  if (value === null || value === undefined) return '∞';
+  if (value === -1) return '∞';
+  return value.toLocaleString('es-BO');
+};
+
+const periodLabel = (period: string): string =>
+  period === 'yearly' ? 'Anual' : 'Mensual';
 
 export const PlansPage = () => {
-  const { plans, loading, error, createPlan, updatePlan } = usePlans();
+  const navigate = useNavigate();
+  const { plans, loading, error, togglePlanActive } = usePlans();
   const { showSnackbar } = useSnackbar();
-  const [showForm, setShowForm] = useState(false);
-  const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
-  const emptyForm = (): CreatePlanData => ({
-    name: '', slug: '', price: 0, currency: 'BOB', billingPeriod: 'monthly',
-    maxUsers: undefined, maxPatients: undefined, maxProducts: undefined,
-  });
+  const sortedPlans = useMemo(
+    () => [...plans].sort((a, b) => a.sortOrder - b.sortOrder),
+    [plans],
+  );
 
-  const [form, setForm] = useState<CreatePlanData & UpdatePlanData>(emptyForm());
-
-  if (loading && plans.length === 0) return <SkeletonPageWithStats statCount={2} tableRows={3} tableCols={5} />;
+  if (loading && plans.length === 0) {
+    return <SkeletonPageWithStats statCount={3} tableRows={7} tableCols={8} />;
+  }
   if (error) return <div className="text-red-500 p-4">{error}</div>;
 
-  const activePlans = plans.filter(p => p.isActive).length;
+  const activePlans = plans.filter((p) => p.isActive).length;
   const totalSubs = plans.reduce((s, p) => s + (p._count?.subscriptions ?? 0), 0);
+  const freePlans = plans.filter((p) => Number(p.price) === 0).length;
 
-  const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.type === 'number' ? (e.target.value ? Number(e.target.value) : undefined) : e.target.value;
-    setForm(prev => ({ ...prev, [field]: value }));
-  };
-
-  const openEdit = (plan: SubscriptionPlan) => {
-    setEditingPlan(plan);
-    setForm({
-      name: plan.name, slug: plan.slug, price: plan.price, currency: plan.currency,
-      maxUsers: plan.maxUsers ?? undefined, maxPatients: plan.maxPatients ?? undefined,
-      maxProducts: plan.maxProducts ?? undefined,
-    });
-    setShowForm(true);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
+  const handleToggle = async (plan: SubscriptionPlan) => {
+    setTogglingId(plan.id);
     try {
-      if (editingPlan) {
-        await updatePlan(editingPlan.id, { name: form.name, price: form.price, maxUsers: form.maxUsers, maxPatients: form.maxPatients, maxProducts: form.maxProducts });
-        showSnackbar('Plan actualizado', 'success');
-      } else {
-        await createPlan(form);
-        showSnackbar('Plan creado', 'success');
-      }
-      setShowForm(false);
-      setEditingPlan(null);
-      setForm(emptyForm());
+      await togglePlanActive(plan.id, !plan.isActive);
+      showSnackbar(
+        plan.isActive ? 'Plan desactivado' : 'Plan activado',
+        'success',
+      );
     } catch (err) {
       showSnackbar(err instanceof Error ? err.message : 'Error', 'error');
     } finally {
-      setSaving(false);
+      setTogglingId(null);
     }
   };
 
@@ -64,86 +71,114 @@ export const PlansPage = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-theme-dark-primary">Planes de Suscripción</h1>
-          <p className="text-theme-secondary-text mt-1">Gestiona los planes disponibles</p>
+          <h1 className="text-3xl font-bold text-theme-dark-primary">
+            Planes de Suscripción
+          </h1>
+          <p className="text-theme-secondary-text mt-1">
+            {plans.length} plan{plans.length !== 1 ? 'es' : ''} configurado
+            {plans.length !== 1 ? 's' : ''}
+          </p>
         </div>
-        <div className="w-40">
-          <Button variant="primary" onClick={() => { setEditingPlan(null); setForm(emptyForm()); setShowForm(true); }} className="!py-2.5 text-sm">
-            + Nuevo Plan
-          </Button>
-        </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <StatCard title="Planes Activos" value={activePlans} variant="primary" />
-        <StatCard title="Total Suscriptores" value={totalSubs} variant="success" />
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <StatCard title="Planes activos" value={activePlans} variant="success" />
+        <StatCard title="Planes gratuitos" value={freePlans} variant="primary" />
+        <StatCard title="Suscripciones totales" value={totalSubs} variant="default" />
       </div>
 
-      {showForm && (
-        <Card className="!p-6">
-          <h2 className="text-lg font-semibold text-theme-dark-primary mb-4">
-            {editingPlan ? `Editar: ${editingPlan.name}` : 'Nuevo Plan'}
-          </h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <Input label="Nombre" value={form.name} onChange={set('name')} placeholder="Básico" />
-              {!editingPlan && <Input label="Slug" value={form.slug} onChange={set('slug')} placeholder="basico" />}
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <Input label="Precio (BOB/mes)" type="number" value={form.price?.toString() ?? ''} onChange={set('price')} placeholder="150" />
-              <Input label="Máx. Usuarios" type="number" value={form.maxUsers?.toString() ?? ''} onChange={set('maxUsers')} placeholder="5" />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <Input label="Máx. Pacientes" type="number" value={form.maxPatients?.toString() ?? ''} onChange={set('maxPatients')} placeholder="1000" />
-              <Input label="Máx. Productos" type="number" value={form.maxProducts?.toString() ?? ''} onChange={set('maxProducts')} placeholder="500" />
-            </div>
-            <div className="flex gap-3">
-              <Button type="button" variant="secondary" onClick={() => setShowForm(false)} className="flex-1">Cancelar</Button>
-              <Button type="submit" variant="primary" isLoading={saving} className="flex-1">
-                {editingPlan ? 'Guardar cambios' : 'Crear Plan'}
-              </Button>
-            </div>
-          </form>
-        </Card>
-      )}
-
-      {/* Plans grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {plans.map(plan => (
-          <div key={plan.id} className="bg-white rounded-2xl shadow-lg border border-theme-divider/20 p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h3 className="text-lg font-bold text-theme-dark-primary">{plan.name}</h3>
-                <span className="font-mono text-xs bg-gray-100 px-2 py-0.5 rounded text-theme-secondary-text">{plan.slug}</span>
-              </div>
-              <Badge variant={plan.isActive ? 'success' : 'default'} size="sm">
-                {plan.isActive ? 'Activo' : 'Inactivo'}
-              </Badge>
-            </div>
-            <div className="text-3xl font-bold text-theme-primary mb-1">
-              Bs {Number(plan.price).toLocaleString()}
-            </div>
-            <div className="text-sm text-theme-secondary-text mb-4">/ mes ({plan.currency})</div>
-            <div className="space-y-1.5 text-sm mb-4">
-              {[
-                { label: 'Usuarios', value: plan.maxUsers ?? '∞' },
-                { label: 'Pacientes', value: plan.maxPatients ?? '∞' },
-                { label: 'Productos', value: plan.maxProducts ?? '∞' },
-                { label: 'Almacenamiento', value: plan.maxStorageMb ? `${plan.maxStorageMb} MB` : '∞' },
-                { label: 'Suscriptores', value: plan._count?.subscriptions ?? 0 },
-              ].map(item => (
-                <div key={item.label} className="flex justify-between text-theme-secondary-text">
-                  <span>{item.label}</span>
-                  <span className="font-semibold text-theme-primary-text">{item.value}</span>
-                </div>
-              ))}
-            </div>
-            <Button variant="outline" onClick={() => openEdit(plan)} className="!py-2 text-sm">
-              Editar
-            </Button>
-          </div>
-        ))}
-      </div>
+      {/* Tabla de planes */}
+      <Table>
+        <TableHeader>
+          <tr>
+            <TableHead>Slug</TableHead>
+            <TableHead>Nombre</TableHead>
+            <TableHead align="right">Precio</TableHead>
+            <TableHead align="center">Ciclo</TableHead>
+            <TableHead align="center">Usuarios</TableHead>
+            <TableHead align="center">Pacientes</TableHead>
+            <TableHead align="center">Productos</TableHead>
+            <TableHead align="center">Activo</TableHead>
+            <TableHead align="right">Acciones</TableHead>
+          </tr>
+        </TableHeader>
+        <TableBody>
+          {sortedPlans.length === 0 ? (
+            <TableEmpty colSpan={9} message="No hay planes configurados" />
+          ) : (
+            sortedPlans.map((plan) => {
+              const isFree = Number(plan.price) === 0;
+              const isYearly = plan.billingPeriod === 'yearly';
+              const isToggling = togglingId === plan.id;
+              return (
+                <TableRow key={plan.id} interactive={false}>
+                  <TableCell>
+                    <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded">
+                      {plan.slug}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-semibold text-theme-dark-primary">
+                      {plan.name}
+                    </span>
+                  </TableCell>
+                  <TableCell align="right">
+                    <div className="flex items-center justify-end gap-2">
+                      {isFree ? (
+                        <Badge variant="success" size="sm">GRATIS</Badge>
+                      ) : (
+                        <span className="font-semibold text-theme-primary">
+                          Bs {priceFmt.format(Number(plan.price))}
+                        </span>
+                      )}
+                      {isYearly && !isFree && (
+                        <Badge variant="primary" size="sm">-20%</Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell align="center">
+                    <Badge
+                      variant={isYearly ? 'info' : 'default'}
+                      size="sm"
+                    >
+                      {periodLabel(plan.billingPeriod)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell align="center">{limitLabel(plan.maxUsers)}</TableCell>
+                  <TableCell align="center">{limitLabel(plan.maxPatients)}</TableCell>
+                  <TableCell align="center">{limitLabel(plan.maxProducts)}</TableCell>
+                  <TableCell align="center">
+                    <button
+                      type="button"
+                      disabled={isToggling}
+                      onClick={() => handleToggle(plan)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-theme-primary focus:ring-offset-2 disabled:opacity-50 ${
+                        plan.isActive ? 'bg-theme-primary' : 'bg-gray-300'
+                      }`}
+                      aria-label={plan.isActive ? 'Desactivar plan' : 'Activar plan'}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          plan.isActive ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </TableCell>
+                  <TableCell align="right">
+                    <button
+                      onClick={() => navigate(`/plans/${plan.id}/edit`)}
+                      className="text-xs px-3 py-1.5 border border-theme-primary/30 text-theme-primary rounded-lg hover:bg-theme-light-primary transition-colors"
+                    >
+                      Editar
+                    </button>
+                  </TableCell>
+                </TableRow>
+              );
+            })
+          )}
+        </TableBody>
+      </Table>
     </div>
   );
 };

@@ -220,6 +220,138 @@ export class PlatformService {
     });
   }
 
+  // ─── METRICS ──────────────────────────────────────────────────────────────
+
+  async getMetrics() {
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    // Suscripciones que cuentan como "revenue" → active + trial, con plan cargado
+    // MRR: yearly se normaliza dividiendo el precio entre 12.
+    const revenueSubs = await this.prisma.subscription.findMany({
+      where: { status: { in: ['active', 'trial'] } },
+      include: {
+        plan: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            price: true,
+            billingPeriod: true,
+          },
+        },
+      },
+    });
+
+    const planAgg = new Map<
+      string,
+      { planSlug: string; planName: string; count: number; mrrContribution: number }
+    >();
+    let mrr = 0;
+
+    for (const sub of revenueSubs) {
+      const rawPrice = Number(sub.plan.price);
+      const monthly =
+        sub.plan.billingPeriod === 'yearly' ? rawPrice / 12 : rawPrice;
+      mrr += monthly;
+
+      const key = sub.plan.id;
+      const existing = planAgg.get(key);
+      if (existing) {
+        existing.count += 1;
+        existing.mrrContribution += monthly;
+      } else {
+        planAgg.set(key, {
+          planSlug: sub.plan.slug,
+          planName: sub.plan.name,
+          count: 1,
+          mrrContribution: monthly,
+        });
+      }
+    }
+
+    const mrrByPlan = Array.from(planAgg.values())
+      .map((row) => ({
+        ...row,
+        mrrContribution: Math.round(row.mrrContribution * 100) / 100,
+      }))
+      .sort((a, b) => b.mrrContribution - a.mrrContribution);
+
+    const [
+      activeTenants,
+      trialingTenants,
+      cancelledLast30Days,
+      totalActiveSubs,
+      activationSampleTenants,
+      totalPatients,
+      totalProducts,
+      salesThisMonth,
+    ] = await Promise.all([
+      this.prisma.tenant.count({ where: { status: 'active' } }),
+      this.prisma.subscription.count({ where: { status: 'trial' } }),
+      this.prisma.subscription.count({
+        where: { cancelledAt: { gte: thirtyDaysAgo } },
+      }),
+      this.prisma.subscription.count({
+        where: { status: { in: ['active', 'trial'] } },
+      }),
+      this.prisma.tenant.findMany({
+        where: { createdAt: { lte: sevenDaysAgo } },
+        select: {
+          id: true,
+          _count: {
+            select: { patients: true, products: true, appointments: true },
+          },
+        },
+      }),
+      this.prisma.patient.count(),
+      this.prisma.product.count(),
+      this.prisma.sale.count({ where: { createdAt: { gte: startOfMonth } } }),
+    ]);
+
+    const sample = activationSampleTenants.length;
+    const activated = activationSampleTenants.filter(
+      (t) =>
+        t._count.patients > 0 &&
+        t._count.products > 0 &&
+        t._count.appointments > 0,
+    ).length;
+    const activationRatePct = sample > 0 ? (activated / sample) * 100 : 0;
+
+    // Churn rate aproximado: cancelados en últimos 30d / (activos + cancelados en ventana).
+    // Sin histórico detallado usamos el total actual como denominador.
+    const churnDenominator = totalActiveSubs + cancelledLast30Days;
+    const churnRatePct =
+      churnDenominator > 0 ? (cancelledLast30Days / churnDenominator) * 100 : 0;
+
+    const roundedMrr = Math.round(mrr * 100) / 100;
+
+    return {
+      mrr: roundedMrr,
+      arr: Math.round(roundedMrr * 12 * 100) / 100,
+      activeTenants,
+      activeSubscriptions: totalActiveSubs,
+      trialingTenants,
+      mrrByPlan,
+      churn: {
+        cancelledLast30Days,
+        churnRatePct: Math.round(churnRatePct * 100) / 100,
+      },
+      activation: {
+        sample,
+        activated,
+        ratePct: Math.round(activationRatePct * 100) / 100,
+      },
+      totals: {
+        patients: totalPatients,
+        products: totalProducts,
+        salesThisMonth,
+      },
+    };
+  }
+
   // ─── STATS ────────────────────────────────────────────────────────────────
 
   async getStats() {

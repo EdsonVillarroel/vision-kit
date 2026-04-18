@@ -9,6 +9,8 @@ import { UpdatePatientDto } from './dto/update-patient.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { PlanQuotaGuard } from '../tenant/plan-quota.guard';
+import { QuotaLimit } from '../tenant/quota-limit.decorator';
 
 @ApiTags('patients')
 @ApiBearerAuth('access-token')
@@ -30,7 +32,9 @@ export class PatientsController {
     return this.patientsService.findOne(id);
   }
 
-  @ApiOperation({ summary: 'Crear paciente' })
+  @ApiOperation({ summary: 'Crear paciente — aplica cuota del plan' })
+  @UseGuards(PlanQuotaGuard)
+  @QuotaLimit('patients')
   @Post()
   create(@Body() dto: CreatePatientDto) {
     return this.patientsService.create(dto);

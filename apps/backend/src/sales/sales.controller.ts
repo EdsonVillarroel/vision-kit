@@ -9,6 +9,8 @@ import { CreateSaleDto } from './dto/create-sale.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { PlanQuotaGuard } from '../tenant/plan-quota.guard';
+import { QuotaLimit } from '../tenant/quota-limit.decorator';
 
 @ApiTags('sales')
 @ApiBearerAuth('access-token')
@@ -48,7 +50,9 @@ export class SalesController {
     return this.service.findOne(id);
   }
 
-  @ApiOperation({ summary: 'Crear venta' })
+  @ApiOperation({ summary: 'Crear venta — aplica cuota del plan (ventas/mes)' })
+  @UseGuards(PlanQuotaGuard)
+  @QuotaLimit('sales_per_month')
   @Post()
   create(@Body() dto: CreateSaleDto, @Req() req: any) {
     return this.service.create(dto, req.user.id);

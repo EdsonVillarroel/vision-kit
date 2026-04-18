@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { patientService } from '../services/patientService';
 import type { Patient, PatientFormData } from '../types';
 import { useSnackbar } from '../../../components/Snackbar';
+import { handleApiError } from '../../subscription';
 
 export const usePatients = () => {
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -49,7 +50,7 @@ export const usePatients = () => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error al crear paciente';
       setError(errorMessage);
-      showError(errorMessage);
+      if (!handleApiError(err)) showError(errorMessage);
       throw err;
     }
   };

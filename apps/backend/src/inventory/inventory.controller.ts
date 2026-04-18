@@ -10,6 +10,8 @@ import { AdjustStockDto } from './dto/adjust-stock.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { PlanQuotaGuard } from '../tenant/plan-quota.guard';
+import { QuotaLimit } from '../tenant/quota-limit.decorator';
 
 @ApiTags('inventory')
 @ApiBearerAuth('access-token')
@@ -49,9 +51,10 @@ export class InventoryController {
     return this.service.getMovements(id);
   }
 
-  @ApiOperation({ summary: 'Crear producto — roles: admin, manager' })
-  @UseGuards(RolesGuard)
+  @ApiOperation({ summary: 'Crear producto — roles: admin, manager — aplica cuota del plan' })
+  @UseGuards(RolesGuard, PlanQuotaGuard)
   @Roles('admin', 'manager')
+  @QuotaLimit('products')
   @Post()
   create(@Body() dto: CreateProductDto) {
     return this.service.create(dto);

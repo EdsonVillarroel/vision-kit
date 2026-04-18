@@ -38,6 +38,7 @@ const UsersPage           = lazy(() => import('../pages/settings/UsersPage').the
 const UserFormPage        = lazy(() => import('../pages/settings/UserFormPage').then(m => ({ default: m.UserFormPage })));
 const ClinicPage          = lazy(() => import('../pages/settings/ClinicPage').then(m => ({ default: m.ClinicPage })));
 const AppearancePage      = lazy(() => import('../pages/settings/AppearancePage').then(m => ({ default: m.AppearancePage })));
+const MyPlanPage          = lazy(() => import('../pages/settings/MyPlanPage').then(m => ({ default: m.MyPlanPage })));
 
 const ClinicalExamsListPage   = lazy(() => import('../pages/clinical-exams').then(m => ({ default: m.ClinicalExamsListPage })));
 const NewClinicalExamPage     = lazy(() => import('../pages/clinical-exams').then(m => ({ default: m.NewClinicalExamPage })));
@@ -106,6 +107,7 @@ export const AppRoutes = () => {
         <Route path="/settings/users/:id/edit" element={<UserFormPage />} />
         <Route path="/settings/clinic" element={<ClinicPage />} />
         <Route path="/settings/appearance" element={<AppearancePage />} />
+        <Route path="/settings/plan" element={<MyPlanPage />} />
 
         {/* 404 */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

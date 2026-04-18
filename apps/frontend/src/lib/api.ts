@@ -2,10 +2,12 @@ const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api/v1';
 
 export class ApiError extends Error {
   readonly status: number;
-  constructor(message: string, status: number) {
+  readonly body: unknown;
+  constructor(message: string, status: number, body?: unknown) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
+    this.body = body;
   }
 }
 
@@ -79,18 +81,25 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 
   if (!res.ok) {
     let errorMessage = `Error ${res.status}`;
+    let errorBody: unknown = undefined;
     try {
-      const errorData = await res.json();
-      if (Array.isArray(errorData.message)) {
-        errorMessage = errorData.message.join(', ');
-      } else if (typeof errorData.message === 'string') {
-        errorMessage = errorData.message;
+      errorBody = await res.json();
+      const data = errorBody as { message?: string | string[] };
+      if (Array.isArray(data.message)) {
+        errorMessage = data.message.join(', ');
+      } else if (typeof data.message === 'string') {
+        errorMessage = data.message;
       }
     } catch {
       // ignore JSON parse errors
     }
-    if (res.status === 402) _on402?.();
-    throw new ApiError(errorMessage, res.status);
+    // 402 puede ser suscripción suspendida (redirect global) o quota del plan
+    // excedida (el componente lo maneja con un modal local).
+    if (res.status === 402) {
+      const errorCode = (errorBody as { error?: string })?.error;
+      if (errorCode !== 'PlanQuotaExceeded') _on402?.();
+    }
+    throw new ApiError(errorMessage, res.status, errorBody);
   }
 
   if (res.status === 204) {

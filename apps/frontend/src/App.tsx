@@ -4,6 +4,7 @@ import { Button } from './components/ui/Button';
 import { LoginPage } from './features/auth/components/LoginPage';
 import { AuthProvider, useAuth } from './features/auth/hooks/useAuth';
 import { ClinicSettingsProvider } from './features/settings/context/ClinicSettingsContext';
+import { SubscriptionProvider, QuotaErrorProvider } from './features/subscription';
 import { MainLayout, SidebarProvider, type MenuItem } from './features/layout';
 import { AppRoutes } from './routes';
 import { ThemeProvider } from './theme/ThemeContext';
@@ -177,6 +178,12 @@ const menuItems: MenuItem[] = [
         label: 'Apariencia',
         icon: '🎨',
         path: '/settings/appearance'
+      },
+      {
+        id: 'settings-plan',
+        label: 'Mi plan',
+        icon: '💎',
+        path: '/settings/plan'
       }
     ]
   }
@@ -272,7 +279,13 @@ const AppContent = () => {
 
   if (!isAuthenticated) return <LoginPage />;
   if (isSuspended) return <SuspendedView />;
-  return <Dashboard />;
+  return (
+    <SubscriptionProvider>
+      <QuotaErrorProvider>
+        <Dashboard />
+      </QuotaErrorProvider>
+    </SubscriptionProvider>
+  );
 };
 
 function App() {

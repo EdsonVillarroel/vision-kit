@@ -1,0 +1,74 @@
+# ============================================================================
+# Vision Kit — Stack de desarrollo local
+#
+# Levanta Postgres aislado + backend con hot-reload-able image. Útil para:
+#   - Desarrollo sin depender de Supabase remoto
+#   - Tests E2E reproducibles en CI
+#   - Demos / onboarding
+#
+# Uso:
+#   docker compose -f docker-compose.dev.yml up           # arranca todo
+#   docker compose -f docker-compose.dev.yml up -d        # detached
+#   docker compose -f docker-compose.dev.yml down -v      # limpia DB
+#   docker compose -f docker-compose.dev.yml logs -f api  # logs del backend
+#
+# Después de la primera vez, correr migraciones manualmente:
+#   docker compose -f docker-compose.dev.yml exec api npx prisma migrate deploy
+#   docker compose -f docker-compose.dev.yml exec api npm run db:seed --workspace=apps/backend
+# ============================================================================
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: vision-kit-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: vision
+      POSTGRES_PASSWORD: vision_dev_password
+      POSTGRES_DB: vision_kit
+    ports:
+      - '5433:5432' # 5433 para no chocar con un Postgres local
+    volumes:
+      - vision-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U vision -d vision_kit']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    container_name: vision-kit-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: '3000'
+      DATABASE_URL: postgresql://vision:vision_dev_password@db:5432/vision_kit
+      DIRECT_URL: postgresql://vision:vision_dev_password@db:5432/vision_kit
+      # Solo dev — NUNCA usar estos en prod
+      JWT_SECRET: dev-tenant-secret-change-in-prod-${RANDOM}${RANDOM}${RANDOM}
+      JWT_PLATFORM_SECRET: dev-platform-secret-change-in-prod-${RANDOM}${RANDOM}${RANDOM}
+      JWT_EXPIRES_IN: 7d
+      JWT_PLATFORM_EXPIRES_IN: 1d
+      CORS_ORIGINS: http://localhost:5173,http://localhost:5174,http://localhost:5175
+      LOG_LEVEL: debug
+      # Supabase storage opcional en dev (si no se usa upload, dummies bastan)
+      SUPABASE_URL: ${SUPABASE_URL:-https://example.supabase.co}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-dev-dummy-key}
+    ports:
+      - '3000:3000'
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:3000/api/v1/health']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  vision-db-data:
+    driver: local

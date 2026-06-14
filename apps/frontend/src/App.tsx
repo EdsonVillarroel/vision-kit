@@ -4,11 +4,11 @@ import { Button } from './components/ui/Button';
 import { LoginPage } from './features/auth/components/LoginPage';
 import { AuthProvider, useAuth } from './features/auth/hooks/useAuth';
 import { ClinicSettingsProvider } from './features/settings/context/ClinicSettingsContext';
-import { SubscriptionProvider, QuotaErrorProvider } from './features/subscription';
+import { SubscriptionProvider, QuotaErrorProvider, useSubscription } from './features/subscription';
 import { MainLayout, SidebarProvider, type MenuItem } from './features/layout';
 import { AppRoutes } from './routes';
 import { ThemeProvider } from './theme/ThemeContext';
-import { SnackbarProvider } from './components/Snackbar';
+import { SnackbarProvider, useSnackbar } from './components/Snackbar';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { setOn402Handler } from './lib/api';
 
@@ -189,8 +189,39 @@ const menuItems: MenuItem[] = [
   }
 ];
 
+const COMMISSIONS_MENU_ITEM: MenuItem = {
+  id: 'commissions',
+  label: 'Comisiones',
+  icon: '💸',
+  path: '/commissions'
+};
+
+const METRICS_MENU_ITEM: MenuItem = {
+  id: 'metrics',
+  label: 'Métricas',
+  icon: '📈',
+  path: '/metrics'
+};
+
 const Dashboard = () => {
   const { user, logout } = useAuth();
+  const { hasFeature } = useSubscription();
+
+  // "Comisiones" y "Métricas" solo para admin/super_admin cuando el plan
+  // actual incluye el feature `commissions`. Insertadas justo después del
+  // grupo de Ventas para agrupar información financiera.
+  const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
+  const showCommissions = isAdmin && hasFeature('commissions');
+
+  const effectiveMenuItems: MenuItem[] = showCommissions
+    ? (() => {
+        const salesIdx = menuItems.findIndex((m) => m.id === 'sales');
+        if (salesIdx === -1) return [...menuItems, METRICS_MENU_ITEM, COMMISSIONS_MENU_ITEM];
+        const copy = [...menuItems];
+        copy.splice(salesIdx + 1, 0, METRICS_MENU_ITEM, COMMISSIONS_MENU_ITEM);
+        return copy;
+      })()
+    : menuItems;
 
   const navbar = (
     <>
@@ -212,7 +243,7 @@ const Dashboard = () => {
 
   return (
     <SidebarProvider>
-      <MainLayout menuItems={menuItems} navbar={navbar}>
+      <MainLayout menuItems={effectiveMenuItems} navbar={navbar}>
         <AppRoutes />
       </MainLayout>
     </SidebarProvider>
@@ -258,11 +289,23 @@ const SuspendedView = () => {
 
 const AppContent = () => {
   const { isAuthenticated, isLoading } = useAuth();
+  const { showWarning } = useSnackbar();
   const [isSuspended, setIsSuspended] = useState(false);
 
   useEffect(() => {
-    setOn402Handler(() => setIsSuspended(true));
-  }, []);
+    setOn402Handler((body: unknown) => {
+      const errorCode = (body as { error?: string } | null | undefined)?.error;
+      if (errorCode === 'FeatureNotInPlan') {
+        const message =
+          (body as { message?: string } | null | undefined)?.message ??
+          'Esta función requiere un plan superior. Actualizá tu plan en Mi plan.';
+        showWarning(message);
+        return;
+      }
+      // Caso por defecto: suscripción suspendida
+      setIsSuspended(true);
+    });
+  }, [showWarning]);
 
   // Reset suspended state on logout
   useEffect(() => {

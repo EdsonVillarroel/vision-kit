@@ -21,7 +21,7 @@ import { TENANT_ID_KEY, TENANT_SCOPED_MODELS } from './tenant.constants';
  */
 @Injectable()
 export class TenantPrismaService implements OnModuleInit {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   private _client!: any;
 
   constructor(
@@ -34,7 +34,7 @@ export class TenantPrismaService implements OnModuleInit {
 
     this._client = this.prisma.$extends({
       query: {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         $allModels: {
           async $allOperations({
             model,
@@ -44,9 +44,9 @@ export class TenantPrismaService implements OnModuleInit {
           }: {
             model: string;
             operation: string;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             args: any;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             query: (args: any) => Promise<any>;
           }) {
             // Solo inyectar en modelos de negocio con tenant_id

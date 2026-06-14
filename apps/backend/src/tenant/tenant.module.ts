@@ -5,11 +5,26 @@ import { TenantGuard } from './tenant.guard';
 import { TenantPrismaService } from './tenant-prisma.service';
 import { SubscriptionGuard } from './subscription.guard';
 import { PlanQuotaGuard } from './plan-quota.guard';
+import { PlanFeatureGuard } from './plan-feature.guard';
 
 @Global()
 @Module({
   imports: [ClsModule],
-  providers: [TenantClsMiddleware, TenantGuard, TenantPrismaService, SubscriptionGuard, PlanQuotaGuard],
-  exports: [TenantClsMiddleware, TenantGuard, TenantPrismaService, SubscriptionGuard, PlanQuotaGuard],
+  providers: [
+    TenantClsMiddleware,
+    TenantGuard,
+    TenantPrismaService,
+    SubscriptionGuard,
+    PlanQuotaGuard,
+    PlanFeatureGuard,
+  ],
+  exports: [
+    TenantClsMiddleware,
+    TenantGuard,
+    TenantPrismaService,
+    SubscriptionGuard,
+    PlanQuotaGuard,
+    PlanFeatureGuard,
+  ],
 })
 export class TenantModule {}

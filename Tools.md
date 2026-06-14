@@ -344,7 +344,161 @@ PATCH  /api/v1/settings            ← admin
 ### Prioridad BAJA — Nice to have
 
 - [ ] CI/CD con GitHub Actions (build + tests en cada PR)
- 
+
+---
+
+## Comisiones y Métricas de Ventas — Plan de ejecución
+
+> **Contexto:** nueva feature para ópticas — comisión por venta configurable por óptico + reporte consultivo con export PDF + métricas/leaderboard de ventas.
+>
+> **Decisiones del fundador (fijadas 2026-04-17):**
+> - `commissionRate` **por usuario** (Decimal 0-100, default 0).
+> - Base de cálculo: **subtotal − discount** (sin IVA) sobre ventas `status=completed`.
+> - Cierre **a demanda**: reporte consultivo con PDF. **Sin snapshot en DB**, sin tabla de periodos, sin flujo de pago.
+> - Visibilidad MVP: **solo admin/super_admin**. Manager/optician ven 403.
+> - Gate por plan: flag `commissions` en `SubscriptionPlan.features` — disponible en **Óptica Pro** y **Cadena**.
+>
+> **Nota de orden:** el seed de `features.commissions` se activa recién en Sesión 5 (junto al gating) para no confundir ambientes mientras el cálculo está en construcción.
+
+### Sesión 1 — Fundación backend y modelo
+
+**Objetivo:** agregar `commissionRate` al modelo User y exponer endpoints de configuración por usuario.
+**Dependencias:** ninguna — `profiles` y auth ya en producción.
+**Entregables:**
+- [x] Migración SQL: `npx supabase migration new add_commission_rate_to_profiles` con `commission_rate NUMERIC(5,2) NOT NULL DEFAULT 0` + check `>= 0 AND <= 100`.
+- [x] `schema.prisma`: `commissionRate Decimal @default(0) @db.Decimal(5,2) @map("commission_rate")` en `User`.
+- [x] Regenerar Prisma client + `db push` a Supabase.
+- [x] Extender `UpdateUserDto` con `commissionRate?: number` + `@IsNumber() @Min(0) @Max(100)`.
+- [x] Incluir `commissionRate` en el `select` de `users.service.ts` (nunca exponer `passwordHash`).
+- [x] Swagger: `@ApiProperty({ example: 5.5, description: 'Porcentaje 0-100' })`.
+- [x] **Bonus:** índice compuesto `sales(tenant_id, date, status)` si no existe — necesario para queries de Sesión 2.
+
+**Archivos:** `supabase/migrations/*_add_commission_rate.sql`, `apps/backend/prisma/schema.prisma`, `apps/backend/src/users/dto/*`, `apps/backend/src/users/users.service.ts`.
+**Criterio de aceptación:** `PATCH /users/:id` con `commissionRate: 5` persiste y `GET /users/:id` lo retorna.
+**Estimación:** 1 día.
+
+### Sesión 2 — Módulo commissions y endpoints de cálculo
+
+**Objetivo:** calcular comisiones on-the-fly por rango de fechas sobre ventas `completed`.
+**Dependencias:** Sesión 1.
+**Entregables:**
+- [x] `CommissionsModule` con controller + service usando `TenantPrismaService`.
+- [x] `GET /commissions?from=&to=&userId?=` → agrupado por vendedor: `{ userId, name, commissionRate, salesCount, grossBase, commissionAmount }`. Base = `sum(subtotal - discount)` para `status='completed'` en rango.
+- [x] `GET /commissions/leaderboard?from=&to=&limit=10` → top vendedores por monto vendido.
+- [x] `GET /commissions/summary/:userId?from=&to=` → detalle por venta (saleNumber, fecha, base, comisión).
+- [x] Guards: `JwtAuthGuard` + `RolesGuard` + `@Roles('admin', 'super_admin')`.
+- [x] Swagger tag `commissions` con ejemplos.
+- [x] Validar `from <= to` y default últimos 30 días si faltan.
+
+**Archivos:** `apps/backend/src/commissions/{commissions.module,controller,service}.ts`, `dto/query-commissions.dto.ts`, `apps/backend/src/app.module.ts`, `docs/API_ENDPOINTS.md`.
+**Criterio de aceptación:** los tres endpoints retornan números consistentes con query SQL manual. 403 para manager/optician.
+**Estimación:** 1.5 días.
+
+### Sesión 3 — UI Admin: comisiones con export PDF
+
+**Objetivo:** página operativa con filtros, tabla por óptico y export PDF.
+**Dependencias:** Sesión 2.
+**Entregables:**
+- [x] Feature `commissions` en frontend: `{services,hooks,components,types,index.ts}`.
+- [x] `hooks/useCommissions` con `useCommissionsReport(from,to)` y `useCommissionsByUser(id,from,to)`.
+- [x] Página `/commissions`: `DateRangePicker` + `Table` (óptico, ventas, base, %, comisión) + totales en footer.
+- [x] Editar `UserFormPage` para incluir input `commissionRate` (number 0-100 con sufijo %).
+- [x] Export PDF con **pdfmake** (mejor soporte unicode/español que jsPDF, tablas nativas). Dynamic import al click para no inflar bundle.
+- [x] Botón "Exportar PDF" → header con logo + nombre del tenant + rango + timestamp + nota "Reporte consultivo basado en ventas completed al momento de emisión".
+- [x] Ruta en `routes/index.tsx` con `React.lazy`; entrada de menú solo para admin.
+
+**Archivos:** `apps/frontend/src/features/commissions/**`, `apps/frontend/src/pages/commissions/CommissionsPage.tsx`, `apps/frontend/src/pages/users/UserFormPage.tsx`, `apps/frontend/src/routes/index.tsx`, `package.json`.
+**Criterio de aceptación:** admin filtra por mes, ve tabla correcta y descarga PDF legible con acentos bien renderizados.
+**Estimación:** 2 días.
+
+### Sesión 4 — Métricas de ventas con Recharts
+
+**Objetivo:** dashboard visual de ventas para decisiones comerciales.
+**Dependencias:** Sesión 2 (reutiliza leaderboard); no bloquea Sesión 3 — ambas pueden ir en paralelo.
+**Entregables:**
+- [x] Instalar **recharts** (composable, tree-shakeable, integra con React 19 y Tailwind v4).
+- [x] Backend: `GET /sales/metrics?from=&to=` → `{ byDay[], byPaymentMethod[], topSellers[], byCategory[] }` vía Prisma `groupBy`.
+- [x] Página `/metrics`: 4 `StatCard` (total, transacciones, ticket promedio, tasa refunds) + LineChart ventas/día + BarChart top 5 vendedores + PieChart mix por método de pago.
+- [x] Filtros: rango fecha + presets (hoy/7d/30d/mes).
+- [x] Skeletons mientras carga; empty state con mensaje contextual.
+
+**Archivos:** `apps/backend/src/sales/sales.{controller,service}.ts`, `apps/frontend/src/features/metrics/**`, `apps/frontend/src/pages/metrics/MetricsPage.tsx`, `apps/frontend/src/routes/index.tsx`.
+**Criterio de aceptación:** gráficos renderizan con seed; cambio de rango refetchea sin flicker.
+**Estimación:** 2 días.
+
+### Sesión 5 — Gating por plan, polish y QA
+
+**Objetivo:** activar feature flag, endurecer UX y documentar.
+**Dependencias:** Sesiones 1-4.
+**Entregables:**
+- [x] Actualizar `seedPlans.ts`: `commissions: true` en Óptica Pro y Cadena; `false` en Escaparate/Consultorio. Re-seed.
+- [x] Backend: guard/check en `CommissionsController` y `GET /sales/metrics` que valide `plan.features.commissions === true`, responder 402 `{ error: 'FeatureNotInPlan', feature: 'commissions' }`.
+- [x] Frontend: `hasFeature('commissions')` oculta menú + protege rutas con redirect a `/settings/plan` + banner de upgrade.
+- [x] Interceptor `api.ts`: 402 → snackbar (FeatureNotInPlan) + modal upgrade existente (PlanQuotaExceeded) + suspended view (resto).
+- [x] Skeletons en tablas y gráficos; `ConfirmModal` al cambiar `commissionRate` de usuario con ventas en el mes ("este cambio afecta reportes de periodos anteriores").
+- [x] Smoke test manual documentado en el reporte de la sesión.
+- [x] Actualizar `docs/API_ENDPOINTS.md`, `docs/PROJECT_STRUCTURE.md`, `CLAUDE.md` (features list + endpoint count).
+
+**Archivos:** `apps/backend/prisma/seedPlans.ts`, `apps/backend/src/commissions/*.ts`, `apps/frontend/src/lib/api.ts`, `apps/frontend/src/routes/index.tsx`, `docs/**`, `CLAUDE.md`.
+**Criterio de aceptación:** tenant Consultorio no ve menú ni puede llamar endpoints (402). Tenant Óptica Pro opera normal. Docs actualizados.
+**Estimación:** 1 día.
+
+### Comisiones y Métricas — Completadas ✅
+
+- [x] Sesión 1: Fundación backend (migración 017 aplicada, `commissionRate` en User)
+- [x] Sesión 2: Módulo commissions + 3 endpoints
+- [x] Sesión 3: UI comisiones con export PDF (pdfmake)
+- [x] Sesión 4: Métricas con Recharts + endpoint /sales/metrics
+- [x] Sesión 5: Gating por plan + polish + docs
+
+### Trabajo nocturno autónomo — 2026-04-18 (post-sesión)
+
+Hecho mientras el usuario dormía. **Sin commits** — todo en working tree para revisión.
+
+**Tech debt resuelto — 7 errores TypeScript pre-existentes que bloqueaban `npm run build`:**
+
+- [x] `apps/frontend/src/pages/inventory/EditProductPage.tsx:93` — `product.imageUrl` no existía en el tipo `Product`; reemplazado por `product.images && product.images.length > 0`.
+- [x] `apps/frontend/src/pages/inventory/InventoryPage.tsx:53-54` — filtros comparaban el enum con variantes `low_stock`/`out_of_stock` (underscore) que no existen; eliminadas, dejando solo `low-stock`/`out-of-stock` (guión).
+- [x] `apps/frontend/src/pages/inventory/NewProductPage.tsx:12` — `showSuccess` destructurado pero nunca usado; eliminado junto con el import de `useSnackbar` (también no usado en el archivo).
+- [x] `apps/frontend/src/pages/settings/ProfilePage.tsx:59,136,138` — referencias a `user.avatarUrl`/`{ avatarUrl: ... }` cuando `User` tiene `avatar`; renombrado las 3 ocurrencias a `avatar`.
+
+**Resultado:** `npm run build` en apps/frontend → **exit 0 limpio**. Build completo genera bundle con `CommissionsPage` 13 kB, `MetricsPage` 408 kB, `pdfmake` 1 MB en chunk aparte (dynamic import, no pesa en carga inicial), `vfs_fonts` 855 kB idem.
+
+**Nota:** el warning de chunk-size >500 kB es esperado por pdfmake/vfs_fonts (ambos lazy-loaded).
+
+**Qué NO hice (a propósito):**
+- **No hice commit.** La decisión de cómo commitear (1 solo commit vs. commits por sesión) queda para el usuario.
+- **No corrí el dev server.** Dejar procesos vivos es riesgoso.
+- **No ejecuté el smoke test end-to-end** (requiere login manual + navegación). El checklist de smoke test está en el reporte de Sesión 5.
+- **No toqué nada fuera del tech debt flaggeado** (no refactors, no nuevos features).
+
+### Riesgos y dependencias cross-session
+
+- **pdfmake vs jsPDF:** pdfmake gana por tablas nativas + unicode (acentos, ñ, Bs). Pesa ~500KB gzipped → dynamic import al click de exportar.
+- **Recharts vs Chart.js:** Recharts declarativo, mejor DX en React 19, tree-shakeable. Para volúmenes de una óptica (decenas de ventas/día) sobra.
+- **Ventas `refunded` post-export:** sin snapshot, re-generar el mismo rango da otro número. Mitigación: timestamp y nota en el PDF.
+- **Testing sin snapshots:** cálculo determinístico — script `scripts/verify-commissions.ts` compara sum manual vs endpoint sobre un rango fijo del seed.
+- **Cambio de `commissionRate` a mitad de mes:** sin historización, ventas viejas recalculan con rate nuevo. Avisar con `ConfirmModal` antes de guardar.
+- **Performance:** `groupBy` sobre `sales` filtrado por `tenant_id + date` necesita índice compuesto — agregado como bonus en Sesión 1.
+
+### Preguntas abiertas (resolver antes de Sesión 2)
+
+1. ¿Ventas `refunded` se descuentan del reporte del periodo en que ocurrió la venta original, o del periodo en que se hizo el refund? **Recomendación:** ajustar en el periodo del refund (más simple, más justo).
+2. ¿Comisión se ajusta para ventas con tarjeta (fee bancario ~3%)? **Recomendación MVP:** no ajustar, mantener simple.
+3. ¿Manager debería ver comisiones de su equipo en v2 (post-MVP)? Define quién hace cierres en ópticas >5 empleados.
+
+### Roadmap post-MVP (upsells adyacentes, no construir todavía)
+
+| Feature | Esfuerzo | Impacto | Notas |
+|---|---|---|---|
+| Dashboard "Mis ventas" óptico (sin montos) | Bajo | Medio | Engagement sin exponer comisiones |
+| Metas mensuales + progreso | Medio | Alto | Argumento de venta fuerte; complementa comisiones |
+| Comisión por tramos (tiered) | Medio | Alto | `[{hasta: 20000, rate: 3}, ...]` JSON en User — justifica tier Cadena |
+| Spiff por producto/marca | Alto | Alto | Bono fijo por vender marca X; monetizable como add-on con proveedores |
+| Export planilla sueldos (CSV) | Bajo | Medio | Cierra ciclo operativo |
+
+**Métrica de decisión 3 meses post-launch:** si <30% de tenants Óptica Pro/Cadena activan la feature o el PDF no se descarga ≥1×/mes, degradar prioridad. Si >50% activa, habilitar roadmap de upsells arriba.
+
 ---
 
 ## Comandos de uso frecuente

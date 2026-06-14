@@ -355,6 +355,7 @@ Mismos campos que POST pero todos opcionales. También acepta:
 |--------|----------|-------|-------------|
 | `GET` | `/sales` | Todos | Listar ventas (con filtros) |
 | `GET` | `/sales/summary` | admin, manager | Resumen de ventas por rango de fechas |
+| `GET` | `/sales/metrics` | admin, super_admin | Métricas: totales, series por día, top vendedores, mix de pagos — requiere plan con feature `commissions` |
 | `GET` | `/sales/:id` | Todos | Obtener venta por ID |
 | `POST` | `/sales` | Todos | Crear nueva venta |
 | `PATCH` | `/sales/:id/status` | Todos | Cambiar estado de venta |
@@ -372,6 +373,17 @@ Mismos campos que POST pero todos opcionales. También acepta:
 |-------|------|-------------|
 | `from` | ISO date | Fecha inicio (requerida) |
 | `to` | ISO date | Fecha fin (requerida) |
+
+### Query params — GET `/sales/metrics`
+| Param | Tipo | Descripción |
+|-------|------|-------------|
+| `from` | ISO date | Fecha inicio (default: hoy - 30d) |
+| `to` | ISO date | Fecha fin (default: hoy) |
+
+Respuesta incluye: `totals` (salesCount, grossAmount, netAmount, avgTicket), `byDay` (serie temporal), `topSellers` (ranking), `byPaymentMethod` (mix de medios de pago), `byCategory` (categorías de producto).
+
+Errores:
+- `402 FeatureNotInPlan` — el plan actual no incluye `commissions`.
 
 ### POST `/sales`
 ```json
@@ -413,6 +425,49 @@ Mismos campos que POST pero todos opcionales. También acepta:
   "reason": "El cliente cambió de opinión"
 }
 ```
+
+---
+
+## Commissions
+
+> Reportes de comisiones por vendedor. Todos los endpoints requieren plan con feature `commissions` (Óptica Pro y Cadena).
+> Devuelven `402 FeatureNotInPlan` en planes sin el flag.
+
+| Método | Endpoint | Roles | Descripción |
+|--------|----------|-------|-------------|
+| `GET` | `/commissions` | admin, super_admin | Reporte agrupado por vendedor en un rango |
+| `GET` | `/commissions/leaderboard` | admin, super_admin | Top vendedores por monto total vendido |
+| `GET` | `/commissions/summary/:userId` | admin, super_admin | Detalle de ventas y comisiones de un vendedor |
+
+### Query params — GET `/commissions`
+| Param | Tipo | Descripción |
+|-------|------|-------------|
+| `from` | ISO date | Fecha inicio (default: hoy - 30d) |
+| `to` | ISO date | Fecha fin (default: hoy) |
+| `userId` | uuid | Filtrar por un vendedor específico (opcional) |
+
+Respuesta: array de `{ userId, name, commissionRate, salesCount, grossBase, commissionAmount }`.
+
+### Query params — GET `/commissions/leaderboard`
+| Param | Tipo | Descripción |
+|-------|------|-------------|
+| `from` | ISO date | Fecha inicio (default: hoy - 30d) |
+| `to` | ISO date | Fecha fin (default: hoy) |
+| `limit` | number | Máximo 50 (default: 10) |
+
+Respuesta: array ordenado desc por `totalSold`, con `{ userId, name, salesCount, totalSold }`.
+
+### Query params — GET `/commissions/summary/:userId`
+| Param | Tipo | Descripción |
+|-------|------|-------------|
+| `from` | ISO date | Fecha inicio (default: hoy - 30d) |
+| `to` | ISO date | Fecha fin (default: hoy) |
+
+Respuesta: resumen con totales del vendedor + listado de ventas (fecha, número, monto, comisión).
+
+Errores:
+- `402 FeatureNotInPlan` — el plan actual no incluye `commissions`.
+- `404` — el `userId` no existe dentro del tenant.
 
 ---
 
@@ -624,9 +679,14 @@ DELETE /inventory/:id
 
 GET    /sales
 GET    /sales/summary
+GET    /sales/metrics
 GET    /sales/:id
 POST   /sales
 PATCH  /sales/:id/status
+
+GET    /commissions
+GET    /commissions/leaderboard
+GET    /commissions/summary/:userId
 
 GET    /settings
 PATCH  /settings
@@ -637,7 +697,8 @@ GET    /public/:tenantSlug/clinic
 POST   /public/:tenantSlug/bookings
 ```
 
-**Total: 47 tenant + public endpoints** (43 tenant + 4 public)
+**Total: 51 tenant + public endpoints** (47 tenant + 4 public)
+> Nota: 47 tenant = 43 base + 1 `/sales/metrics` + 3 `/commissions/*`.
 
 ---
 
@@ -745,4 +806,12 @@ POST   /public/:tenantSlug/bookings
 ```
 
 **Total nuevos endpoints sesión 5: 12 (platform management)**
-**Total global: 58 endpoints (43 tenant + 3 platform-auth + 12 platform-management)**
+
+**Total global: 68 endpoints**
+- 43 tenant base
+- 1 `/subscriptions/current`
+- 1 `/sales/metrics` (requiere feature `commissions`)
+- 3 `/commissions/*` (requiere feature `commissions`)
+- 4 public
+- 3 platform-auth
+- 13 platform-management

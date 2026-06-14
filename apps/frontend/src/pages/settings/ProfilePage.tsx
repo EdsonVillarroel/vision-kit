@@ -56,7 +56,7 @@ export const ProfilePage: React.FC = () => {
     setIsUploadingAvatar(true);
     try {
       const url = await uploadService.uploadAvatar(user.id, file);
-      updateUser({ avatarUrl: url });
+      updateUser({ avatar: url });
       showSuccess('Foto de perfil actualizada');
     } catch (error: any) {
       showError(error?.message ?? 'Error al subir la foto');
@@ -133,9 +133,9 @@ export const ProfilePage: React.FC = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
         <div className="flex items-center gap-6">
           <div className="flex-shrink-0 relative group">
-            {user.avatarUrl ? (
+            {user.avatar ? (
               <img
-                src={user.avatarUrl}
+                src={user.avatar}
                 alt={user.name}
                 className="w-24 h-24 rounded-full border-4 border-gray-100 object-cover"
               />

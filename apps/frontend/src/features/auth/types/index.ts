@@ -9,6 +9,7 @@ export interface User {
   avatar?: string;
   phone?: string;
   status: 'active' | 'inactive';
+  commissionRate?: number; // 0-100 — porcentaje de comisión por venta
   createdAt: string;
   updatedAt: string;
 }

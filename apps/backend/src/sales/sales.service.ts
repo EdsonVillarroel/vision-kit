@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { SaleStatus } from '@prisma/client';
 import { TenantPrismaService } from '../tenant/tenant-prisma.service';
 import { CreateSaleDto } from './dto/create-sale.dto';
+import { SalesMetricsQueryDto } from './dto/sales-metrics-query.dto';
 
 const SALE_INCLUDE = {
   patient: { select: { id: true, firstName: true, lastName: true } },
@@ -272,6 +273,150 @@ export class SalesService {
       topProducts,
       salesByMethod,
       salesByDay,
+    };
+  }
+
+  async getMetrics(query: SalesMetricsQueryDto) {
+    // ── Rango por defecto: últimos 30 días ───────────────────────────────────
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+
+    const defaultFrom = new Date(today);
+    defaultFrom.setDate(defaultFrom.getDate() - 30);
+    defaultFrom.setHours(0, 0, 0, 0);
+
+    const fromDate = query.from ? new Date(query.from) : defaultFrom;
+    const toDate = query.to ? new Date(query.to) : today;
+
+    // Normalizar extremos del rango para incluir días completos
+    if (query.from) fromDate.setHours(0, 0, 0, 0);
+    if (query.to) toDate.setHours(23, 59, 59, 999);
+
+    const fromStr = fromDate.toISOString().split('T')[0];
+    const toStr = toDate.toISOString().split('T')[0];
+
+    const dateRange = { gte: fromDate, lte: toDate };
+
+    // ── Ventas completadas en el rango ───────────────────────────────────────
+    const completedSales = await this.tenantPrisma.client.sale.findMany({
+      where: { status: 'completed', date: dateRange },
+      select: { id: true, date: true, total: true, paymentMethod: true, soldById: true },
+    });
+
+    // Refunded count para calcular tasa de reembolsos
+    const refundedCount = await this.tenantPrisma.client.sale.count({
+      where: { status: 'refunded', date: dateRange },
+    });
+
+    const completedCount = completedSales.length;
+    const grossRevenue = completedSales.reduce((s, sale) => s + Number(sale.total), 0);
+    const avgTicket = completedCount ? grossRevenue / completedCount : 0;
+    const totalWithRefunds = completedCount + refundedCount;
+    const refundRate = totalWithRefunds ? (refundedCount / totalWithRefunds) * 100 : 0;
+
+    // ── byDay: agrupar en memoria por YYYY-MM-DD ─────────────────────────────
+    const dayMap = new Map<string, { date: string; total: number; count: number }>();
+    for (const sale of completedSales) {
+      const dateKey =
+        sale.date instanceof Date
+          ? sale.date.toISOString().split('T')[0]
+          : String(sale.date).split('T')[0];
+      const existing = dayMap.get(dateKey);
+      if (existing) {
+        existing.total += Number(sale.total);
+        existing.count += 1;
+      } else {
+        dayMap.set(dateKey, { date: dateKey, total: Number(sale.total), count: 1 });
+      }
+    }
+    const byDay = Array.from(dayMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+
+    // ── byPaymentMethod: groupBy con _sum + _count ──────────────────────────
+    const paymentGroups = await this.tenantPrisma.client.sale.groupBy({
+      by: ['paymentMethod'],
+      where: { status: 'completed', date: dateRange },
+      _sum: { total: true },
+      _count: { _all: true },
+    });
+    const byPaymentMethod = paymentGroups.map(
+      (g: { paymentMethod: string; _sum: { total: unknown }; _count: { _all: number } }) => ({
+        method: g.paymentMethod,
+        total: Number(g._sum.total ?? 0),
+        count: g._count._all,
+      }),
+    );
+
+    // ── topSellers: groupBy por soldById + lookup de nombres ────────────────
+    const sellerGroups = await this.tenantPrisma.client.sale.groupBy({
+      by: ['soldById'],
+      where: { status: 'completed', date: dateRange },
+      _sum: { total: true },
+      _count: { _all: true },
+    });
+    const sellerIds = sellerGroups.map((g: { soldById: string }) => g.soldById);
+    const sellers = sellerIds.length
+      ? await this.tenantPrisma.client.user.findMany({
+          where: { id: { in: sellerIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+    const sellerNameMap = new Map<string, string>(
+      sellers.map((u: { id: string; name: string }) => [u.id, u.name]),
+    );
+    const topSellers = sellerGroups
+      .map(
+        (g: { soldById: string; _sum: { total: unknown }; _count: { _all: number } }) => ({
+          userId: g.soldById,
+          name: sellerNameMap.get(g.soldById) ?? 'Usuario',
+          total: Number(g._sum.total ?? 0),
+          count: g._count._all,
+        }),
+      )
+      .sort((a: { total: number }, b: { total: number }) => b.total - a.total)
+      .slice(0, 5);
+
+    // ── byCategory: agregar desde sale_items + product.category ─────────────
+    const saleItems = await this.tenantPrisma.client.saleItem.findMany({
+      where: {
+        sale: { status: 'completed', date: dateRange },
+      },
+      select: {
+        total: true,
+        saleId: true,
+        product: { select: { category: true } },
+      },
+    });
+    const categoryMap = new Map<string, { category: string; total: number; saleIds: Set<string> }>();
+    for (const item of saleItems) {
+      const category = item.product?.category ?? 'uncategorized';
+      const existing = categoryMap.get(category);
+      if (existing) {
+        existing.total += Number(item.total);
+        existing.saleIds.add(item.saleId);
+      } else {
+        categoryMap.set(category, {
+          category,
+          total: Number(item.total),
+          saleIds: new Set([item.saleId]),
+        });
+      }
+    }
+    const byCategory = Array.from(categoryMap.values())
+      .map((c) => ({ category: c.category, total: c.total, count: c.saleIds.size }))
+      .sort((a, b) => b.total - a.total);
+
+    return {
+      range: { from: fromStr, to: toStr },
+      totals: {
+        salesCount: completedCount,
+        grossRevenue,
+        avgTicket,
+        refundRate,
+      },
+      byDay,
+      byPaymentMethod,
+      topSellers,
+      byCategory,
     };
   }
 }

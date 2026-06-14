@@ -1,8 +1,11 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ClsModule } from 'nestjs-cls';
+import { LoggerModule } from 'nestjs-pino';
+import { randomUUID } from 'crypto';
+import { AllExceptionsFilter } from './common/all-exceptions.filter';
 import { PrismaModule } from './prisma/prisma.module';
 import { TenantModule } from './tenant/tenant.module';
 import { TenantClsMiddleware } from './tenant/tenant-cls.middleware';
@@ -16,16 +19,54 @@ import { MedicalRecordsModule } from './medical-records/medical-records.module';
 import { ClinicalExamsModule } from './clinical-exams/clinical-exams.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { SalesModule } from './sales/sales.module';
+import { CommissionsModule } from './commissions/commissions.module';
 import { SettingsModule } from './settings/settings.module';
 import { UploadModule } from './upload/upload.module';
 import { PublicModule } from './public/public.module';
 import { PlatformModule } from './platform/platform.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
     // ── Variables de entorno (.env) ───────────────────────────────────────
     ConfigModule.forRoot({ isGlobal: true }),
+    // ── Logger estructurado (Pino) ────────────────────────────────────────
+    // - JSON en producción (consumible por Datadog/Loki/CloudWatch)
+    // - Pretty con colores en desarrollo
+    // - Auto-redacta authorization, cookies y passwords en logs HTTP
+    // - Inyecta requestId trazable por header x-request-id
+    LoggerModule.forRoot({
+      pinoHttp: {
+        level: process.env.LOG_LEVEL || (process.env.NODE_ENV === 'production' ? 'info' : 'debug'),
+        transport:
+          process.env.NODE_ENV !== 'production'
+            ? { target: 'pino-pretty', options: { singleLine: true, translateTime: 'HH:MM:ss' } }
+            : undefined,
+        redact: {
+          paths: [
+            'req.headers.authorization',
+            'req.headers.cookie',
+            'req.body.password',
+            'req.body.passwordHash',
+            'res.headers["set-cookie"]',
+          ],
+          censor: '[REDACTED]',
+        },
+        genReqId: (req, res) => {
+          const id = (req.headers['x-request-id'] as string) || randomUUID();
+          res.setHeader('x-request-id', id);
+          return id;
+        },
+        customLogLevel: (_req, res, err) => {
+          if (err || res.statusCode >= 500) return 'error';
+          if (res.statusCode >= 400) return 'warn';
+          return 'info';
+        },
+        // Silencia logs de healthcheck (ruido en uptime monitors)
+        autoLogging: { ignore: (req) => req.url === '/api/v1/health' },
+      },
+    }),
     // ── CLS (continuation-local storage) — base para tenant context ───────
     ClsModule.forRoot({ global: true, middleware: { mount: false } }),
     // ── Rate limiting global ───────────────────────────────────────────────
@@ -61,10 +102,12 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
     ClinicalExamsModule,
     InventoryModule,
     SalesModule,
+    CommissionsModule,
     SettingsModule,
     UploadModule,
     PublicModule,
     SubscriptionsModule,
+    HealthModule,
   ],
   providers: [
     // ThrottlerGuard aplicado globalmente a TODAS las rutas
@@ -78,6 +121,11 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
     {
       provide: APP_GUARD,
       useClass: SubscriptionGuard,
+    },
+    // Filtro global de excepciones: sanitiza respuestas + envía a Sentry.
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
     },
   ],
 })

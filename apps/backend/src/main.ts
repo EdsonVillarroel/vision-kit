@@ -1,11 +1,29 @@
+import * as Sentry from '@sentry/node';
+
+// ── Sentry: init ANTES de NestFactory para capturar errores de bootstrap ──
+// Solo se activa si SENTRY_DSN está definido (opt-in por entorno).
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.SENTRY_ENVIRONMENT || process.env.NODE_ENV || 'development',
+    release: process.env.SENTRY_RELEASE,
+    // 0.0–1.0 — en prod típicamente 0.1 para no saturar plan.
+    tracesSampleRate: Number(process.env.SENTRY_TRACES_SAMPLE_RATE ?? '0'),
+  });
+}
+
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { Logger as PinoLogger } from 'nestjs-pino';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+
+  // Reemplaza el logger por defecto de Nest con Pino (estructurado, redact)
+  app.useLogger(app.get(PinoLogger));
 
   app.setGlobalPrefix('api/v1');
 
@@ -73,6 +91,7 @@ async function bootstrap() {
     .addTag('settings', 'Configuración de la clínica')
     .addTag('upload', 'Subida de imágenes a Supabase Storage')
     .addTag('public', 'Portal público — catálogo y reservas online (sin auth)')
+    .addTag('health', 'Healthcheck para load balancers / uptime monitors')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -85,10 +104,28 @@ async function bootstrap() {
   });
   // ─────────────────────────────────────────────────────────────────────────
 
+  // Shutdown limpio: drena requests + flushea Sentry antes de salir
+  app.enableShutdownHooks();
+
+  const logger = new Logger('Bootstrap');
   const port = process.env.PORT || 3000;
   await app.listen(port);
-  console.log(`Vision Kit API   → http://localhost:${port}/api/v1`);
-  console.log(`Swagger UI       → http://localhost:${port}/api/docs`);
-  console.log(`Public API       → http://localhost:${port}/api/v1/public/`);
+  logger.log(`Vision Kit API   → http://localhost:${port}/api/v1`);
+  logger.log(`Swagger UI       → http://localhost:${port}/api/docs`);
+  logger.log(`Public API       → http://localhost:${port}/api/v1/public/`);
+  if (process.env.SENTRY_DSN) {
+    logger.log(`Sentry           → enabled (env=${process.env.SENTRY_ENVIRONMENT || process.env.NODE_ENV})`);
+  }
 }
-bootstrap();
+
+bootstrap().catch(async (err) => {
+  // Captura cualquier fallo de bootstrap (env vars faltantes, etc.) y flushea
+  // a Sentry antes de salir para no perder el evento.
+  if (process.env.SENTRY_DSN) {
+    Sentry.captureException(err);
+    await Sentry.flush(2000);
+  }
+   
+  console.error('Fatal bootstrap error:', err);
+  process.exit(1);
+});

@@ -11,10 +11,14 @@ export class ApiError extends Error {
   }
 }
 
-// Callback invocado cuando el backend devuelve 402 (suscripción inactiva).
-// Registrado por App.tsx para mostrar la vista de suscripción suspendida.
-let _on402: (() => void) | null = null;
-export function setOn402Handler(handler: () => void) {
+// Callback invocado cuando el backend devuelve 402 (suscripción inactiva o
+// feature no incluida en el plan). El body del error puede incluir:
+//   { error: 'PlanQuotaExceeded', ... }  → manejado por QuotaErrorProvider
+//   { error: 'FeatureNotInPlan', feature, planName, ... }  → handler global
+//   (sin error) → suscripción suspendida → SuspendedView
+// El handler recibe el body completo para distinguir casos.
+let _on402: ((body: unknown) => void) | null = null;
+export function setOn402Handler(handler: (body: unknown) => void) {
   _on402 = handler;
 }
 
@@ -93,11 +97,13 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     } catch {
       // ignore JSON parse errors
     }
-    // 402 puede ser suscripción suspendida (redirect global) o quota del plan
-    // excedida (el componente lo maneja con un modal local).
+    // 402 puede ser: (a) suscripción suspendida → vista global SuspendedView,
+    // (b) quota del plan excedida (PlanQuotaExceeded) → modal local,
+    // (c) feature no incluida en plan (FeatureNotInPlan) → snackbar global.
+    // Pasamos el body completo al handler para que distinga casos.
     if (res.status === 402) {
       const errorCode = (errorBody as { error?: string })?.error;
-      if (errorCode !== 'PlanQuotaExceeded') _on402?.();
+      if (errorCode !== 'PlanQuotaExceeded') _on402?.(errorBody);
     }
     throw new ApiError(errorMessage, res.status, errorBody);
   }

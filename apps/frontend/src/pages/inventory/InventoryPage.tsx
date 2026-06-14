@@ -50,8 +50,8 @@ export const InventoryPage = () => {
   );
 
   const totalValue = products.reduce((sum, p) => sum + p.sellingPrice * p.stock, 0);
-  const lowStockCount = products.filter(p => p.status === 'low-stock' || p.status === 'low_stock').length;
-  const outOfStockCount = products.filter(p => p.status === 'out-of-stock' || p.status === 'out_of_stock').length;
+  const lowStockCount = products.filter(p => p.status === 'low-stock').length;
+  const outOfStockCount = products.filter(p => p.status === 'out-of-stock').length;
 
   return (
     <div className="space-y-6">

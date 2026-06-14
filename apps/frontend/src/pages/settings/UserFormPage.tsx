@@ -6,6 +6,7 @@ import { userService } from '../../features/users/services/userService';
 import type { UserRole } from '../../features/auth/types';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { ConfirmModal } from '../../components/ui/ConfirmModal';
 
 export const UserFormPage: React.FC = () => {
   const navigate = useNavigate();
@@ -21,8 +22,13 @@ export const UserFormPage: React.FC = () => {
     email: '',
     role: 'optician' as UserRole,
     phone: '',
-    password: ''
+    password: '',
+    commissionRate: 0
   });
+  // Valor original de commissionRate cargado desde el server (null = creación).
+  // Se usa para detectar cambios y pedir confirmación antes de persistir.
+  const [originalCommissionRate, setOriginalCommissionRate] = useState<number | null>(null);
+  const [showCommissionConfirm, setShowCommissionConfirm] = useState(false);
 
   // Verificar permisos
   useEffect(() => {
@@ -45,13 +51,16 @@ export const UserFormPage: React.FC = () => {
             setError('Usuario no encontrado');
             return;
           }
+          const rate = Number(user.commissionRate ?? 0);
           setFormData({
             name: user.name,
             email: user.email,
             role: user.role,
             phone: user.phone || '',
-            password: ''
+            password: '',
+            commissionRate: rate
           });
+          setOriginalCommissionRate(rate);
         } catch (err: any) {
           setError(err.message);
         } finally {
@@ -61,6 +70,27 @@ export const UserFormPage: React.FC = () => {
       loadUser();
     }
   }, [id, isEditing]);
+
+  const commissionRateChanged =
+    isEditing &&
+    originalCommissionRate !== null &&
+    Number(formData.commissionRate) !== Number(originalCommissionRate);
+
+  const persistUser = async () => {
+    setIsSaving(true);
+    try {
+      if (isEditing && id) {
+        await userService.update(id, formData);
+      } else {
+        await userService.create(formData);
+      }
+      navigate('/settings/users');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,19 +107,28 @@ export const UserFormPage: React.FC = () => {
       return;
     }
 
-    setIsSaving(true);
-    try {
-      if (isEditing && id) {
-        await userService.update(id, formData);
-      } else {
-        await userService.create(formData);
-      }
-      navigate('/settings/users');
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setIsSaving(false);
+    if (
+      Number.isNaN(formData.commissionRate) ||
+      formData.commissionRate < 0 ||
+      formData.commissionRate > 100
+    ) {
+      setError('La comisión debe estar entre 0 y 100%');
+      return;
     }
+
+    // En edición, si cambió la tasa de comisión, pedir confirmación explícita
+    // porque el cambio afecta cálculos de reportes (periodos anteriores + actuales).
+    if (commissionRateChanged) {
+      setShowCommissionConfirm(true);
+      return;
+    }
+
+    await persistUser();
+  };
+
+  const handleCommissionConfirm = async () => {
+    setShowCommissionConfirm(false);
+    await persistUser();
   };
 
   if (isLoading) {
@@ -168,6 +207,36 @@ export const UserFormPage: React.FC = () => {
             </p>
           </div>
 
+          <div>
+            <label htmlFor="commissionRate" className="block text-sm font-medium text-gray-700 mb-1">
+              Comisión por venta
+            </label>
+            <div className="relative">
+              <input
+                id="commissionRate"
+                type="number"
+                step="0.01"
+                min="0"
+                max="100"
+                value={formData.commissionRate}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    commissionRate: e.target.value === '' ? 0 : Number(e.target.value),
+                  })
+                }
+                className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="0"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm pointer-events-none">
+                %
+              </span>
+            </div>
+            <p className="mt-1 text-sm text-gray-500">
+              Porcentaje aplicado sobre la base de cada venta (subtotal menos descuentos). Entre 0 y 100.
+            </p>
+          </div>
+
           {!isEditing && (
             <Input
               id="password"
@@ -204,6 +273,18 @@ export const UserFormPage: React.FC = () => {
           </Button>
         </div>
       </form>
+
+      <ConfirmModal
+        isOpen={showCommissionConfirm}
+        title="Cambiar tasa de comisión"
+        message={`Este cambio (de ${originalCommissionRate ?? 0}% a ${formData.commissionRate}%) afecta el cálculo de comisiones en reportes de periodos anteriores y actuales. ¿Confirmás el cambio?`}
+        variant="warning"
+        confirmLabel="Confirmar cambio"
+        cancelLabel="Cancelar"
+        isLoading={isSaving}
+        onConfirm={handleCommissionConfirm}
+        onCancel={() => setShowCommissionConfirm(false)}
+      />
     </div>
   );
 };

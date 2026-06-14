@@ -45,6 +45,10 @@ const NewClinicalExamPage     = lazy(() => import('../pages/clinical-exams').the
 const EditClinicalExamPage    = lazy(() => import('../pages/clinical-exams').then(m => ({ default: m.EditClinicalExamPage })));
 const ClinicalExamDetailsPage = lazy(() => import('../pages/clinical-exams').then(m => ({ default: m.ClinicalExamDetailsPage })));
 
+const CommissionsPage     = lazy(() => import('../pages/commissions/CommissionsPage').then(m => ({ default: m.CommissionsPage })));
+
+const MetricsPage         = lazy(() => import('../pages/metrics/MetricsPage'));
+
 // ─── Fallback de carga ────────────────────────────────────────────────────────
 const PageLoader = () => <SkeletonPageWithStats statCount={4} tableRows={8} />;
 
@@ -87,6 +91,12 @@ export const AppRoutes = () => {
         <Route path="/sales/new" element={<NewSalePage />} />
         <Route path="/sales/reports" element={<SalesPage />} />
         <Route path="/sales/:id" element={<ViewSalePage />} />
+
+        {/* Comisiones (solo admin/super_admin — protegido adentro de la página) */}
+        <Route path="/commissions" element={<CommissionsPage />} />
+
+        {/* Métricas (solo admin/super_admin) */}
+        <Route path="/metrics" element={<MetricsPage />} />
 
         {/* Inventario */}
         <Route path="/inventory" element={<InventoryListPage />} />

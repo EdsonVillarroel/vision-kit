@@ -17,6 +17,7 @@ const SELECT_USER = {
   role: true,
   avatarUrl: true,
   phone: true,
+  commissionRate: true,
   status: true,
   createdAt: true,
   updatedAt: true,

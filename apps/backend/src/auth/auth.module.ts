@@ -9,9 +9,15 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 @Module({
   imports: [
     PassportModule,
-    JwtModule.register({
-      secret: process.env.JWT_SECRET || 'secret',
-      signOptions: { expiresIn: process.env.JWT_EXPIRES_IN || '7d' },
+    JwtModule.registerAsync({
+      useFactory: () => {
+        const secret = process.env.JWT_SECRET;
+        if (!secret) throw new Error('JWT_SECRET no está definido');
+        return {
+          secret,
+          signOptions: { expiresIn: process.env.JWT_EXPIRES_IN || '7d' },
+        };
+      },
     }),
   ],
   providers: [AuthService, JwtStrategy, JwtAuthGuard],

@@ -90,7 +90,7 @@ export const EditProductPage = () => {
               onClick={() => imageInputRef.current?.click()}
               className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors"
             >
-              {imageFile ? 'Cambiar imagen' : product.imageUrl ? 'Reemplazar imagen' : 'Seleccionar imagen'}
+              {imageFile ? 'Cambiar imagen' : product.images && product.images.length > 0 ? 'Reemplazar imagen' : 'Seleccionar imagen'}
             </button>
             {imageFile && (
               <button

@@ -1,0 +1,53 @@
+# Dependencias y artefactos de build
+**/node_modules
+**/dist
+**/build
+**/.next
+**/coverage
+
+# Secrets — NUNCA copiar al image
+**/.env
+**/.env.local
+**/.env.*.local
+!**/.env.example
+
+# Git y CI
+.git
+.github
+.gitignore
+.gitattributes
+
+# Editor / IDE
+.vscode
+.idea
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Tests / docs / docker mismo
+**/test
+**/tests
+**/__tests__
+**/*.test.ts
+**/*.spec.ts
+docs
+*.md
+!README.md
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Supabase local / temp
+supabase/.branches
+supabase/.temp
+
+# Otros monorepos workspaces que el backend no necesita en runtime
+apps/frontend/dist
+apps/admin/dist
+apps/landing/dist

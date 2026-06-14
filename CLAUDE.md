@@ -111,7 +111,7 @@ npx supabase db pull                  # sync schema desde remoto
 └── index.ts       ← Exports públicos del módulo
 ```
 
-**Features existentes (frontend):** `auth`, `patients`, `medical-records`, `clinical-exams`, `appointments`, `inventory`, `sales`, `users`, `layout`, `subscription` (plan actual + `hasFeature()` + quota checks)
+**Features existentes (frontend):** `auth`, `patients`, `medical-records`, `clinical-exams`, `appointments`, `inventory`, `sales`, `users`, `layout`, `subscription` (plan actual + `hasFeature()` + quota checks), `commissions` (reporte + export PDF con pdfmake), `metrics` (recharts: totales, series por día, top vendedores, mix de pagos)
 
 ---
 
@@ -188,11 +188,43 @@ Cada módulo en `apps/backend/src/<modulo>/` tiene:
 
 **Auth platform:** strategy `'jwt-platform'`, guard `PlatformAuthGuard`. Payload: `{ sub, email, type: 'platform' }`. Separado completamente de tenant auth.
 
-**Módulos:** `auth`, `platform-auth`, `platform`, `users`, `patients`, `appointments`, `medical-records`, `clinical-exams`, `inventory`, `sales`, `settings`, `subscriptions`, `upload`, `public`, `prisma` (global).
+**Módulos:** `auth`, `platform-auth`, `platform`, `users`, `patients`, `appointments`, `medical-records`, `clinical-exams`, `inventory`, `sales`, `commissions`, `settings`, `subscriptions`, `upload`, `public`, `health` (GET `/api/v1/health` — chequea DB, skip throttle, sin auth), `prisma` (global).
 
-**Seguridad:** `helmet` (headers HTTP) + `@nestjs/throttler` (10/seg · 100/min · 1000/h global; `POST /public/:tenantSlug/bookings` con límite propio 2/10s · 3/min). CORS multi-origen via `CORS_ORIGINS` (separados por coma). `SubscriptionGuard` (APP_GUARD global) devuelve HTTP 402 si el tenant no está `active`. `PlanQuotaGuard` (por-handler con `@QuotaLimit('patients'|'products'|'sales_per_month'|'users')`) devuelve HTTP 402 + body `{ error: 'PlanQuotaExceeded', limit, current, planName }` al exceder el plan; cableado en `POST /patients`, `POST /inventory`, `POST /sales`. Rutas sin tenantId en CLS (public/platform) se saltan. RLS habilitado en todas las tablas via migración 015.
+**JWT separado:** `JWT_SECRET` firma tokens de tenant (auth module); `JWT_PLATFORM_SECRET` firma tokens de platform admin (platform-auth module). Ambos son requeridos al boot — el server falla con error claro si falta alguno.
 
-**Total endpoints:** 64 (43 tenant + 1 subscriptions + 4 public + 3 platform-auth + 13 platform-management) — ver `docs/API_ENDPOINTS.md`
+**Resiliencia:** `PrismaService.onModuleInit()` no es bloqueante: si la DB cae temporalmente al boot, el server arranca y `/health` reporta `degraded` (HTTP 503) en lugar de crash-loop.
+
+**Docker:** `apps/backend/Dockerfile` multi-stage (deps → build → runtime alpine, ~700MB). Build context = raíz del monorepo. Usa tini como PID 1 para shutdown limpio + non-root user `nestjs`. `tsconfig.build.json` excluye `prisma/` para que `dist/main.js` quede en raíz.
+
+**Observabilidad:**
+- **Logger:** `nestjs-pino` reemplaza el logger por defecto. JSON estructurado en prod (consumible por Datadog/Loki/CloudWatch), pretty con colores en dev. Auto-redacta `authorization`, `cookie`, `password`, `passwordHash`. Cada request lleva `x-request-id` (UUID propagado en response header). Healthchecks no se loguean (`autoLogging.ignore`).
+- **Sentry:** opt-in via `SENTRY_DSN`. Init antes de `NestFactory.create` para capturar errores de bootstrap. Tags automáticos: `requestId`, `tenantId`. Sample rate de traces configurable. Si `SENTRY_DSN` está vacío, queda deshabilitado (no falla).
+- **AllExceptionsFilter** (global via `APP_FILTER`): sanitiza respuestas (no leak stack traces ni mensajes de Prisma al cliente), mapea errores conocidos de Prisma (`P2002`→409, `P2025`→404, `P2003`→400), incluye `requestId` en todas las respuestas de error. Solo errores **no-HttpException** (true unhandled) se reportan a Sentry — esto evita ruido por `ServiceUnavailableException` esperado del `/health`.
+
+**Seguridad:** `helmet` (headers HTTP) + `@nestjs/throttler` (10/seg · 100/min · 1000/h global; `POST /public/:tenantSlug/bookings` con límite propio 2/10s · 3/min). CORS multi-origen via `CORS_ORIGINS` (separados por coma). `SubscriptionGuard` (APP_GUARD global) devuelve HTTP 402 si el tenant no está `active`. `PlanQuotaGuard` (por-handler con `@QuotaLimit('patients'|'products'|'sales_per_month'|'users')`) devuelve HTTP 402 + body `{ error: 'PlanQuotaExceeded', limit, current, planName }` al exceder el plan; cableado en `POST /patients`, `POST /inventory`, `POST /sales`. `PlanFeatureGuard` (por-handler/controller con `@PlanFeature('commissions')`) devuelve HTTP 402 + body `{ error: 'FeatureNotInPlan', feature, planSlug, planName }` cuando el flag booleano del plan no está activo; cableado en controller `commissions/*` y en `GET /sales/metrics`. Rutas sin tenantId en CLS (public/platform) se saltan. RLS habilitado en todas las tablas via migración 015.
+
+**Total endpoints:** 69 (43 tenant + 1 subscriptions + 1 sales/metrics + 3 commissions + 4 public + 3 platform-auth + 13 platform-management + 1 health) — ver `docs/API_ENDPOINTS.md`
+
+**Tests:** Jest. 41 tests críticos en `apps/backend/src/**/*.spec.ts`:
+- `auth.service.spec.ts` — login OK, password incorrecto, usuario inexistente/inactivo, garantiza que `passwordHash` NUNCA se filtra en respuestas.
+- `subscription.guard.spec.ts` — pasa sin tenantId (rutas public/platform), suspended → 402, cache 5 min funciona.
+- `plan-quota.guard.spec.ts` — sin decorator → pasa, sin sub → 402, dentro de límite → pasa, exceso → 402 con body `PlanQuotaExceeded`, UNLIMITED (-1) → pasa, `sales_per_month` lee `features.max_sales_per_month`.
+- `tenant-prisma.service.spec.ts` — el más crítico para aislamiento: verifica que el query extension inyecta `tenantId` en `where` (find/update/delete/count/aggregate/groupBy), en `data` (create/createMany), en `where + create` (upsert pero NO en update); NO inyecta en `findUnique` (rompería unique constraints), en modelos no scoped (`Tenant`, `SubscriptionPlan`), ni en rutas sin tenantId en CLS. Cubre los 16 modelos en `TENANT_SCOPED_MODELS`. Cobertura del archivo: 100% líneas, 95% branches.
+- Comando: `npm test --workspace=apps/backend` o `cd apps/backend && npx jest`. Coverage: `npm test -- --coverage`.
+
+**CI/CD:** `.github/workflows/ci.yml` — en cada PR/push a `main`:
+- Job `validate` (matrix: backend, frontend, admin, landing): `npm ci` + `prisma generate` (solo backend) + `lint` + `test` (solo backend) + `build` por app en paralelo. `fail-fast: false` para diagnóstico completo.
+- Job `docker-publish-backend` (solo en push a `main`): builda `apps/backend/Dockerfile` y pushea a `ghcr.io/edsonvillarroel/vision-kit-backend` con tags `latest` + `sha-<short>`. Usa `cache: type=gha` para builds incrementales (~1–2 min después del primer build).
+- `concurrency` cancela runs anteriores del mismo branch — ahorra CI minutes en pushes rápidos.
+
+**Deployment:**
+- Backend: imagen GHCR → Railway/Render/Fly.io. Healthcheck `/api/v1/health`.
+- Frontend/Admin/Landing: cada app tiene `vercel.json` con SPA rewrite + headers de seguridad (X-Content-Type-Options, X-Frame-Options, Permissions-Policy, HSTS en admin). Build commands apuntan a la raíz del monorepo (`cd ../..`).
+- Stack de dev local: `docker-compose -f docker-compose.dev.yml up` (Postgres aislado en :5433 + backend con healthcheck + auto-deps).
+- Scripts útiles: `scripts/generate-secrets.sh` (genera `JWT_SECRET` + `JWT_PLATFORM_SECRET` con `openssl rand -base64 64`); `scripts/verify-rls.sql` (audita que todas las tablas tengan RLS habilitado).
+- Plan paso-a-paso: `docs/DEPLOYMENT.md` (incluye smoke test crítico de aislamiento multi-tenant).
+
+**Audit cross-tenant (pasado):** los 9 services de negocio (`patients`, `appointments`, `medical-records`, `clinical-exams`, `inventory`, `sales`, `commissions`, `settings`, `users`) usan EXCLUSIVAMENTE `tenantPrisma.client` (70 queries auto-scoped, 0 directas a `this.prisma`). Los usos directos en `auth`/`platform`/`public`/`subscriptions` son intencionales (login pre-context, operaciones cross-tenant del admin global, rutas públicas con `tenantId` derivado del slug).
 
 ---
 

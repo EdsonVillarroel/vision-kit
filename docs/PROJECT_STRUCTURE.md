@@ -103,6 +103,21 @@ apps/frontend/
 │   │   │   ├── types/              ← Sale, SaleItem, PaymentMethod, SalesSummary
 │   │   │   └── index.ts
 │   │   │
+│   │   ├── commissions/            ← requiere plan con feature `commissions`
+│   │   │   ├── components/         ← CommissionsTable, DateRangeFilter
+│   │   │   ├── hooks/              ← useCommissionsReport, useUserCommissionSummary
+│   │   │   ├── services/           ← commissionService → /commissions/*
+│   │   │   ├── utils/              ← exportCommissionsPdf (pdfmake)
+│   │   │   ├── types/              ← CommissionReportRow, UserCommissionSummary, DateRange
+│   │   │   └── index.ts
+│   │   │
+│   │   ├── metrics/                ← requiere plan con feature `commissions`
+│   │   │   ├── components/         ← StatsRow, SalesByDayChart, TopSellersChart, PaymentMethodChart, DateRangePresets (recharts)
+│   │   │   ├── hooks/              ← useSalesMetrics
+│   │   │   ├── services/           ← metricsService → /sales/metrics
+│   │   │   ├── types/              ← SalesMetrics, DailySales, TopSeller
+│   │   │   └── index.ts
+│   │   │
 │   │   ├── users/
 │   │   │   ├── services/           ← userService → /users
 │   │   │   ├── types/              ← UserFormData
@@ -156,6 +171,10 @@ apps/frontend/
 │   │   │   ├── SalesPage.tsx           ← reportes + filtros
 │   │   │   ├── NewSalePage.tsx
 │   │   │   └── ViewSalePage.tsx
+│   │   ├── commissions/
+│   │   │   └── CommissionsPage.tsx     ← admin/super_admin + feature `commissions`
+│   │   ├── metrics/
+│   │   │   └── MetricsPage.tsx         ← admin/super_admin + feature `commissions`
 │   │   └── settings/
 │   │       ├── ProfilePage.tsx
 │   │       ├── UsersPage.tsx
@@ -221,7 +240,9 @@ apps/backend/
 │   ├── medical-records/            ← /medical-records CRUD, mapea DTO → columnas flat
 │   ├── clinical-exams/             ← /clinical-exams CRUD, genera examNumber automático
 │   ├── inventory/                  ← /inventory CRUD + /alerts + /:id/adjust + /:id/movements
-│   ├── sales/                      ← /sales CRUD + /summary + /:id/status (con stock revert)
+│   ├── sales/                      ← /sales CRUD + /summary + /metrics + /:id/status (con stock revert)
+│   ├── commissions/                ← GET /commissions, /leaderboard, /summary/:userId (requiere feature `commissions`)
+│   ├── tenant/                     ← guards multi-tenant: SubscriptionGuard, PlanQuotaGuard, PlanFeatureGuard + decorators QuotaLimit, PlanFeature
 │   ├── settings/                   ← GET/PATCH /settings (singleton ClinicSettings)
 │   ├── upload/                     ← POST /upload/avatar/:userId + /upload/product-image/:productId
 │   └── public/                     ← GET /public/catalog|clinic, POST /public/bookings (sin JWT)
@@ -258,6 +279,8 @@ apps/backend/
 | `/sales/new` | NewSalePage |
 | `/sales/reports` | SalesPage |
 | `/sales/:id` | ViewSalePage |
+| `/commissions` | CommissionsPage (admin/super_admin + feature `commissions`) |
+| `/metrics` | MetricsPage (admin/super_admin + feature `commissions`) |
 | `/inventory` | InventoryListPage |
 | `/inventory/new` | NewProductPage |
 | `/inventory/frames` | FramesPage |

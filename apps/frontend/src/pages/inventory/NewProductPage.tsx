@@ -2,14 +2,12 @@ import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useInventory } from '../../features/inventory/hooks/useInventory';
 import { ProductForm } from '../../features/inventory/components/ProductForm';
-import { useSnackbar } from '../../components/Snackbar';
 import { uploadService } from '../../lib/uploadService';
 import type { ProductFormData } from '../../features/inventory/types';
 
 export const NewProductPage = () => {
   const navigate = useNavigate();
   const { createProduct } = useInventory();
-  const { showSuccess } = useSnackbar();
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);

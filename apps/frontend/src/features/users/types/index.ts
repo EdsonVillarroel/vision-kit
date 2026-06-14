@@ -8,6 +8,7 @@ export interface UserFormData {
   role: UserRole;
   phone?: string;
   password?: string; // Para crear/actualizar contraseña
+  commissionRate?: number; // 0-100 — porcentaje sobre la base de cada venta
 }
 
 export interface UserFilters {

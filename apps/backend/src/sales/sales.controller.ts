@@ -6,11 +6,14 @@ import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger'
 import { SaleStatus } from '@prisma/client';
 import { SalesService } from './sales.service';
 import { CreateSaleDto } from './dto/create-sale.dto';
+import { SalesMetricsQueryDto } from './dto/sales-metrics-query.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { PlanQuotaGuard } from '../tenant/plan-quota.guard';
 import { QuotaLimit } from '../tenant/quota-limit.decorator';
+import { PlanFeatureGuard } from '../tenant/plan-feature.guard';
+import { PlanFeature } from '../tenant/plan-feature.decorator';
 
 @ApiTags('sales')
 @ApiBearerAuth('access-token')
@@ -42,6 +45,17 @@ export class SalesController {
   @Get('summary')
   getSummary(@Query('from') from: string, @Query('to') to: string) {
     return this.service.getSummary(from, to);
+  }
+
+  @ApiOperation({ summary: 'Métricas de ventas: totales, series temporales, top vendedores, mix de pagos y categorías — requiere plan con feature `commissions`' })
+  @ApiQuery({ name: 'from', required: false, example: '2026-01-01' })
+  @ApiQuery({ name: 'to', required: false, example: '2026-01-31' })
+  @UseGuards(RolesGuard, PlanFeatureGuard)
+  @Roles('admin', 'super_admin')
+  @PlanFeature('commissions')
+  @Get('metrics')
+  getMetrics(@Query() q: SalesMetricsQueryDto) {
+    return this.service.getMetrics(q);
   }
 
   @ApiOperation({ summary: 'Obtener venta por ID' })

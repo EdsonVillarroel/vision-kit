@@ -334,7 +334,7 @@ const AppContent = () => {
 function App() {
   return (
     <ErrorBoundary>
-      <BrowserRouter basename="/vision-kit">
+      <BrowserRouter>
         <ThemeProvider>
           <SnackbarProvider>
             <AuthProvider>

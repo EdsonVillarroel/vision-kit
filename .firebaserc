@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "REEMPLAZAR_PROJECT_ID"
+  },
+  "targets": {
+    "REEMPLAZAR_PROJECT_ID": {
+      "hosting": {
+        "frontend": ["REEMPLAZAR_SITE_FRONTEND"],
+        "landing": ["REEMPLAZAR_SITE_LANDING"],
+        "admin": ["REEMPLAZAR_SITE_ADMIN"]
+      }
+    }
+  }
+}

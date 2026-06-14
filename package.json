@@ -27,7 +27,11 @@
     "db:seed": "npm run db:seed --workspace=apps/backend",
     "db:seed:plans": "npm run db:seed:plans --workspace=apps/backend",
     "db:studio": "npm run db:studio --workspace=apps/backend",
-    "test": "node .github/setup.js"
+    "test": "node .github/setup.js",
+    "deploy:hosting": "npm run build:frontend && npm run build:landing && npm run build:admin && firebase deploy --only hosting",
+    "deploy:frontend": "npm run build:frontend && firebase deploy --only hosting:frontend",
+    "deploy:landing": "npm run build:landing && firebase deploy --only hosting:landing",
+    "deploy:admin": "npm run build:admin && firebase deploy --only hosting:admin"
   },
   "devDependencies": {
     "concurrently": "^9.0.0"

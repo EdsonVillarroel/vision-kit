@@ -16,6 +16,15 @@ dist-ssr
 coverage
 *.tsbuildinfo
 
+# Firebase
+.firebase
+firebase-debug.log
+.runtimeconfig.json
+
+# Production env (cada app build con su VITE_API_URL)
+.env.production
+.env.production.local
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

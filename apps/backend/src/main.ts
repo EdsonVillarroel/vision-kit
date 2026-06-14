@@ -64,7 +64,9 @@ async function bootstrap() {
       // Permitir requests sin Origin: Postman, curl, apps móviles del equipo interno
       if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) return callback(null, true);
-      callback(new Error(`Origin '${origin}' no permitido por CORS`));
+      // Origen no permitido: no setear headers CORS (el navegador bloquea).
+      // NO lanzar Error: evita HTTP 500 + ruido en Sentry por scanners/bots.
+      callback(null, false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],

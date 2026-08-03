@@ -25,6 +25,15 @@ firebase-debug.log
 .env.production
 .env.production.local
 
+# Cloud Run — archivo de variables con secretos (JWT, DATABASE_URL)
+env.yaml
+env*.yaml
+!env*.example.yaml
+
+# Secretos de backend (nunca commitear; .env.example sí se versiona)
+apps/backend/.env
+prod-secrets.env
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

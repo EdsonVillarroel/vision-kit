@@ -1,13 +1,13 @@
 {
   "projects": {
-    "default": "REEMPLAZAR_PROJECT_ID"
+    "default": "vision2020-8df81"
   },
   "targets": {
-    "REEMPLAZAR_PROJECT_ID": {
+    "vision2020-8df81": {
       "hosting": {
-        "frontend": ["REEMPLAZAR_SITE_FRONTEND"],
-        "landing": ["REEMPLAZAR_SITE_LANDING"],
-        "admin": ["REEMPLAZAR_SITE_ADMIN"]
+        "frontend": ["vision-kit"],
+        "landing": ["vision-2020-hd"],
+        "admin": ["vision-kit-admin"]
       }
     }
   }

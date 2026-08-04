@@ -1,0 +1,38 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Render Blueprint — backend NestJS (Vision Kit)
+#
+# USO:
+#   1. Push de este repo a GitHub.
+#   2. Render Dashboard → New → Blueprint → conectar el repo.
+#   3. Render detecta este archivo y crea el servicio. Pedirá los valores de las
+#      variables marcadas `sync: false` (secretos) — pegarlos desde tu env.yaml.
+#
+# Free tier: sin tarjeta, se duerme tras 15 min de inactividad (cold start ~50s).
+# Construye apps/backend/Dockerfile con contexto = raíz del monorepo.
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  - type: web
+    name: vision-kit-backend
+    runtime: docker
+    plan: free
+    region: oregon                     # free tier: oregon | frankfurt | singapore | ohio | virginia
+    dockerfilePath: ./apps/backend/Dockerfile
+    dockerContext: .                   # raíz del monorepo (el Dockerfile es multi-stage y lo espera así)
+    healthCheckPath: /api/v1/health
+    autoDeploy: true                   # redeploy automático en cada push a la rama conectada
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Render inyecta PORT automáticamente; el backend lo lee con process.env.PORT.
+      - key: CORS_ORIGINS
+        value: https://vision-kit.web.app,https://vision-2020-hd.web.app,https://vision-kit-admin.web.app
+      # ── Secretos: Render los pide al crear el Blueprint (no se versionan) ──
+      - key: DATABASE_URL              # Supabase Transaction pooler (6543, ?pgbouncer=true)
+        sync: false
+      - key: DIRECT_URL                # Supabase Direct connection (5432)
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_PLATFORM_SECRET
+        sync: false

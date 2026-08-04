@@ -206,6 +206,33 @@ PATCH  /api/v1/settings            ← admin
 - [ ] **Notificaciones** → recordatorios de citas (email/SMS via servicio externo)
 - [ ] **Exportar reportes** → PDF de ventas, historial clínico
 
+### Feature: Migración de datos por tenant (clientes + ventas) — BACKLOG
+
+> Objetivo: cada tenant (rol admin/manager) migra sus datos manuales cargando la plantilla Excel
+> `docs/migracion/plantilla-migracion-vision-kit.xlsx` (generada con `npm run template:migration`).
+> Todo el import es auto-scopeado al tenant vía `tenantPrisma.client`.
+
+**Backend — módulo `migration`**
+- [ ] `GET /migration/template` → descarga el `.xlsx` (reusar `generateMigrationTemplate.ts` como buffer, no archivo estático). Guard: `JwtAuthGuard` + `RolesGuard` (admin, manager).
+- [ ] `POST /migration/import?dryRun=true|false` → multipart `.xlsx` (Multer, límite de tamaño). Parsea con `exceljs`, ignora fila 2 (ayuda) y detecta/omite la fila de ejemplo.
+- [ ] Parser: **Clientes** → upsert por `identificationId` (`@@unique([tenantId, identificationId])`); **Productos** → upsert por `sku`; **Ventas + Detalle_Ventas** → agrupar líneas por "Referencia de venta", resolver `documento→patientId` y `sku→productId`, armar `CreateSaleDto` y crear.
+- [ ] DTO de import propio: hacer `emergencyContact` **opcional** (el `CreatePatientDto` actual lo exige; la plantilla lo marca "recomendado").
+- [ ] Modo `dryRun`: validar y devolver reporte `{ creados, omitidos, errores:[{hoja, fila, motivo}] }` SIN escribir. Import real: transacción por venta, errores por fila sin abortar todo.
+- [ ] Idempotencia: clientes/productos por clave natural (upsert). Ventas: definir dedupe (¿guardar `externalRef`=Referencia de venta en `Sale` para no duplicar en reintentos?) — decisión de diseño pendiente.
+- [ ] (Opcional) Gate por plan: `@PlanFeature('data_migration')` + flag en `subscription_plans.features`.
+
+**Frontend — feature `migration` (apps/frontend/src/features/migration/)**
+- [ ] Página `/migracion` (o bajo Configuración): botón "Descargar plantilla" (`GET /migration/template`), dropzone `.xlsx`.
+- [ ] Flujo 2 pasos: "Validar" (dryRun → muestra conteos + tabla de errores por fila) → "Importar" (commit → reporte final). Role-gated (admin/manager).
+- [ ] Ruta + entrada de navegación + service/hook/types del feature.
+
+**Docs a actualizar al implementar**
+- [ ] `API_ENDPOINTS.md` (+2 endpoints), `PROJECT_STRUCTURE.md` (módulo + feature), contador de endpoints en `CLAUDE.md`.
+
+**Ya hecho (esta sesión)**
+- [x] Plantilla Excel `docs/migracion/plantilla-migracion-vision-kit.xlsx` + generador `prisma/generateMigrationTemplate.ts` + script `npm run template:migration`.
+- [x] `exceljs` agregado como dependencia del backend (se reusa para servir/parsear).
+
 ### Completado en sesión 9 ✅
 - [x] **`ConfirmModal` reutilizable** → `components/ui/ConfirmModal.tsx` con variantes danger/warning/default; exportado desde `ui/index.ts`
 - [x] **Variantes `danger` y `warning` en `Button`** → añadidas al type union y al mapa de estilos

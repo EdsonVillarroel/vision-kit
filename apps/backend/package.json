@@ -19,6 +19,7 @@
     "db:seed": "ts-node prisma/seed.ts",
     "db:seed:plans": "ts-node prisma/seedPlans.ts",
     "db:seed:admin": "ts-node prisma/seedPlatformAdmin.ts",
+    "template:migration": "ts-node prisma/generateMigrationTemplate.ts",
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset"
   },
@@ -37,6 +38,7 @@
     "bcrypt": "^5.1.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "exceljs": "^4.4.0",
     "helmet": "^8.1.0",
     "nestjs-cls": "^6.2.0",
     "nestjs-pino": "^4.6.1",

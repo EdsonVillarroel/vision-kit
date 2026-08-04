@@ -88,6 +88,7 @@ npm run admin          # solo admin dev server (puerto 5175)
 npm run db:migrate     # aplicar migraciones Prisma
 npm run db:seed        # seed con usuarios, pacientes, productos, citas (Bolivia, BOB, IVA 13%)
 npm run db:seed:plans  # seed con 7 filas en subscription_plans (4 tiers × mensual/anual)
+npm run db:seed:admin  # crea/actualiza el platform admin (NO está en db:seed) — configurable con PLATFORM_ADMIN_EMAIL/PASSWORD/NAME
 npm run db:studio      # GUI Prisma Studio
 npm run build          # build frontend + backend
 
@@ -335,6 +336,8 @@ Cada módulo en `apps/backend/src/<modulo>/` tiene:
 | optico2@visionkit.com | optician |
 
 ### Platform admin
+
+> **No lo crea `db:seed`** — correr `npm run db:seed:admin` por separado. Login en el panel admin vía `POST /platform/auth/login` (endpoint separado del tenant auth).
 
 | Email | Tipo |
 |-------|------|

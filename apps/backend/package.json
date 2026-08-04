@@ -18,6 +18,7 @@
     "db:generate": "prisma generate",
     "db:seed": "ts-node prisma/seed.ts",
     "db:seed:plans": "ts-node prisma/seedPlans.ts",
+    "db:seed:admin": "ts-node prisma/seedPlatformAdmin.ts",
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset"
   },

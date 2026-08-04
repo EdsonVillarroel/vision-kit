@@ -27,7 +27,12 @@ services:
       # Render inyecta PORT automáticamente; el backend lo lee con process.env.PORT.
       - key: CORS_ORIGINS
         value: https://vision-kit.web.app,https://vision-2020-hd.web.app,https://vision-kit-admin.web.app
+      # SUPABASE_URL no es secreto (deriva del project ref). StorageService lo exige AL BOOT.
+      - key: SUPABASE_URL
+        value: https://fobfltxxsudplapdwlfj.supabase.co
       # ── Secretos: Render los pide al crear el Blueprint (no se versionan) ──
+      - key: SUPABASE_SERVICE_ROLE_KEY # requerido al boot por StorageService
+        sync: false
       - key: DATABASE_URL              # Supabase Transaction pooler (6543, ?pgbouncer=true)
         sync: false
       - key: DIRECT_URL                # Supabase Direct connection (5432)

@@ -9,7 +9,8 @@ Guía paso-a-paso para desplegar el monorepo completo. Tiempo estimado primera v
 - Cuenta en **Supabase** (DB ya existe en proyecto `fobfltxxsudplapdwlfj`)
 - Cuenta en **Sentry** (gratuita: 5K eventos/mes) → crear proyecto Node.js
 - Cuenta en **Vercel** (gratuita) — para frontend, admin, landing
-- Cuenta en **Railway** o **Render** o **Fly.io** — para backend NestJS
+- **Render** (free tier, sin tarjeta) — para backend NestJS vía Blueprint `render.yaml` (ver sección 3). Alternativas: Cloud Run / Railway / Fly.io
+- **Firebase / Google** (proyecto `vision2020-8df81`) — para hosting de los 3 frontends
 - GitHub repo configurado con permisos de Actions: *Settings → Actions → General → "Read and write permissions"*
 
 ---
@@ -41,9 +42,106 @@ Abre `/tmp/prod-secrets.env`, completa los campos vacíos (`DATABASE_URL`, `SUPA
 
 ---
 
-## 3. Backend — Railway (recomendado)
+## 3. Backend — Render (recomendado)
 
-Railway hace deploy directo desde imagen GHCR sin configuración compleja.
+**Free tier sin tarjeta de crédito**, sostenible indefinidamente. Ideal para etapa temprana. Construye `apps/backend/Dockerfile` directo desde GitHub (no requiere GHCR ni CLI). Config declarativa en `render.yaml` (Blueprint) en la raíz del repo.
+
+> **Trade-off del free tier:** el servicio se duerme tras 15 min de inactividad → la primera request después tarda ~50s (cold start). Aceptable para uso interno/bajo tráfico. Al crecer, se mueve a un plan pago o a otra plataforma sin tocar el código.
+
+### 3.1 Las dos URLs de Supabase (crítico)
+En Supabase → *Project Settings → Database → Connection string*:
+- **Transaction pooler** (puerto `6543`, `?pgbouncer=true`) → `DATABASE_URL` (runtime).
+- **Direct connection** (puerto `5432`) → `DIRECT_URL` (solo migraciones).
+
+Prisma usa ambas: `url = env("DATABASE_URL")` + `directUrl = env("DIRECT_URL")` en `schema.prisma`.
+
+### 3.2 Secretos JWT
+```bash
+bash scripts/generate-secrets.sh   # genera JWT_SECRET + JWT_PLATFORM_SECRET (deben ser distintos)
+```
+Guardar ambos + las 2 URLs Supabase en `env.yaml` local (gitignored) como vault de referencia.
+
+### 3.3 Deploy vía Blueprint
+1. Push del repo a GitHub (con `render.yaml` en la raíz).
+2. [Render Dashboard](https://dashboard.render.com) → *New → Blueprint* → conectar el repo.
+3. Render lee `render.yaml` y crea el servicio `vision-kit-backend`. Pedirá los 4 valores marcados `sync: false` (`DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`, `JWT_PLATFORM_SECRET`) — pegarlos desde `env.yaml`.
+4. *Apply* → primer build+deploy (~3-5 min). El healthcheck `/api/v1/health` debe pasar.
+
+Render inyecta `PORT` automáticamente; el backend lo lee con `process.env.PORT` y bindea a `0.0.0.0`. La URL pública queda: `https://vision-kit-backend.onrender.com` → esa `+ /api/v1` es el `VITE_API_URL` de los frontends.
+
+### 3.4 Migraciones de Prisma (primera vez y en cada cambio de schema)
+```bash
+cd apps/backend
+DATABASE_URL="<direct-url-5432>" npx prisma migrate deploy
+```
+
+### 3.5 Redeploy
+`autoDeploy: true` en `render.yaml` → cada push a la rama conectada dispara un redeploy automático.
+
+---
+
+## 3-bis. Backend — Cloud Run (alternativa)
+
+Requiere **cuenta de facturación (tarjeta)** aunque el free tier permanente (2M req/mes) no cobre dentro de límites. Mismo proyecto GCP que Firebase (`vision2020-8df81`), escala a cero. Despliega la imagen que publica el CI en GHCR.
+
+### 3.1 Prerrequisitos (una vez)
+```bash
+# gcloud CLI: https://cloud.google.com/sdk/docs/install
+gcloud auth login
+gcloud config set project vision2020-8df81          # MISMO project de Firebase Hosting
+gcloud services enable run.googleapis.com cloudbuild.googleapis.com
+```
+> Si el paquete GHCR es privado: GitHub → repo → *Packages → vision-kit-backend → Package settings → Change visibility → Public*. La imagen no contiene secretos.
+
+### 3.2 Las dos URLs de Supabase (crítico con escala a cero)
+En Supabase → *Project Settings → Database → Connection string*:
+- **Transaction pooler** (puerto `6543`, `?pgbouncer=true`) → `DATABASE_URL` (runtime). Evita agotar conexiones cuando Cloud Run crea instancias nuevas.
+- **Direct connection** (puerto `5432`) → `DIRECT_URL` (solo migraciones).
+
+Prisma usa ambas: `url = env("DATABASE_URL")` + `directUrl = env("DIRECT_URL")` en `schema.prisma`.
+
+### 3.3 Variables de entorno (`env.yaml`)
+`--set-env-vars` choca con las comas de `CORS_ORIGINS`; usar un archivo es más limpio. Crear `env.yaml` (NO commitear — contiene secretos):
+```yaml
+NODE_ENV: production
+DATABASE_URL: postgresql://...@...pooler.supabase.com:6543/postgres?pgbouncer=true
+DIRECT_URL: postgresql://...@...supabase.com:5432/postgres
+JWT_SECRET: <scripts/generate-secrets.sh>
+JWT_PLATFORM_SECRET: <scripts/generate-secrets.sh>
+CORS_ORIGINS: https://vision-kit.web.app,https://vision-2020-hd.web.app,https://vision-kit-admin.web.app
+# opcionales: SENTRY_DSN, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, LOG_LEVEL
+```
+
+### 3.4 Deploy
+```bash
+gcloud run deploy vision-kit-backend \
+  --image ghcr.io/edsonvillarroel/vision-kit-backend:latest \
+  --region southamerica-east1 \
+  --platform managed \
+  --allow-unauthenticated \
+  --port 3000 \
+  --min-instances 0 \
+  --env-vars-file env.yaml
+```
+El backend escucha en `process.env.PORT` (`main.ts`), que Cloud Run inyecta automáticamente. Al terminar imprime la URL: `https://vision-kit-backend-xxxx.a.run.app` → esa `+ /api/v1` es el `VITE_API_URL` de los 3 frontends.
+
+### 3.5 Migraciones de Prisma (primera vez y en cada cambio de schema)
+```bash
+cd apps/backend
+DATABASE_URL="<direct-url-5432>" npx prisma migrate deploy
+```
+
+### 3.6 Redeploy tras nueva imagen
+El CI publica `latest` en cada push a `main`. Para forzar que Cloud Run tome la nueva imagen:
+```bash
+gcloud run deploy vision-kit-backend --image ghcr.io/edsonvillarroel/vision-kit-backend:latest --region southamerica-east1
+```
+
+---
+
+## 3-ter. Backend — Railway (alternativa)
+
+Railway hace deploy directo desde imagen GHCR sin configuración compleja. Sin capa gratuita (~$5/mes); útil si prefieres cero CLI.
 
 1. *New Project → Deploy from Docker Image* → `ghcr.io/edsonvillarroel/vision-kit-backend:latest`
 2. *Variables*: pegar todo el contenido de `/tmp/prod-secrets.env`

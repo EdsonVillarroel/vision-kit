@@ -218,8 +218,8 @@ Cada módulo en `apps/backend/src/<modulo>/` tiene:
 - `concurrency` cancela runs anteriores del mismo branch — ahorra CI minutes en pushes rápidos.
 
 **Deployment:**
-- Backend: imagen GHCR → Railway/Render/Fly.io. Healthcheck `/api/v1/health`.
-- Frontend/Admin/Landing: cada app tiene `vercel.json` con SPA rewrite + headers de seguridad (X-Content-Type-Options, X-Frame-Options, Permissions-Policy, HSTS en admin). Build commands apuntan a la raíz del monorepo (`cd ../..`).
+- Backend: **Render** (recomendado — free tier sin tarjeta, sostenible; Blueprint `render.yaml` construye `apps/backend/Dockerfile` desde GitHub; se duerme tras 15 min → cold start ~50s). Secretos (JWT + Supabase pooler URLs) en `env.yaml` local (gitignored), se pegan en Render como vars `sync: false`. Alternativas: Cloud Run (requiere tarjeta) / Railway / Fly.io. Healthcheck `/api/v1/health`. Ver `docs/DEPLOYMENT.md` §3.
+- Frontend/Admin/Landing: **Firebase Hosting** multi-site (config en `firebase.json` + `.firebaserc`, project `vision2020-8df81`). Sites: `vision-kit` (frontend), `vision-2020-hd` (landing), `vision-kit-admin` (admin) → `*.web.app`. Deploy con `npm run deploy:hosting` (o `deploy:frontend`/`deploy:landing`/`deploy:admin`). Cada app lee `VITE_API_URL` desde su `.env.production` (gitignored). SPA rewrite + headers de seguridad definidos por site. Alternativa: `vercel.json` (aún presente en cada app).
 - Stack de dev local: `docker-compose -f docker-compose.dev.yml up` (Postgres aislado en :5433 + backend con healthcheck + auto-deps).
 - Scripts útiles: `scripts/generate-secrets.sh` (genera `JWT_SECRET` + `JWT_PLATFORM_SECRET` con `openssl rand -base64 64`); `scripts/verify-rls.sql` (audita que todas las tablas tengan RLS habilitado).
 - Plan paso-a-paso: `docs/DEPLOYMENT.md` (incluye smoke test crítico de aislamiento multi-tenant).

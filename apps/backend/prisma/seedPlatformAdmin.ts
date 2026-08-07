@@ -13,13 +13,24 @@ import * as bcrypt from 'bcrypt';
 //   PLATFORM_ADMIN_PASSWORD  (default: 123456 — CAMBIAR en producción)
 //   PLATFORM_ADMIN_NAME      (default: Platform Admin)
 
+// Prefiere DATABASE_URL (pooler, el que funciona en producción/Render).
+// Cae a DIRECT_URL solo si el primero no está.
+const dbUrl = process.env.DATABASE_URL ?? process.env.DIRECT_URL;
+
 const prisma = new PrismaClient({
-  datasources: {
-    db: { url: process.env.DIRECT_URL ?? process.env.DATABASE_URL },
-  },
+  datasources: { db: { url: dbUrl } },
 });
 
 async function main() {
+  if (!dbUrl) {
+    throw new Error(
+      'Falta DATABASE_URL. Uso: DATABASE_URL="<url-de-Render>" npm run db:seed:admin',
+    );
+  }
+  // Loguea el host destino (sin credenciales) para confirmar a qué DB se conecta
+  const host = dbUrl.replace(/^.*@/, '').replace(/\?.*$/, '');
+  console.log(`→ Conectando a: ${host}`);
+
   const email = process.env.PLATFORM_ADMIN_EMAIL ?? 'platform@visionkit.com';
   const password = process.env.PLATFORM_ADMIN_PASSWORD ?? '123456';
   const name = process.env.PLATFORM_ADMIN_NAME ?? 'Platform Admin';

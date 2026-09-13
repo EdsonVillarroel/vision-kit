@@ -144,13 +144,13 @@ export const StockControlPage = () => {
                   return (
                     <tr key={movement.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 text-sm text-gray-900">
-                        {new Date(movement.date).toLocaleDateString('es-MX', {
+                        {new Date(movement.date).toLocaleDateString('es-BO', {
                           year: 'numeric',
                           month: 'short',
                           day: 'numeric'
                         })}
                         <div className="text-xs text-gray-500">
-                          {new Date(movement.createdAt).toLocaleTimeString('es-MX', {
+                          {new Date(movement.createdAt).toLocaleTimeString('es-BO', {
                             hour: '2-digit',
                             minute: '2-digit'
                           })}

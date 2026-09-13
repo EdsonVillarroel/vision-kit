@@ -189,13 +189,13 @@ export const SaleDetails: React.FC<SaleDetailsProps> = ({ sale }) => {
                       <td className="py-3 px-2 text-sm text-gray-600 text-center">{item.productSku}</td>
                       <td className="py-3 px-2 text-sm text-gray-900 text-center">{item.quantity}</td>
                       <td className="py-3 px-2 text-sm text-gray-900 text-right">
-                        ${item.unitPrice.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                        Bs {item.unitPrice.toLocaleString('es-BO', { minimumFractionDigits: 2 })}
                       </td>
                       <td className="py-3 px-2 text-sm text-gray-600 text-right">
                         {item.discount > 0 ? `${item.discount}%` : '-'}
                       </td>
                       <td className="py-3 px-2 text-sm font-medium text-gray-900 text-right">
-                        ${item.total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                        Bs {item.total.toLocaleString('es-BO', { minimumFractionDigits: 2 })}
                       </td>
                     </tr>
                   ))}
@@ -209,27 +209,27 @@ export const SaleDetails: React.FC<SaleDetailsProps> = ({ sale }) => {
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Subtotal:</span>
                   <span className="font-medium text-gray-900">
-                    ${sale.subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                    Bs {sale.subtotal.toLocaleString('es-BO', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
                 {sale.discount > 0 && (
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Descuento:</span>
                     <span className="font-medium text-red-600">
-                      -${sale.discount.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                      -Bs {sale.discount.toLocaleString('es-BO', { minimumFractionDigits: 2 })}
                     </span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">IVA (16%):</span>
                   <span className="font-medium text-gray-900">
-                    ${sale.tax.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                    Bs {sale.tax.toLocaleString('es-BO', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
                 <div className="flex justify-between text-lg font-bold border-t pt-2">
                   <span className="text-gray-900">Total:</span>
                   <span className="text-gray-900">
-                    ${sale.total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                    Bs {sale.total.toLocaleString('es-BO', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
               </div>
@@ -251,7 +251,7 @@ export const SaleDetails: React.FC<SaleDetailsProps> = ({ sale }) => {
                     <div key={index} className="flex justify-between py-2 border-b border-gray-100">
                       <span className="text-sm text-gray-700">{getPaymentMethodLabel(payment.method)}</span>
                       <span className="text-sm font-medium text-gray-900">
-                        ${payment.amount.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                        Bs {payment.amount.toLocaleString('es-BO', { minimumFractionDigits: 2 })}
                       </span>
                       {payment.reference && (
                         <span className="text-xs text-gray-500">Ref: {payment.reference}</span>

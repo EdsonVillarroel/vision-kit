@@ -202,7 +202,7 @@ export const AlertsPage = () => {
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
                       {product.lastRestocked
-                        ? new Date(product.lastRestocked).toLocaleDateString('es-MX')
+                        ? new Date(product.lastRestocked).toLocaleDateString('es-BO')
                         : 'N/A'}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">

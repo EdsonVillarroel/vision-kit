@@ -51,44 +51,44 @@ export const PatientsList = () => {
   if (loading && patients.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-16 w-16 border-4 border-theme-primary border-t-transparent shadow-lg"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-theme-primary border-t-transparent"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fadeIn">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-bold text-theme-dark-primary">Pacientes</h1>
-          <p className="text-theme-secondary-text mt-2">Gestión de información de pacientes</p>
+          <h1 className="text-3xl font-bold text-theme-dark-primary tracking-tight">Pacientes</h1>
+          <p className="text-theme-secondary-text mt-1">Gestión de información de pacientes</p>
         </div>
-        <Link to="/patients/new">
-          <Button>
+        <Link to="/patients/new" className="shrink-0">
+          <Button className="!w-auto px-5">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            Nuevo Paciente
+            Nuevo paciente
           </Button>
         </Link>
       </div>
 
       {/* Error Message */}
       {error && (
-        <div className="bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-4 rounded-2xl shadow-xl border border-red-400/20">
+        <div className="bg-red-50 ring-1 ring-inset ring-red-600/20 text-red-700 px-4 py-3 rounded-xl animate-fadeIn">
           <div className="flex items-center gap-3">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span className="font-semibold">{error}</span>
+            <span className="font-medium text-sm">{error}</span>
           </div>
         </div>
       )}
 
       {/* Search Bar */}
-      <div className="bg-gradient-to-br from-white to-theme-light-primary/10 rounded-2xl shadow-lg p-6 border border-theme-divider/20">
-        <form onSubmit={handleSearch} className="flex gap-4">
+      <div className="bg-white ring-1 ring-black/[0.06] rounded-2xl shadow-[0_1px_3px_rgba(16,24,40,0.06),0_1px_2px_rgba(16,24,40,0.04)] p-4 sm:p-6">
+        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3">
           <Input
             type="text"
             value={searchQuery}
@@ -221,29 +221,29 @@ export const PatientsList = () => {
                     <div className="text-xs text-theme-secondary-text">{patient.email || '-'}</div>
                   </TableCell>
                   <TableCell>
-                    <div className="font-medium">{patient.visitCount} visitas</div>
-                    <div className="text-xs text-theme-secondary-text">${patient.totalSpent.toLocaleString()}</div>
+                    <div className="font-medium tnum">{patient.visitCount} visitas</div>
+                    <div className="text-xs text-theme-secondary-text tnum">Bs {patient.totalSpent.toLocaleString('es-BO')}</div>
                   </TableCell>
                   <TableCell>
-                    {patient.lastVisit ? new Date(patient.lastVisit).toLocaleDateString('es-ES') : 'Sin visitas'}
+                    <span className="tnum">{patient.lastVisit ? new Date(patient.lastVisit).toLocaleDateString('es-BO') : 'Sin visitas'}</span>
                   </TableCell>
                   <TableCell align="right">
                     <div className="flex items-center justify-end gap-3">
                       <Link
                         to={`/patients/${patient.id}`}
-                        className="text-theme-primary hover:text-theme-dark-primary font-semibold transition-colors duration-300"
+                        className="text-theme-primary hover:text-theme-dark-primary font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/40 rounded px-1"
                       >
                         Ver
                       </Link>
                       <Link
                         to={`/patients/${patient.id}/edit`}
-                        className="text-theme-accent hover:text-theme-primary font-semibold transition-colors duration-300"
+                        className="text-theme-accent hover:text-theme-primary font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/40 rounded px-1"
                       >
                         Editar
                       </Link>
                       <button
                         onClick={() => setDeleteConfirm(patient.id)}
-                        className="text-red-600 hover:text-red-800 font-semibold transition-colors duration-300"
+                        className="text-red-600 hover:text-red-700 font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-red-500/40 rounded px-1"
                       >
                         Eliminar
                       </button>

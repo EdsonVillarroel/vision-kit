@@ -62,7 +62,7 @@ export const InventoryPage = () => {
         </div>
         <button
           onClick={() => navigate('/inventory/new')}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="px-4 py-2 bg-theme-primary text-white rounded-lg hover:bg-theme-dark-primary transition-colors"
         >
           + Nuevo Producto
         </button>
@@ -101,7 +101,7 @@ export const InventoryPage = () => {
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value as ProductCategory | '')}
-              className="px-4 py-2 border border-gray-300 rounded-lg"
+              className="px-4 py-2 border border-theme-divider rounded-lg"
             >
               <option value="">Todas las categorías</option>
               <option value="frames">Armazones</option>
@@ -114,7 +114,7 @@ export const InventoryPage = () => {
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as ProductStatus | '')}
-              className="px-4 py-2 border border-gray-300 rounded-lg"
+              className="px-4 py-2 border border-theme-divider rounded-lg"
             >
               <option value="">Todos los estados</option>
               <option value="in_stock">En stock</option>
@@ -126,7 +126,7 @@ export const InventoryPage = () => {
               placeholder="Buscar por nombre, SKU o marca..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
+              className="flex-1 px-4 py-2 border border-theme-divider rounded-lg"
             />
           </div>
         </div>
@@ -182,7 +182,7 @@ export const InventoryPage = () => {
                     <td className="px-6 py-4 text-right text-sm">
                       <button
                         onClick={() => navigate(`/inventory/${product.id}`)}
-                        className="text-blue-600 hover:text-blue-800 mr-3"
+                        className="text-theme-primary hover:text-theme-dark-primary mr-3"
                       >
                         Ver
                       </button>

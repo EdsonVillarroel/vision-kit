@@ -104,7 +104,7 @@ export const SalesList = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <StatCard
           title="Ventas Hoy"
-          value={`$${todayTotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`}
+          value={`Bs ${todayTotal.toLocaleString('es-BO', { minimumFractionDigits: 2 })}`}
           variant="success"
           icon={
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -114,7 +114,7 @@ export const SalesList = () => {
         />
         <StatCard
           title="Ventas del Mes"
-          value={`$${monthTotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`}
+          value={`Bs ${monthTotal.toLocaleString('es-BO', { minimumFractionDigits: 2 })}`}
           variant="primary"
           icon={
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -124,7 +124,7 @@ export const SalesList = () => {
         />
         <StatCard
           title="Ticket Promedio"
-          value={`$${avgTicket.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`}
+          value={`Bs ${avgTicket.toLocaleString('es-BO', { minimumFractionDigits: 2 })}`}
           variant="info"
           icon={
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -215,7 +215,7 @@ export const SalesList = () => {
                 </TableCell>
                 <TableCell>
                   <span className="font-bold text-theme-dark-primary">
-                    ${sale.total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                    Bs {sale.total.toLocaleString('es-BO', { minimumFractionDigits: 2 })}
                   </span>
                 </TableCell>
                 <TableCell>

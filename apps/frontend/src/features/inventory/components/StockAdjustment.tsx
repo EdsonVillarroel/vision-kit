@@ -103,15 +103,15 @@ export const StockAdjustment = ({ product, onSuccess }: StockAdjustmentProps) =>
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <div className="text-sm text-blue-600">Stock Actual</div>
+            <div className="text-sm text-theme-primary">Stock Actual</div>
             <div className="text-3xl font-bold text-gray-900">{product.stock} uds</div>
           </div>
           <div>
-            <div className="text-sm text-blue-600">Stock Mínimo</div>
+            <div className="text-sm text-theme-primary">Stock Mínimo</div>
             <div className="text-lg font-semibold text-gray-900">{product.minStock} uds</div>
           </div>
           <div>
-            <div className="text-sm text-blue-600">Estado</div>
+            <div className="text-sm text-theme-primary">Estado</div>
             <div className={`text-lg font-semibold ${
               product.stock === 0 ? 'text-red-600' :
               product.stock <= product.minStock ? 'text-yellow-600' :
@@ -145,7 +145,7 @@ export const StockAdjustment = ({ product, onSuccess }: StockAdjustmentProps) =>
                 className={`p-4 border-2 rounded-lg text-left transition-all ${
                   type === movementType.value
                     ? `border-${movementType.color}-500 bg-${movementType.color}-50`
-                    : 'border-gray-200 hover:border-gray-300'
+                    : 'border-gray-200 hover:border-theme-divider'
                 }`}
               >
                 <div className={`font-semibold ${
@@ -178,7 +178,7 @@ export const StockAdjustment = ({ product, onSuccess }: StockAdjustmentProps) =>
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
                 placeholder={type === 'adjustment' ? 'Nueva cantidad total' : 'Cantidad a mover'}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
+                className="w-full px-3 py-2 border border-theme-divider rounded-lg focus:ring-2 focus:ring-theme-primary/30 focus:border-transparent text-lg"
                 required
               />
               {quantity && (
@@ -194,7 +194,7 @@ export const StockAdjustment = ({ product, onSuccess }: StockAdjustmentProps) =>
                     </span>
                   )}
                   {type === 'adjustment' && (
-                    <span className="text-blue-600">
+                    <span className="text-theme-primary">
                       ➜ Nuevo stock: {newStock} uds ({stockDiff >= 0 ? '+' : ''}{stockDiff})
                     </span>
                   )}
@@ -209,7 +209,7 @@ export const StockAdjustment = ({ product, onSuccess }: StockAdjustmentProps) =>
               <select
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-theme-divider rounded-lg focus:ring-2 focus:ring-theme-primary/30 focus:border-transparent"
                 required
               >
                 <option value="">Seleccione un motivo...</option>
@@ -253,7 +253,7 @@ export const StockAdjustment = ({ product, onSuccess }: StockAdjustmentProps) =>
                 value={reference}
                 onChange={(e) => setReference(e.target.value)}
                 placeholder="Ej: VNT-2024-001, PO-2024-042"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-theme-divider rounded-lg focus:ring-2 focus:ring-theme-primary/30 focus:border-transparent"
               />
               <p className="mt-1 text-sm text-gray-500">
                 Número de venta, orden de compra, o cualquier referencia relacionada
@@ -324,7 +324,7 @@ export const StockAdjustment = ({ product, onSuccess }: StockAdjustmentProps) =>
           <button
             type="button"
             onClick={() => navigate(`/inventory/${product.id}`)}
-            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
+            className="px-6 py-2 border border-theme-divider text-gray-700 rounded-lg hover:bg-gray-50 font-medium"
             disabled={submitting}
           >
             Cancelar
@@ -334,7 +334,7 @@ export const StockAdjustment = ({ product, onSuccess }: StockAdjustmentProps) =>
             className={`px-6 py-2 text-white rounded-lg font-medium disabled:bg-gray-400 ${
               selectedType?.color === 'green' ? 'bg-green-600 hover:bg-green-700' :
               selectedType?.color === 'red' ? 'bg-red-600 hover:bg-red-700' :
-              'bg-blue-600 hover:bg-blue-700'
+              'bg-theme-primary hover:bg-theme-dark-primary'
             }`}
             disabled={submitting}
           >

@@ -15,23 +15,23 @@ export const Badge: React.FC<BadgeProps> = ({
   className
 }) => {
   const variants = {
-    default: 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border-gray-300',
-    success: 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border-green-300',
-    warning: 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 border-yellow-300',
-    error: 'bg-gradient-to-r from-red-100 to-red-200 text-red-800 border-red-300',
-    info: 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border-blue-300',
-    primary: 'bg-gradient-to-r from-theme-light-primary to-theme-light-primary/60 text-theme-dark-primary border-theme-primary/30'
+    default: 'bg-gray-100 text-gray-700 ring-gray-500/15',
+    success: 'bg-green-50 text-green-700 ring-green-600/20',
+    warning: 'bg-amber-50 text-amber-700 ring-amber-600/20',
+    error: 'bg-red-50 text-red-700 ring-red-600/20',
+    info: 'bg-blue-50 text-blue-700 ring-blue-600/20',
+    primary: 'bg-theme-light-primary/50 text-theme-dark-primary ring-theme-primary/20'
   };
 
   const sizes = {
-    sm: 'px-2.5 py-1 text-xs',
-    md: 'px-3 py-1.5 text-sm',
-    lg: 'px-4 py-2 text-base'
+    sm: 'px-2 py-0.5 text-xs',
+    md: 'px-2.5 py-1 text-xs',
+    lg: 'px-3 py-1.5 text-sm'
   };
 
   return (
     <span className={clsx(
-      'inline-flex items-center font-semibold rounded-full border transition-all duration-300 hover:scale-105',
+      'inline-flex items-center font-medium rounded-full ring-1 ring-inset',
       variants[variant],
       sizes[size],
       className

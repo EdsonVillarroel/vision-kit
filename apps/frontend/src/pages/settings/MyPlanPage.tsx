@@ -67,7 +67,7 @@ const formatDate = (iso: string | null) => {
 
 const formatPrice = (price: number, currency: string) => {
   const abbrev = currency === 'BOB' ? 'Bs' : currency;
-  return `${abbrev} ${price.toLocaleString('es-BO')}`;
+  return `${abbrev} Bs ${price.toLocaleString('es-BO')}`;
 };
 
 const periodLabel = (period: 'monthly' | 'yearly') =>

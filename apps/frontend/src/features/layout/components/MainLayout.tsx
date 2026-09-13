@@ -21,15 +21,15 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, menuItems, nav
       {/* Main Content */}
       <div
         className={clsx(
-          'transition-all duration-300 ease-in-out',
+          'transition-[margin] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
           isCollapsed ? 'lg:ml-20' : 'lg:ml-64'
         )}
       >
         {/* Top Navbar */}
         {navbar && (
-          <nav className="bg-gradient-to-r from-theme-dark-primary via-theme-primary to-theme-dark-primary shadow-2xl border-b border-theme-accent/20 fixed top-0 left-0 right-0 z-40 backdrop-blur-md">
+          <nav className="bg-theme-primary border-b border-black/10 shadow-sm fixed top-0 left-0 right-0 z-40">
             <div className={clsx(
-              'px-4 sm:px-6 lg:px-8 transition-all duration-300',
+              'px-4 sm:px-6 lg:px-8 transition-[margin] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
               isCollapsed ? 'lg:ml-20' : 'lg:ml-64'
             )}>
               <div className="flex justify-between items-center h-16">
@@ -37,10 +37,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, menuItems, nav
                   {/* Mobile menu button */}
                   <button
                     onClick={toggleSidebar}
-                    className="lg:hidden p-2.5 rounded-xl text-theme-text-icons hover:bg-white/15 active:bg-white/25 transition-all duration-300 hover:scale-110 active:scale-95 hover:shadow-lg"
-                    aria-label="Open sidebar"
+                    className="lg:hidden p-2 rounded-lg text-theme-text-icons hover:bg-white/15 active:scale-95 transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+                    aria-label="Abrir menú"
                   >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                   </button>
@@ -50,8 +50,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, menuItems, nav
                 </div>
               </div>
             </div>
-            {/* Bottom glow effect */}
-            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-theme-accent/50 to-transparent"></div>
           </nav>
         )}
 

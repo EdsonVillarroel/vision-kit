@@ -123,14 +123,14 @@ export const ProfilePage: React.FC = () => {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Mi Perfil</h1>
-        <p className="text-gray-600 mt-1">
+        <h1 className="text-2xl font-bold text-theme-primary-text">Mi Perfil</h1>
+        <p className="text-theme-secondary-text mt-1">
           Administra tu información personal y configuración de cuenta
         </p>
       </div>
 
       {/* Avatar y Rol */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-xl shadow-sm border border-black/[0.06] p-6 mb-6">
         <div className="flex items-center gap-6">
           <div className="flex-shrink-0 relative group">
             {user.avatar ? (
@@ -140,7 +140,7 @@ export const ProfilePage: React.FC = () => {
                 className="w-24 h-24 rounded-full border-4 border-gray-100 object-cover"
               />
             ) : (
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-3xl font-bold">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-theme-primary to-theme-dark-primary flex items-center justify-center text-white text-3xl font-bold">
                 {user.name.charAt(0).toUpperCase()}
               </div>
             )}
@@ -161,8 +161,8 @@ export const ProfilePage: React.FC = () => {
             />
           </div>
           <div className="flex-1">
-            <h2 className="text-2xl font-bold text-gray-900">{user.name}</h2>
-            <p className="text-gray-600 mt-1">{user.email}</p>
+            <h2 className="text-2xl font-bold text-theme-primary-text">{user.name}</h2>
+            <p className="text-theme-secondary-text mt-1">{user.email}</p>
             <div className="mt-3 flex items-center gap-3">
               <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getRoleBadgeColor(user.role)}`}>
                 {getRoleName(user.role)}
@@ -174,7 +174,7 @@ export const ProfilePage: React.FC = () => {
             <button
               onClick={() => avatarInputRef.current?.click()}
               disabled={isUploadingAvatar}
-              className="mt-3 text-sm text-blue-600 hover:text-blue-800 disabled:text-gray-400"
+              className="mt-3 text-sm text-theme-primary hover:text-theme-dark-primary disabled:text-gray-400"
             >
               {isUploadingAvatar ? 'Subiendo...' : 'Cambiar foto de perfil'}
             </button>
@@ -183,9 +183,9 @@ export const ProfilePage: React.FC = () => {
       </div>
 
       {/* Información Personal */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-black/[0.06] p-6">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">Información Personal</h3>
+          <h3 className="text-lg font-semibold text-theme-primary-text">Información Personal</h3>
           {!isEditing && (
             <Button
               variant="outline"
@@ -224,32 +224,32 @@ export const ProfilePage: React.FC = () => {
           />
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-theme-primary-text mb-1">
               Rol
             </label>
             <input
               type="text"
               value={getRoleName(user.role)}
               disabled
-              className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-500 cursor-not-allowed"
+              className="w-full px-3 py-2 bg-theme-light-primary/20 border border-theme-divider rounded-lg text-theme-secondary-text cursor-not-allowed"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-theme-primary-text mb-1">
               ID de Usuario
             </label>
             <input
               type="text"
               value={user.id}
               disabled
-              className="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-500 cursor-not-allowed font-mono text-sm"
+              className="w-full px-3 py-2 bg-theme-light-primary/20 border border-theme-divider rounded-lg text-theme-secondary-text cursor-not-allowed font-mono text-sm"
             />
           </div>
         </div>
 
         {isEditing && (
-          <div className="flex gap-3 mt-6 pt-6 border-t border-gray-200">
+          <div className="flex gap-3 mt-6 pt-6 border-t border-black/[0.06]">
             <Button
               onClick={handleSave}
               isLoading={isSaving}
@@ -268,8 +268,8 @@ export const ProfilePage: React.FC = () => {
       </div>
 
       {/* Cambio de Contraseña */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Seguridad</h3>
+      <div className="bg-white rounded-xl shadow-sm border border-black/[0.06] p-6 mt-6">
+        <h3 className="text-lg font-semibold text-theme-primary-text mb-4">Seguridad</h3>
 
         {!showPasswordForm ? (
           <Button variant="outline" onClick={() => setShowPasswordForm(true)}>
@@ -318,13 +318,13 @@ export const ProfilePage: React.FC = () => {
       </div>
 
       {/* Información de Cuenta */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Información de Cuenta</h3>
+      <div className="bg-white rounded-xl shadow-sm border border-black/[0.06] p-6 mt-6">
+        <h3 className="text-lg font-semibold text-theme-primary-text mb-4">Información de Cuenta</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <div>
-            <span className="text-gray-600">Fecha de creación:</span>
-            <p className="font-medium text-gray-900">
-              {new Date(user.createdAt).toLocaleDateString('es-ES', {
+            <span className="text-theme-secondary-text">Fecha de creación:</span>
+            <p className="font-medium text-theme-primary-text">
+              {new Date(user.createdAt).toLocaleDateString('es-BO', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric'
@@ -332,9 +332,9 @@ export const ProfilePage: React.FC = () => {
             </p>
           </div>
           <div>
-            <span className="text-gray-600">Última actualización:</span>
-            <p className="font-medium text-gray-900">
-              {new Date(user.updatedAt).toLocaleDateString('es-ES', {
+            <span className="text-theme-secondary-text">Última actualización:</span>
+            <p className="font-medium text-theme-primary-text">
+              {new Date(user.updatedAt).toLocaleDateString('es-BO', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric'

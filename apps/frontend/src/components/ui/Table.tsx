@@ -38,7 +38,7 @@ interface TableCellProps {
 export const Table: React.FC<TableProps> = ({ children, className }) => {
   return (
     <div className={clsx(
-      "bg-gradient-to-br from-white to-theme-light-primary/10 rounded-2xl shadow-xl overflow-hidden border border-theme-divider/20 backdrop-blur-sm",
+      "bg-white ring-1 ring-black/[0.06] rounded-2xl shadow-[0_1px_3px_rgba(16,24,40,0.06),0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden",
       className
     )}>
       <div className="overflow-x-auto">
@@ -53,7 +53,7 @@ export const Table: React.FC<TableProps> = ({ children, className }) => {
 export const TableHeader: React.FC<TableHeaderProps> = ({ children, className }) => {
   return (
     <thead className={clsx(
-      "bg-gradient-to-r from-theme-dark-primary to-theme-primary text-theme-text-icons border-b-2 border-theme-accent/30",
+      "bg-theme-light-primary/20 border-b border-black/[0.06]",
       className
     )}>
       {children}
@@ -64,7 +64,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({ children, className })
 export const TableBody: React.FC<TableBodyProps> = ({ children, className }) => {
   return (
     <tbody className={clsx(
-      "divide-y divide-theme-divider/30",
+      "divide-y divide-black/[0.05]",
       className
     )}>
       {children}
@@ -76,19 +76,19 @@ export const TableRow: React.FC<TableRowProps> = ({
   children,
   className,
   variant = 'default',
-  interactive = true
+  interactive = false
 }) => {
   const variants = {
     default: 'hover:bg-theme-light-primary/20',
-    success: 'bg-green-50/50 hover:bg-green-50 border-l-4 border-green-500',
-    warning: 'bg-yellow-50/50 hover:bg-yellow-50 border-l-4 border-yellow-500',
-    error: 'bg-red-50/50 hover:bg-red-50 border-l-4 border-red-500'
+    success: 'bg-green-50/40 hover:bg-green-50 border-l-2 border-green-500',
+    warning: 'bg-amber-50/40 hover:bg-amber-50 border-l-2 border-amber-500',
+    error: 'bg-red-50/40 hover:bg-red-50 border-l-2 border-red-500'
   };
 
   return (
     <tr className={clsx(
-      "transition-all duration-300",
-      interactive && "hover:shadow-md hover:scale-[1.01] cursor-pointer",
+      "transition-colors duration-100",
+      interactive && "cursor-pointer",
       variants[variant],
       className
     )}>
@@ -110,7 +110,7 @@ export const TableHead: React.FC<TableHeadProps> = ({
 
   return (
     <th className={clsx(
-      "px-6 py-4 text-xs font-bold uppercase tracking-wider",
+      "px-6 py-3 text-xs font-semibold uppercase tracking-wide text-theme-secondary-text",
       alignments[align],
       className
     )}>

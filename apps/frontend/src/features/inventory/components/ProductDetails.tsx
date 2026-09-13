@@ -25,7 +25,7 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
 const MOVEMENT_TYPE_CONFIG: Record<string, { label: string; icon: string; className: string }> = {
   'in': { label: 'Entrada', icon: '↑', className: 'text-green-600' },
   'out': { label: 'Salida', icon: '↓', className: 'text-red-600' },
-  'adjustment': { label: 'Ajuste', icon: '~', className: 'text-blue-600' }
+  'adjustment': { label: 'Ajuste', icon: '~', className: 'text-theme-primary' }
 };
 
 export const ProductDetails = ({ product }: ProductDetailsProps) => {
@@ -69,7 +69,7 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
           </button>
           <button
             onClick={() => navigate(`/inventory/${product.id}/edit`)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+            className="px-4 py-2 bg-theme-primary text-white rounded-lg hover:bg-theme-dark-primary font-medium"
           >
             Editar
           </button>
@@ -107,21 +107,21 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
               <div>
                 <div className="text-sm text-gray-600">Precio Costo</div>
                 <div className="text-lg font-semibold text-gray-900">
-                  ${product.costPrice.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                  Bs {product.costPrice.toLocaleString('es-BO', { minimumFractionDigits: 2 })}
                 </div>
               </div>
 
               <div>
                 <div className="text-sm text-gray-600">Precio Venta</div>
                 <div className="text-lg font-semibold text-gray-900">
-                  ${product.sellingPrice.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                  Bs {product.sellingPrice.toLocaleString('es-BO', { minimumFractionDigits: 2 })}
                 </div>
               </div>
 
               <div>
                 <div className="text-sm text-gray-600">Margen</div>
                 <div className="text-lg font-semibold text-green-600">
-                  ${margin.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                  Bs {margin.toLocaleString('es-BO', { minimumFractionDigits: 2 })}
                 </div>
               </div>
 
@@ -174,7 +174,7 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
               <div>
                 <div className="text-sm text-gray-600">Valor Stock</div>
                 <div className="text-lg font-semibold text-gray-900">
-                  ${(product.stock * product.costPrice).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                  Bs {(product.stock * product.costPrice).toLocaleString('es-BO', { minimumFractionDigits: 2 })}
                 </div>
               </div>
 
@@ -182,7 +182,7 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
                 <div className="col-span-2">
                   <div className="text-sm text-gray-600">Último Reabastecimiento</div>
                   <div className="text-gray-900">
-                    {new Date(product.lastRestocked).toLocaleDateString('es-MX', {
+                    {new Date(product.lastRestocked).toLocaleDateString('es-BO', {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric'
@@ -334,7 +334,7 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
                           {movement.previousStock} → {movement.newStock}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {new Date(movement.date).toLocaleDateString('es-MX')}
+                          {new Date(movement.date).toLocaleDateString('es-BO')}
                         </div>
                         <div className="text-xs text-gray-500">{movement.performedBy.name}</div>
                       </div>
@@ -391,7 +391,7 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
               <div>
                 <div className="text-gray-600">Creado</div>
                 <div className="text-gray-900">
-                  {new Date(product.createdAt).toLocaleDateString('es-MX', {
+                  {new Date(product.createdAt).toLocaleDateString('es-BO', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric',
@@ -403,7 +403,7 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
               <div>
                 <div className="text-gray-600">Última Actualización</div>
                 <div className="text-gray-900">
-                  {new Date(product.updatedAt).toLocaleDateString('es-MX', {
+                  {new Date(product.updatedAt).toLocaleDateString('es-BO', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric',

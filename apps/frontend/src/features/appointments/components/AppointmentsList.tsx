@@ -65,47 +65,45 @@ export const AppointmentsList = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fadeIn">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Citas</h1>
-          <p className="text-gray-600 mt-2">Gestión de citas y calendario</p>
+          <h1 className="text-3xl font-bold text-theme-dark-primary tracking-tight">Citas</h1>
+          <p className="text-theme-secondary-text mt-1">Gestión de citas y calendario</p>
         </div>
-        <Link to="/appointments/new">
-          <Button>
-            ➕ Nueva Cita
-          </Button>
+        <Link to="/appointments/new" className="shrink-0">
+          <Button className="!w-auto px-5">Nueva cita</Button>
         </Link>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
+        <div className="bg-red-50 ring-1 ring-inset ring-red-600/20 text-red-700 px-4 py-3 rounded-xl text-sm animate-fadeIn">
           {error}
         </div>
       )}
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <p className="text-sm text-gray-600 mb-2">Citas de Hoy</p>
-          <p className="text-3xl font-bold text-gray-900">{todayAppointments.length}</p>
+        <div className="bg-white ring-1 ring-black/[0.06] rounded-2xl p-6 shadow-[0_1px_3px_rgba(16,24,40,0.06),0_1px_2px_rgba(16,24,40,0.04)]">
+          <p className="text-sm font-medium text-theme-secondary-text mb-2">Citas de hoy</p>
+          <p className="text-3xl font-bold tnum tracking-tight text-theme-primary-text">{todayAppointments.length}</p>
         </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <p className="text-sm text-gray-600 mb-2">Confirmadas</p>
-          <p className="text-3xl font-bold text-green-600">
+        <div className="bg-white ring-1 ring-black/[0.06] rounded-2xl p-6 shadow-[0_1px_3px_rgba(16,24,40,0.06),0_1px_2px_rgba(16,24,40,0.04)]">
+          <p className="text-sm font-medium text-theme-secondary-text mb-2">Confirmadas</p>
+          <p className="text-3xl font-bold tnum tracking-tight text-green-600">
             {appointments.filter(a => a.status === 'confirmed').length}
           </p>
         </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <p className="text-sm text-gray-600 mb-2">Pendientes</p>
-          <p className="text-3xl font-bold text-yellow-600">
+        <div className="bg-white ring-1 ring-black/[0.06] rounded-2xl p-6 shadow-[0_1px_3px_rgba(16,24,40,0.06),0_1px_2px_rgba(16,24,40,0.04)]">
+          <p className="text-sm font-medium text-theme-secondary-text mb-2">Pendientes</p>
+          <p className="text-3xl font-bold tnum tracking-tight text-amber-600">
             {appointments.filter(a => a.status === 'scheduled').length}
           </p>
         </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <p className="text-sm text-gray-600 mb-2">Completadas Este Mes</p>
-          <p className="text-3xl font-bold text-blue-600">
+        <div className="bg-white ring-1 ring-black/[0.06] rounded-2xl p-6 shadow-[0_1px_3px_rgba(16,24,40,0.06),0_1px_2px_rgba(16,24,40,0.04)]">
+          <p className="text-sm font-medium text-theme-secondary-text mb-2">Completadas este mes</p>
+          <p className="text-3xl font-bold tnum tracking-tight text-theme-primary">
             {appointments.filter(a => {
               if (a.status !== 'completed') return false;
               const date = new Date(a.date);
@@ -117,27 +115,27 @@ export const AppointmentsList = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white ring-1 ring-black/[0.06] rounded-2xl p-4 sm:p-6 shadow-[0_1px_3px_rgba(16,24,40,0.06),0_1px_2px_rgba(16,24,40,0.04)]">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-theme-primary-text mb-2">
               Fecha
             </label>
             <input
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-theme-divider rounded-lg outline-none transition-[border-color,box-shadow] duration-150 focus:border-theme-primary focus-visible:ring-2 focus-visible:ring-theme-primary/25"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-theme-primary-text mb-2">
               Estado
             </label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as AppointmentStatus | 'all')}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-theme-divider rounded-lg outline-none transition-[border-color,box-shadow] duration-150 focus:border-theme-primary focus-visible:ring-2 focus-visible:ring-theme-primary/25"
             >
               <option value="all">Todos</option>
               <option value="scheduled">Programadas</option>
@@ -152,52 +150,59 @@ export const AppointmentsList = () => {
       </div>
 
       {/* Appointments List */}
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-white ring-1 ring-black/[0.06] rounded-2xl shadow-[0_1px_3px_rgba(16,24,40,0.06),0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-theme-light-primary/20 border-b border-black/[0.06]">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha/Hora</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Paciente</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Profesional</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-theme-secondary-text uppercase tracking-wide">Fecha/Hora</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-theme-secondary-text uppercase tracking-wide">Paciente</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-theme-secondary-text uppercase tracking-wide">Tipo</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-theme-secondary-text uppercase tracking-wide">Profesional</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-theme-secondary-text uppercase tracking-wide">Estado</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-theme-secondary-text uppercase tracking-wide">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-black/[0.05]">
               {filteredAppointments.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                    No se encontraron citas
+                  <td colSpan={6} className="px-6 py-16 text-center">
+                    <div className="flex flex-col items-center justify-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-theme-light-primary/40 flex items-center justify-center text-theme-secondary-text">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <p className="text-sm text-theme-secondary-text">No se encontraron citas</p>
+                    </div>
                   </td>
                 </tr>
               ) : (
                 filteredAppointments.map((appointment) => (
-                  <tr key={appointment.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={appointment.id} className="hover:bg-theme-light-primary/20 transition-colors duration-100">
                     <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">
-                        {new Date(appointment.date).toLocaleDateString('es-ES')}
+                      <div className="text-sm font-medium text-theme-primary-text tnum">
+                        {new Date(appointment.date).toLocaleDateString('es-BO')}
                       </div>
-                      <div className="text-sm text-gray-600">{appointment.time} - {appointment.endTime}</div>
+                      <div className="text-sm text-theme-secondary-text tnum">{appointment.time} - {appointment.endTime}</div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">{appointment.patientName}</div>
-                      <div className="text-sm text-gray-600">{appointment.patientPhone}</div>
+                      <div className="text-sm font-medium text-theme-primary-text">{appointment.patientName}</div>
+                      <div className="text-sm text-theme-secondary-text">{appointment.patientPhone}</div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{getTypeLabel(appointment.type)}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{appointment.practitioner.name}</td>
+                    <td className="px-6 py-4 text-sm text-theme-primary-text">{getTypeLabel(appointment.type)}</td>
+                    <td className="px-6 py-4 text-sm text-theme-secondary-text">{appointment.practitioner.name}</td>
                     <td className="px-6 py-4">
-                      <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(appointment.status)}`}>
+                      <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${getStatusColor(appointment.status)}`}>
                         {getStatusLabel(appointment.status)}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end gap-2">
+                      <div className="flex justify-end gap-3">
                         {appointment.status === 'scheduled' && (
                           <button
                             onClick={() => updateStatus(appointment.id, 'confirmed')}
-                            className="text-green-600 hover:text-green-800 text-sm font-medium"
+                            className="text-green-600 hover:text-green-700 text-sm font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 rounded px-1"
                           >
                             Confirmar
                           </button>
@@ -205,14 +210,14 @@ export const AppointmentsList = () => {
                         {(appointment.status === 'scheduled' || appointment.status === 'confirmed') && (
                           <button
                             onClick={() => updateStatus(appointment.id, 'cancelled', 'Cancelada por el usuario')}
-                            className="text-red-600 hover:text-red-800 text-sm font-medium"
+                            className="text-red-600 hover:text-red-700 text-sm font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-red-500/40 rounded px-1"
                           >
                             Cancelar
                           </button>
                         )}
                         <Link
                           to={`/appointments/${appointment.id}`}
-                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                          className="text-theme-primary hover:text-theme-dark-primary text-sm font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/40 rounded px-1"
                         >
                           Ver
                         </Link>

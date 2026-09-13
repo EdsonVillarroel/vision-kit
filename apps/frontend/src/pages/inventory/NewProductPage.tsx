@@ -45,7 +45,7 @@ export const NewProductPage = () => {
       <div>
         <button
           onClick={() => navigate('/inventory')}
-          className="text-blue-600 hover:text-blue-800 mb-2 text-sm font-medium"
+          className="text-theme-primary hover:text-theme-dark-primary mb-2 text-sm font-medium"
         >
           ← Volver a Inventario
         </button>
@@ -59,7 +59,7 @@ export const NewProductPage = () => {
         <div className="flex items-center gap-6">
           <div
             onClick={() => imageInputRef.current?.click()}
-            className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-400 transition-colors overflow-hidden"
+            className="w-32 h-32 border-2 border-dashed border-theme-divider rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-400 transition-colors overflow-hidden"
           >
             {imagePreview ? (
               <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
@@ -72,7 +72,7 @@ export const NewProductPage = () => {
             <button
               type="button"
               onClick={() => imageInputRef.current?.click()}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+              className="px-4 py-2 border border-theme-divider rounded-lg text-sm hover:bg-gray-50 transition-colors"
             >
               {imageFile ? 'Cambiar imagen' : 'Seleccionar imagen'}
             </button>

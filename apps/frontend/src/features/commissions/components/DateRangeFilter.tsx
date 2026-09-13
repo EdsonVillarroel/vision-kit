@@ -73,7 +73,7 @@ export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
   }, [value.from, value.to]);
 
   return (
-    <div className="bg-gradient-to-br from-white to-theme-light-primary/10 rounded-2xl shadow-lg p-6 border border-theme-divider/20">
+    <div className="bg-white ring-1 ring-black/[0.06] rounded-2xl shadow-[0_1px_3px_rgba(16,24,40,0.06),0_1px_2px_rgba(16,24,40,0.04)] p-4 sm:p-6">
       <div className="flex flex-col md:flex-row md:items-end gap-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
           <Input

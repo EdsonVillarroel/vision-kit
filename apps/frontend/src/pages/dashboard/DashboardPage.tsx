@@ -88,7 +88,7 @@ const useDashboardStats = () => {
 };
 
 const formatCurrency = (n: number) =>
-  n.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
+  `Bs ${n.toLocaleString('es-BO', { maximumFractionDigits: 0 })}`;
 
 export const DashboardPage = () => {
   const { user } = useAuth();
@@ -97,10 +97,10 @@ export const DashboardPage = () => {
   if (loading && !stats) return <SkeletonPageWithStats statCount={4} />;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fadeIn">
       <div>
-        <h1 className="text-3xl font-bold text-theme-dark-primary">Dashboard</h1>
-        <p className="text-theme-secondary-text mt-2">Bienvenido, {user?.name}</p>
+        <h1 className="text-3xl font-bold text-theme-dark-primary tracking-tight">Dashboard</h1>
+        <p className="text-theme-secondary-text mt-1">Bienvenido, {user?.name}</p>
       </div>
 
       {/* Stat cards */}
@@ -153,17 +153,17 @@ export const DashboardPage = () => {
       {/* Lower panels */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card elevation="low" className="!p-6">
-          <h2 className="text-xl font-bold text-theme-dark-primary mb-4">Citas de Hoy</h2>
+          <h2 className="text-lg font-semibold text-theme-dark-primary mb-4">Citas de hoy</h2>
           {loading ? (
             <SkeletonListItems count={3} />
           ) : stats?.upcomingAppointments.length ? (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {stats.upcomingAppointments.map(apt => (
-                <div key={apt.id} className="flex items-center justify-between p-3 bg-theme-light-primary/20 rounded-xl">
-                  <div>
-                    <p className="font-medium text-theme-dark-primary">{apt.patientName}</p>
-                    <p className="text-sm text-theme-secondary-text">
-                      {TYPE_LABELS[apt.type] ?? apt.type} — {apt.time}
+                <div key={apt.id} className="flex items-center justify-between gap-3 p-3 bg-theme-light-primary/20 rounded-xl">
+                  <div className="min-w-0">
+                    <p className="font-medium text-theme-dark-primary truncate">{apt.patientName}</p>
+                    <p className="text-sm text-theme-secondary-text truncate">
+                      {TYPE_LABELS[apt.type] ?? apt.type} · <span className="tnum">{apt.time}</span>
                     </p>
                   </div>
                   <Badge
@@ -176,28 +176,42 @@ export const DashboardPage = () => {
               ))}
             </div>
           ) : (
-            <p className="text-center text-theme-secondary-text py-8">No hay citas para hoy</p>
+            <div className="flex flex-col items-center justify-center text-center py-10">
+              <div className="w-11 h-11 rounded-full bg-theme-light-primary/40 flex items-center justify-center mb-3 text-theme-secondary-text">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <p className="text-sm text-theme-secondary-text">No hay citas para hoy</p>
+            </div>
           )}
         </Card>
 
         <Card elevation="low" className="!p-6">
-          <h2 className="text-xl font-bold text-theme-dark-primary mb-4">Productos Más Vendidos (este mes)</h2>
+          <h2 className="text-lg font-semibold text-theme-dark-primary mb-4">Productos más vendidos <span className="text-theme-secondary-text font-normal">· este mes</span></h2>
           {loading ? (
             <SkeletonListItems count={3} />
           ) : stats?.topProducts.length ? (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {stats.topProducts.map((product, i) => (
-                <div key={i} className="flex items-center justify-between p-3 bg-theme-light-primary/20 rounded-xl">
-                  <div>
-                    <p className="font-medium text-theme-dark-primary">{product.productName}</p>
-                    <p className="text-sm text-theme-secondary-text">{product.quantitySold} unidades</p>
+                <div key={i} className="flex items-center justify-between gap-3 p-3 bg-theme-light-primary/20 rounded-xl">
+                  <div className="min-w-0">
+                    <p className="font-medium text-theme-dark-primary truncate">{product.productName}</p>
+                    <p className="text-sm text-theme-secondary-text"><span className="tnum">{product.quantitySold}</span> unidades</p>
                   </div>
                   <Badge variant="primary" size="sm">#{i + 1}</Badge>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-center text-theme-secondary-text py-8">Sin ventas completadas este mes</p>
+            <div className="flex flex-col items-center justify-center text-center py-10">
+              <div className="w-11 h-11 rounded-full bg-theme-light-primary/40 flex items-center justify-center mb-3 text-theme-secondary-text">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+              </div>
+              <p className="text-sm text-theme-secondary-text">Sin ventas completadas este mes</p>
+            </div>
           )}
         </Card>
       </div>

@@ -19,22 +19,22 @@ export const ThemeSelector: React.FC = () => {
     return (
       <div className="flex gap-1 mt-2">
         <div
-          className="w-8 h-8 rounded border border-gray-300"
+          className="w-8 h-8 rounded border border-theme-divider"
           style={{ backgroundColor: theme.colors.darkPrimary }}
           title="Dark Primary"
         />
         <div
-          className="w-8 h-8 rounded border border-gray-300"
+          className="w-8 h-8 rounded border border-theme-divider"
           style={{ backgroundColor: theme.colors.primary }}
           title="Primary"
         />
         <div
-          className="w-8 h-8 rounded border border-gray-300"
+          className="w-8 h-8 rounded border border-theme-divider"
           style={{ backgroundColor: theme.colors.lightPrimary }}
           title="Light Primary"
         />
         <div
-          className="w-8 h-8 rounded border border-gray-300"
+          className="w-8 h-8 rounded border border-theme-divider"
           style={{ backgroundColor: theme.colors.accent }}
           title="Accent"
         />
@@ -59,13 +59,13 @@ export const ThemeSelector: React.FC = () => {
             className={`p-4 rounded-lg border-2 text-left transition-all ${
               themeKey === item.key
                 ? 'border-blue-500 bg-blue-50 shadow-md'
-                : 'border-gray-200 hover:border-gray-300 hover:shadow'
+                : 'border-gray-200 hover:border-theme-divider hover:shadow'
             }`}
           >
             <div className="flex items-center justify-between mb-2">
               <h4 className="font-semibold text-gray-900">{item.label}</h4>
               {themeKey === item.key && (
-                <span className="text-blue-600 text-xl">✓</span>
+                <span className="text-theme-primary text-xl">✓</span>
               )}
             </div>
             <p className="text-sm text-gray-600 mb-2">{item.description}</p>
@@ -93,7 +93,7 @@ export const ThemeSelector: React.FC = () => {
           <div>
             <div className="font-medium text-gray-700 mb-1">Primario Oscuro</div>
             <div
-              className="h-12 rounded border border-gray-300 shadow-sm"
+              className="h-12 rounded border border-theme-divider shadow-sm"
               style={{ backgroundColor: availableThemes[themeKey].colors.darkPrimary }}
             />
             <code className="text-xs text-gray-600">{availableThemes[themeKey].colors.darkPrimary}</code>
@@ -101,7 +101,7 @@ export const ThemeSelector: React.FC = () => {
           <div>
             <div className="font-medium text-gray-700 mb-1">Primario</div>
             <div
-              className="h-12 rounded border border-gray-300 shadow-sm"
+              className="h-12 rounded border border-theme-divider shadow-sm"
               style={{ backgroundColor: availableThemes[themeKey].colors.primary }}
             />
             <code className="text-xs text-gray-600">{availableThemes[themeKey].colors.primary}</code>
@@ -109,7 +109,7 @@ export const ThemeSelector: React.FC = () => {
           <div>
             <div className="font-medium text-gray-700 mb-1">Primario Claro</div>
             <div
-              className="h-12 rounded border border-gray-300 shadow-sm"
+              className="h-12 rounded border border-theme-divider shadow-sm"
               style={{ backgroundColor: availableThemes[themeKey].colors.lightPrimary }}
             />
             <code className="text-xs text-gray-600">{availableThemes[themeKey].colors.lightPrimary}</code>
@@ -117,7 +117,7 @@ export const ThemeSelector: React.FC = () => {
           <div>
             <div className="font-medium text-gray-700 mb-1">Acento</div>
             <div
-              className="h-12 rounded border border-gray-300 shadow-sm"
+              className="h-12 rounded border border-theme-divider shadow-sm"
               style={{ backgroundColor: availableThemes[themeKey].colors.accent }}
             />
             <code className="text-xs text-gray-600">{availableThemes[themeKey].colors.accent}</code>

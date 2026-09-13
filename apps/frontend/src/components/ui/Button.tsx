@@ -14,15 +14,15 @@ export const Button: React.FC<ButtonProps> = ({
   disabled,
   ...props
 }) => {
-  const baseStyles = "w-full py-3 px-6 rounded-full font-semibold text-sm tracking-wide transition-all duration-300 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 relative overflow-hidden";
+  const baseStyles = "w-full py-3 px-6 rounded-full font-semibold text-sm tracking-wide transition-[transform,box-shadow,background-color,border-color,color] duration-150 ease-[cubic-bezier(0.16,1,0.3,1)] outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 flex justify-center items-center gap-2 select-none active:scale-[0.97]";
 
   const variants = {
-    primary: "bg-theme-primary hover:bg-theme-dark-primary text-theme-text-icons shadow-md hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] before:absolute before:inset-0 before:bg-white/10 before:opacity-0 hover:before:opacity-100 before:transition-opacity",
-    secondary: "bg-theme-light-primary text-theme-primary border-2 border-theme-primary/20 hover:bg-theme-primary hover:text-theme-text-icons shadow-sm hover:shadow-lg hover:border-theme-primary active:scale-[0.98]",
-    ghost: "bg-transparent text-theme-primary hover:bg-theme-light-primary active:scale-[0.98]",
-    outline: "bg-transparent border-2 border-theme-primary/30 text-theme-primary hover:bg-theme-light-primary hover:border-theme-primary active:scale-[0.98]",
-    danger: "bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]",
-    warning: "bg-yellow-500 hover:bg-yellow-600 text-white shadow-md hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]",
+    primary: "bg-theme-primary hover:bg-theme-dark-primary text-theme-text-icons shadow-sm hover:shadow-md",
+    secondary: "bg-theme-light-primary text-theme-primary border border-theme-primary/20 hover:bg-theme-primary hover:text-theme-text-icons hover:border-theme-primary",
+    ghost: "bg-transparent text-theme-primary hover:bg-theme-light-primary",
+    outline: "bg-transparent border border-theme-primary/30 text-theme-primary hover:bg-theme-light-primary hover:border-theme-primary",
+    danger: "bg-red-600 hover:bg-red-700 text-white shadow-sm hover:shadow-md focus-visible:ring-red-500/40",
+    warning: "bg-amber-500 hover:bg-amber-600 text-white shadow-sm hover:shadow-md focus-visible:ring-amber-500/40",
   };
 
   return (

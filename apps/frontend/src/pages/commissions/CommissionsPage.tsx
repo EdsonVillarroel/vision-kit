@@ -63,7 +63,7 @@ export const CommissionsPage: React.FC = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold text-theme-dark-primary">
+            <h1 className="text-3xl font-bold text-theme-dark-primary tracking-tight">
               Comisiones
             </h1>
             <p className="text-theme-secondary-text mt-2">
@@ -119,11 +119,11 @@ export const CommissionsPage: React.FC = () => {
 
       {/* Error */}
       {error && (
-        <div className="bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-4 rounded-2xl shadow-xl border border-red-400/20">
+        <div className="bg-red-50 ring-1 ring-inset ring-red-600/20 text-red-700 px-4 py-3 rounded-xl animate-fadeIn">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <svg
-                className="w-6 h-6 flex-shrink-0"
+                className="w-5 h-5 flex-shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -135,12 +135,12 @@ export const CommissionsPage: React.FC = () => {
                   d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              <span className="font-semibold">{error}</span>
+              <span className="font-medium text-sm">{error}</span>
             </div>
             <button
               type="button"
               onClick={refetch}
-              className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 text-sm font-semibold transition-colors"
+              className="shrink-0 px-3 py-1.5 rounded-full bg-red-600/10 hover:bg-red-600/20 text-sm font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-red-500/40"
             >
               Reintentar
             </button>
@@ -152,8 +152,8 @@ export const CommissionsPage: React.FC = () => {
       {isLoading && data.length > 0 ? (
         <div className="relative">
           <CommissionsTable rows={data} />
-          <div className="absolute inset-0 bg-white/40 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-theme-primary border-t-transparent shadow-lg"></div>
+          <div className="absolute inset-0 bg-white/50 rounded-2xl flex items-center justify-center">
+            <div className="animate-spin rounded-full h-10 w-10 border-4 border-theme-primary border-t-transparent"></div>
           </div>
         </div>
       ) : (

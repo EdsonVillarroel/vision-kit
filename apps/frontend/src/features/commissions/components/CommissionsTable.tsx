@@ -26,7 +26,7 @@ const formatRate = (rate: number) => `${rate.toFixed(2)}%`;
 export const CommissionsTable: React.FC<CommissionsTableProps> = ({ rows }) => {
   if (rows.length === 0) {
     return (
-      <div className="bg-gradient-to-br from-white to-theme-light-primary/10 rounded-2xl shadow-lg p-12 border border-theme-divider/20 text-center">
+      <div className="bg-white ring-1 ring-black/[0.06] rounded-2xl shadow-[0_1px_3px_rgba(16,24,40,0.06),0_1px_2px_rgba(16,24,40,0.04)] p-12 text-center">
         <svg
           className="w-16 h-16 text-theme-secondary-text opacity-50 mx-auto mb-4"
           fill="none"

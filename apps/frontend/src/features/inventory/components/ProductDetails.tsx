@@ -25,7 +25,7 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
 const MOVEMENT_TYPE_CONFIG: Record<string, { label: string; icon: string; className: string }> = {
   'in': { label: 'Entrada', icon: '↑', className: 'text-green-600' },
   'out': { label: 'Salida', icon: '↓', className: 'text-red-600' },
-  'adjustment': { label: 'Ajuste', icon: '~', className: 'text-blue-600' }
+  'adjustment': { label: 'Ajuste', icon: '~', className: 'text-theme-primary' }
 };
 
 export const ProductDetails = ({ product }: ProductDetailsProps) => {
@@ -69,7 +69,7 @@ export const ProductDetails = ({ product }: ProductDetailsProps) => {
           </button>
           <button
             onClick={() => navigate(`/inventory/${product.id}/edit`)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+            className="px-4 py-2 bg-theme-primary text-white rounded-lg hover:bg-theme-dark-primary font-medium"
           >
             Editar
           </button>

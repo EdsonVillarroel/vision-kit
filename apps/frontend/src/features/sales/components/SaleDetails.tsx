@@ -105,7 +105,7 @@ export const SaleDetails: React.FC<SaleDetailsProps> = ({ sale }) => {
         <div>
           <button
             onClick={() => navigate('/sales')}
-            className="text-blue-600 hover:text-blue-800 mb-2 text-sm font-medium"
+            className="text-theme-primary hover:text-theme-dark-primary mb-2 text-sm font-medium"
           >
             ← Volver a Ventas
           </button>
@@ -155,7 +155,7 @@ export const SaleDetails: React.FC<SaleDetailsProps> = ({ sale }) => {
                 <p className="text-sm text-gray-600">Paciente</p>
                 <Link
                   to={`/patients/${sale.patientId}`}
-                  className="font-medium text-blue-600 hover:text-blue-800"
+                  className="font-medium text-theme-primary hover:text-theme-dark-primary"
                 >
                   {sale.patientName}
                 </Link>
@@ -172,7 +172,7 @@ export const SaleDetails: React.FC<SaleDetailsProps> = ({ sale }) => {
             <h2 className="text-xl font-bold text-gray-900 mb-4">Productos</h2>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="border-b-2 border-gray-300">
+                <thead className="border-b-2 border-theme-divider">
                   <tr>
                     <th className="text-left py-3 px-2 text-sm font-semibold text-gray-700">Producto</th>
                     <th className="text-center py-3 px-2 text-sm font-semibold text-gray-700">SKU</th>
@@ -365,7 +365,7 @@ export const SaleDetails: React.FC<SaleDetailsProps> = ({ sale }) => {
               value={cancelReason}
               onChange={(e) => { setCancelReason(e.target.value); setCancelError(''); }}
               placeholder="Motivo de la cancelación..."
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 mb-1 ${cancelError ? 'border-red-400' : 'border-gray-300'}`}
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-theme-primary/30 mb-1 ${cancelError ? 'border-red-400' : 'border-theme-divider'}`}
               rows={3}
             />
             {cancelError && (
@@ -403,7 +403,7 @@ export const SaleDetails: React.FC<SaleDetailsProps> = ({ sale }) => {
               value={cancelReason}
               onChange={(e) => { setCancelReason(e.target.value); setCancelError(''); }}
               placeholder="Motivo del reembolso..."
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 mb-1 ${cancelError ? 'border-red-400' : 'border-gray-300'}`}
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-theme-primary/30 mb-1 ${cancelError ? 'border-red-400' : 'border-theme-divider'}`}
               rows={3}
             />
             {cancelError && (

@@ -23,7 +23,7 @@ export const PatientStatusBadge = ({ status, size = 'md', showIcon = true }: Pat
     normal: {
       label: 'Normal',
       icon: '👤',
-      className: 'bg-gray-100 text-gray-700 border-gray-300',
+      className: 'bg-gray-100 text-gray-700 border-theme-divider',
       dotClassName: 'bg-gray-500'
     }
   };

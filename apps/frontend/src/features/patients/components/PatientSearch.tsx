@@ -79,7 +79,7 @@ export const PatientSearch = ({ onSelect, showCreateButton = true, autoFocus = f
     const statusClasses = {
       frequent: 'border-green-500 bg-green-50',
       warning: 'border-yellow-500 bg-yellow-50',
-      normal: 'border-gray-300 bg-white'
+      normal: 'border-theme-divider bg-white'
     };
     return `${baseClass} ${statusClasses[status]}`;
   };
@@ -100,7 +100,7 @@ export const PatientSearch = ({ onSelect, showCreateButton = true, autoFocus = f
               onFocus={() => searchResults.length > 0 && setShowResults(true)}
               placeholder="Buscar por nombre, cédula, teléfono o email..."
               autoFocus={autoFocus}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-theme-divider rounded-lg focus:ring-2 focus:ring-theme-primary/30 focus:border-transparent"
             />
             {isSearching && (
               <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -127,7 +127,7 @@ export const PatientSearch = ({ onSelect, showCreateButton = true, autoFocus = f
             <button
               type="button"
               onClick={() => navigate('/patients/new')}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
+              className="px-4 py-2 bg-theme-primary text-white rounded-lg hover:bg-theme-dark-primary transition-colors whitespace-nowrap"
             >
               Nuevo Paciente
             </button>
@@ -171,7 +171,7 @@ export const PatientSearch = ({ onSelect, showCreateButton = true, autoFocus = f
               )}
 
               {selectedPatient.notes && (
-                <div className="mt-2 p-2 bg-gray-100 border border-gray-300 rounded text-sm text-gray-700">
+                <div className="mt-2 p-2 bg-gray-100 border border-theme-divider rounded text-sm text-gray-700">
                   <p className="font-semibold">Notas:</p>
                   <p>{selectedPatient.notes}</p>
                 </div>
@@ -183,7 +183,7 @@ export const PatientSearch = ({ onSelect, showCreateButton = true, autoFocus = f
 
       {/* Resultados de búsqueda */}
       {showResults && searchResults.length > 0 && !selectedPatient && (
-        <div className="absolute z-10 mt-2 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-96 overflow-y-auto">
+        <div className="absolute z-10 mt-2 w-full bg-white border border-theme-divider rounded-lg shadow-lg max-h-96 overflow-y-auto">
           <div className="p-2">
             <p className="text-xs text-gray-500 px-2 py-1">
               {searchResults.length} resultado(s) encontrado(s)
@@ -229,7 +229,7 @@ export const PatientSearch = ({ onSelect, showCreateButton = true, autoFocus = f
 
       {/* No hay resultados */}
       {showResults && searchResults.length === 0 && !isSearching && searchQuery.trim().length >= 2 && (
-        <div className="absolute z-10 mt-2 w-full bg-white border border-gray-300 rounded-lg shadow-lg p-4">
+        <div className="absolute z-10 mt-2 w-full bg-white border border-theme-divider rounded-lg shadow-lg p-4">
           <p className="text-gray-600 text-center">
             No se encontraron pacientes con "{searchQuery}"
           </p>
@@ -237,7 +237,7 @@ export const PatientSearch = ({ onSelect, showCreateButton = true, autoFocus = f
             <button
               type="button"
               onClick={() => navigate('/patients/new')}
-              className="mt-3 w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="mt-3 w-full px-4 py-2 bg-theme-primary text-white rounded-lg hover:bg-theme-dark-primary transition-colors"
             >
               Crear nuevo paciente
             </button>

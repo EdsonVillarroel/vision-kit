@@ -143,7 +143,7 @@ export const AppearancePage: React.FC = () => {
               <button
                 onClick={handleResetBrandColors}
                 disabled={saving}
-                className="px-5 py-2 border border-gray-300 text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-60"
+                className="px-5 py-2 border border-theme-divider text-gray-600 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-60"
               >
                 Restablecer
               </button>

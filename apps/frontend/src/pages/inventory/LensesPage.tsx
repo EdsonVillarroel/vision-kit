@@ -34,7 +34,7 @@ export const LensesPage = () => {
         </div>
         <button
           onClick={() => navigate('/inventory/new')}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+          className="px-4 py-2 bg-theme-primary text-white rounded-lg hover:bg-theme-dark-primary font-medium"
         >
           + Nuevo Producto
         </button>
@@ -48,7 +48,7 @@ export const LensesPage = () => {
         </div>
         <div className="bg-white rounded-lg shadow p-4">
           <div className="text-sm text-gray-600">Lentes Oftálmicos</div>
-          <div className="text-2xl font-bold text-blue-600">{opticalLenses.length}</div>
+          <div className="text-2xl font-bold text-theme-primary">{opticalLenses.length}</div>
         </div>
         <div className="bg-white rounded-lg shadow p-4">
           <div className="text-sm text-gray-600">Lentes de Contacto</div>
@@ -68,7 +68,7 @@ export const LensesPage = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Nombre, SKU, marca..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-theme-divider rounded-lg focus:ring-2 focus:ring-theme-primary/30 focus:border-transparent"
             />
           </div>
 
@@ -79,7 +79,7 @@ export const LensesPage = () => {
             <select
               value={lensType}
               onChange={(e) => setLensType(e.target.value as any)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-theme-divider rounded-lg focus:ring-2 focus:ring-theme-primary/30 focus:border-transparent"
             >
               <option value="">Todos</option>
               <option value="lenses">Lentes Oftálmicos</option>
@@ -138,7 +138,7 @@ export const LensesPage = () => {
                       </p>
                       <button
                         onClick={() => navigate('/inventory/new')}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+                        className="px-4 py-2 bg-theme-primary text-white rounded-lg hover:bg-theme-dark-primary text-sm font-medium"
                       >
                         + Agregar producto
                       </button>
@@ -214,7 +214,7 @@ export const LensesPage = () => {
                     <td className="px-6 py-4 text-sm">
                       <button
                         onClick={() => navigate(`/inventory/${product.id}`)}
-                        className="text-blue-600 hover:text-blue-800 font-medium"
+                        className="text-theme-primary hover:text-theme-dark-primary font-medium"
                       >
                         Ver
                       </button>

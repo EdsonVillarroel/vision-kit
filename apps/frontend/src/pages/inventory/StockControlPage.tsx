@@ -6,7 +6,7 @@ import { SkeletonPageWithStats } from '../../components/ui/Skeleton';
 const MOVEMENT_TYPE_CONFIG: Record<string, { label: string; icon: string; className: string }> = {
   in: { label: 'Entrada', icon: '↑', className: 'text-green-600 bg-green-50' },
   out: { label: 'Salida', icon: '↓', className: 'text-red-600 bg-red-50' },
-  adjustment: { label: 'Ajuste', icon: '~', className: 'text-blue-600 bg-blue-50' }
+  adjustment: { label: 'Ajuste', icon: '~', className: 'text-theme-primary bg-blue-50' }
 };
 
 export const StockControlPage = () => {
@@ -57,7 +57,7 @@ export const StockControlPage = () => {
         </div>
         <div className="bg-white rounded-lg shadow p-4">
           <div className="text-sm text-gray-600">Ajustes</div>
-          <div className="text-2xl font-bold text-blue-600">{totalAdjustments}</div>
+          <div className="text-2xl font-bold text-theme-primary">{totalAdjustments}</div>
         </div>
       </div>
 
@@ -73,7 +73,7 @@ export const StockControlPage = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Motivo, referencia..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-theme-divider rounded-lg focus:ring-2 focus:ring-theme-primary/30 focus:border-transparent"
             />
           </div>
 
@@ -84,7 +84,7 @@ export const StockControlPage = () => {
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value as any)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-theme-divider rounded-lg focus:ring-2 focus:ring-theme-primary/30 focus:border-transparent"
             >
               <option value="">Todos</option>
               <option value="in">Entradas</option>
@@ -167,7 +167,7 @@ export const StockControlPage = () => {
                       <td className="px-6 py-4">
                         <button
                           onClick={() => navigate(`/inventory/${movement.productId}`)}
-                          className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                          className="text-sm text-theme-primary hover:text-theme-dark-primary font-medium"
                         >
                           Ver Producto
                         </button>
@@ -179,7 +179,7 @@ export const StockControlPage = () => {
                               ? 'text-green-600'
                               : movement.type === 'out'
                               ? 'text-red-600'
-                              : 'text-blue-600'
+                              : 'text-theme-primary'
                           }`}
                         >
                           {movement.type === 'in' ? '+' : movement.type === 'out' ? '-' : ''}
@@ -223,13 +223,13 @@ export const StockControlPage = () => {
         <div className="flex flex-wrap gap-3">
           <button
             onClick={() => navigate('/inventory')}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+            className="px-4 py-2 bg-theme-primary text-white rounded-lg hover:bg-theme-dark-primary font-medium"
           >
             Ver Todos los Productos
           </button>
           <button
             onClick={() => navigate('/inventory/new')}
-            className="px-4 py-2 bg-white text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 font-medium"
+            className="px-4 py-2 bg-white text-theme-primary border border-theme-primary/40 rounded-lg hover:bg-theme-light-primary/40 font-medium transition-colors duration-150"
           >
             Agregar Producto
           </button>

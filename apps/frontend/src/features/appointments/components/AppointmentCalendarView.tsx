@@ -72,14 +72,14 @@ export const AppointmentCalendarView = () => {
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-4 py-2 border border-theme-divider rounded-lg focus:ring-2 focus:ring-theme-primary/30 focus:border-transparent"
           />
         </div>
 
         {/* Summary Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-blue-50 rounded-lg p-4">
-            <p className="text-sm text-blue-600 font-medium">Citas del Día</p>
+            <p className="text-sm text-theme-primary font-medium">Citas del Día</p>
             <p className="text-2xl font-bold text-blue-900">{dateAppointments.length}</p>
           </div>
           <div className="bg-green-50 rounded-lg p-4">
@@ -130,7 +130,7 @@ export const AppointmentCalendarView = () => {
                         </div>
                         <Link
                           to={`/appointments/${appointment.id}`}
-                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                          className="text-theme-primary hover:text-theme-dark-primary text-sm font-medium"
                         >
                           Ver →
                         </Link>
@@ -179,7 +179,7 @@ export const AppointmentCalendarView = () => {
                         </div>
                         <Link
                           to={`/medical-records/${record.id}`}
-                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                          className="text-theme-primary hover:text-theme-dark-primary text-sm font-medium"
                         >
                           Ver →
                         </Link>

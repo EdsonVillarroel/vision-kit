@@ -19,7 +19,7 @@ export const NewMedicalRecordPage = () => {
       <div>
         <button
           onClick={() => navigate('/medical-records')}
-          className="text-blue-600 hover:text-blue-800 mb-2 text-sm font-medium"
+          className="text-theme-primary hover:text-theme-dark-primary mb-2 text-sm font-medium"
         >
           ← Volver a Historia Clínica
         </button>

@@ -31,7 +31,7 @@ export const MedicalRecordDetails: React.FC<MedicalRecordDetailsProps> = ({ reco
         <div>
           <button
             onClick={() => navigate('/medical-records')}
-            className="text-blue-600 hover:text-blue-800 mb-2 text-sm font-medium"
+            className="text-theme-primary hover:text-theme-dark-primary mb-2 text-sm font-medium"
           >
             ← Volver a Historia Clínica
           </button>
@@ -122,7 +122,7 @@ export const MedicalRecordDetails: React.FC<MedicalRecordDetailsProps> = ({ reco
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b-2 border-gray-300">
+              <tr className="border-b-2 border-theme-divider">
                 <th className="text-left py-3 px-4 font-semibold text-gray-700">Ojo</th>
                 <th className="text-center py-3 px-4 font-semibold text-gray-700">Esfera</th>
                 <th className="text-center py-3 px-4 font-semibold text-gray-700">Cilindro</th>

@@ -140,7 +140,7 @@ export const AlertsPage = () => {
                       </button>
                       <button
                         onClick={() => navigate(`/inventory/${product.id}`)}
-                        className="text-blue-600 hover:text-blue-800 font-medium"
+                        className="text-theme-primary hover:text-theme-dark-primary font-medium"
                       >
                         Ver
                       </button>
@@ -217,7 +217,7 @@ export const AlertsPage = () => {
                       </button>
                       <button
                         onClick={() => navigate(`/inventory/${product.id}`)}
-                        className="text-blue-600 hover:text-blue-800 font-medium"
+                        className="text-theme-primary hover:text-theme-dark-primary font-medium"
                       >
                         Ver
                       </button>
@@ -278,7 +278,7 @@ export const AlertsPage = () => {
                     <td className="px-6 py-4 text-sm">
                       <button
                         onClick={() => navigate(`/inventory/${product.id}`)}
-                        className="text-blue-600 hover:text-blue-800 font-medium"
+                        className="text-theme-primary hover:text-theme-dark-primary font-medium"
                       >
                         Ver Detalles
                       </button>
@@ -311,19 +311,19 @@ export const AlertsPage = () => {
         <h3 className="text-lg font-semibold text-gray-900 mb-2">Recomendaciones</h3>
         <ul className="space-y-2 text-sm text-gray-700">
           <li className="flex items-start">
-            <span className="text-blue-600 mr-2">•</span>
+            <span className="text-theme-primary mr-2">•</span>
             <span>
               Revisa regularmente los productos con stock bajo para evitar desabastecimiento
             </span>
           </li>
           <li className="flex items-start">
-            <span className="text-blue-600 mr-2">•</span>
+            <span className="text-theme-primary mr-2">•</span>
             <span>
               Contacta a tus proveedores con anticipación para productos críticos
             </span>
           </li>
           <li className="flex items-start">
-            <span className="text-blue-600 mr-2">•</span>
+            <span className="text-theme-primary mr-2">•</span>
             <span>
               Considera ajustar los niveles de stock mínimo según la demanda histórica
             </span>

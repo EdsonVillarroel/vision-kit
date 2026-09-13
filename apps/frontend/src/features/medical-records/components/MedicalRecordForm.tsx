@@ -119,7 +119,7 @@ export const MedicalRecordForm: React.FC<MedicalRecordFormProps> = ({
             <select
               value={formData.examType}
               onChange={(e) => setFormData({ ...formData, examType: e.target.value as any })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-theme-divider rounded-lg focus:ring-2 focus:ring-theme-primary/30"
               required
             >
               <option value="routine">Examen de Rutina</option>
@@ -280,7 +280,7 @@ export const MedicalRecordForm: React.FC<MedicalRecordFormProps> = ({
               value={diagnosisText}
               onChange={(e) => setDiagnosisText(e.target.value)}
               placeholder="Separar por comas (Ej: Miopía leve bilateral, Astigmatismo)"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-theme-divider rounded-lg focus:ring-2 focus:ring-theme-primary/30"
               rows={2}
             />
           </div>
@@ -293,7 +293,7 @@ export const MedicalRecordForm: React.FC<MedicalRecordFormProps> = ({
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               placeholder="Notas adicionales, recomendaciones, observaciones del paciente..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border border-theme-divider rounded-lg focus:ring-2 focus:ring-theme-primary/30"
               rows={4}
             />
           </div>

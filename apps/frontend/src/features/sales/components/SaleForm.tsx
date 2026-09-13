@@ -246,10 +246,10 @@ export const SaleForm: React.FC<SaleFormProps> = ({ onSubmit }) => {
                   value={searchProduct}
                   onChange={(e) => setSearchProduct(e.target.value)}
                   placeholder="Buscar por nombre o SKU..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-theme-divider rounded-lg focus:ring-2 focus:ring-theme-primary/30"
                 />
                 {searchProduct && filteredProducts.length > 0 && (
-                  <div className="mt-2 border border-gray-300 rounded-lg max-h-48 overflow-y-auto">
+                  <div className="mt-2 border border-theme-divider rounded-lg max-h-48 overflow-y-auto">
                     {filteredProducts.map(product => (
                       <button
                         key={product.id}
@@ -414,7 +414,7 @@ export const SaleForm: React.FC<SaleFormProps> = ({ onSubmit }) => {
                   setShowMixedPayment(method === 'mixed');
                   setPayments([]);
                 }}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border border-theme-divider rounded-lg focus:ring-2 focus:ring-theme-primary/30"
                 required
               >
                 <option value="cash">Efectivo</option>
@@ -433,7 +433,7 @@ export const SaleForm: React.FC<SaleFormProps> = ({ onSubmit }) => {
                   <select
                     value={currentPayment.method}
                     onChange={(e) => setCurrentPayment({ ...currentPayment, method: e.target.value as PaymentMethod })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    className="w-full px-3 py-2 border border-theme-divider rounded-lg text-sm"
                   >
                     <option value="cash">Efectivo</option>
                     <option value="card">Tarjeta</option>
@@ -446,7 +446,7 @@ export const SaleForm: React.FC<SaleFormProps> = ({ onSubmit }) => {
                     placeholder="Monto"
                     value={currentPayment.amount}
                     onChange={(e) => setCurrentPayment({ ...currentPayment, amount: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    className="w-full px-3 py-2 border border-theme-divider rounded-lg text-sm"
                   />
                   {currentPayment.method !== 'cash' && (
                     <input
@@ -454,13 +454,13 @@ export const SaleForm: React.FC<SaleFormProps> = ({ onSubmit }) => {
                       placeholder="Referencia (opcional)"
                       value={currentPayment.reference}
                       onChange={(e) => setCurrentPayment({ ...currentPayment, reference: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      className="w-full px-3 py-2 border border-theme-divider rounded-lg text-sm"
                     />
                   )}
                   <button
                     type="button"
                     onClick={addPayment}
-                    className="w-full px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                    className="w-full px-3 py-2 bg-theme-primary text-white rounded-lg hover:bg-theme-dark-primary text-sm"
                   >
                     Agregar Pago
                   </button>
@@ -506,7 +506,7 @@ export const SaleForm: React.FC<SaleFormProps> = ({ onSubmit }) => {
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 placeholder="Notas adicionales..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border border-theme-divider rounded-lg focus:ring-2 focus:ring-theme-primary/30"
                 rows={3}
               />
             </div>

@@ -117,8 +117,8 @@ export const UsersPage: React.FC = () => {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestión de Usuarios</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-2xl font-bold text-theme-primary-text">Gestión de Usuarios</h1>
+          <p className="text-theme-secondary-text mt-1">
             Administra los usuarios del sistema y sus permisos
           </p>
         </div>
@@ -130,10 +130,10 @@ export const UsersPage: React.FC = () => {
       </div>
 
       {/* Filtros */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+      <div className="bg-white rounded-xl shadow-sm border border-black/[0.06] p-4 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-theme-primary-text mb-1">
               Buscar
             </label>
             <input
@@ -141,17 +141,17 @@ export const UsersPage: React.FC = () => {
               placeholder="Nombre, email o ID..."
               value={filter.search}
               onChange={(e) => setFilter({ ...filter, search: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-theme-divider rounded-lg outline-none focus:border-theme-primary focus-visible:ring-2 focus-visible:ring-theme-primary/25"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-theme-primary-text mb-1">
               Rol
             </label>
             <select
               value={filter.role || ''}
               onChange={(e) => setFilter({ ...filter, role: (e.target.value as UserRole) || undefined })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-theme-divider rounded-lg outline-none focus:border-theme-primary focus-visible:ring-2 focus-visible:ring-theme-primary/25"
             >
               <option value="">Todos</option>
               <option value="admin">Administrador</option>
@@ -160,13 +160,13 @@ export const UsersPage: React.FC = () => {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-theme-primary-text mb-1">
               Estado
             </label>
             <select
               value={filter.status || ''}
               onChange={(e) => setFilter({ ...filter, status: (e.target.value as 'active' | 'inactive') || undefined })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-theme-divider rounded-lg outline-none focus:border-theme-primary focus-visible:ring-2 focus-visible:ring-theme-primary/25"
             >
               <option value="">Todos</option>
               <option value="active">Activos</option>
@@ -176,7 +176,7 @@ export const UsersPage: React.FC = () => {
           <div className="flex items-end">
             <button
               onClick={() => setFilter({ search: '' })}
-              className="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              className="w-full px-4 py-2 text-sm font-medium text-theme-primary-text bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
             >
               Limpiar Filtros
             </button>
@@ -186,24 +186,24 @@ export const UsersPage: React.FC = () => {
 
       {/* Estadísticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div className="text-sm text-gray-600">Total Usuarios</div>
-          <div className="text-2xl font-bold text-gray-900 mt-1">{users.length}</div>
+        <div className="bg-white rounded-xl shadow-sm border border-black/[0.06] p-4">
+          <div className="text-sm text-theme-secondary-text">Total Usuarios</div>
+          <div className="text-2xl font-bold text-theme-primary-text mt-1">{users.length}</div>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-red-200 p-4">
-          <div className="text-sm text-gray-600">Administradores</div>
+          <div className="text-sm text-theme-secondary-text">Administradores</div>
           <div className="text-2xl font-bold text-red-600 mt-1">
             {users.filter(u => u.role === 'admin').length}
           </div>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-blue-200 p-4">
-          <div className="text-sm text-gray-600">Gerentes</div>
-          <div className="text-2xl font-bold text-blue-600 mt-1">
+          <div className="text-sm text-theme-secondary-text">Gerentes</div>
+          <div className="text-2xl font-bold text-theme-primary mt-1">
             {users.filter(u => u.role === 'manager').length}
           </div>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-green-200 p-4">
-          <div className="text-sm text-gray-600">Ópticos</div>
+          <div className="text-sm text-theme-secondary-text">Ópticos</div>
           <div className="text-2xl font-bold text-green-600 mt-1">
             {users.filter(u => u.role === 'optician').length}
           </div>
@@ -211,41 +211,41 @@ export const UsersPage: React.FC = () => {
       </div>
 
       {/* Lista de Usuarios */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-black/[0.06] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-theme-light-primary/20 border-b border-black/[0.06]">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-theme-secondary-text uppercase tracking-wider">
                   Usuario
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-theme-secondary-text uppercase tracking-wider">
                   Rol
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-theme-secondary-text uppercase tracking-wider">
                   Teléfono
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-theme-secondary-text uppercase tracking-wider">
                   Estado
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-theme-secondary-text uppercase tracking-wider">
                   Fecha de Creación
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium text-theme-secondary-text uppercase tracking-wider">
                   Acciones
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white divide-y divide-black/[0.05]">
               {filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={6} className="px-6 py-12 text-center text-theme-secondary-text">
                     No se encontraron usuarios
                   </td>
                 </tr>
               ) : (
                 filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50">
+                  <tr key={user.id} className="hover:bg-theme-light-primary/20">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10">
@@ -256,14 +256,14 @@ export const UsersPage: React.FC = () => {
                               className="h-10 w-10 rounded-full"
                             />
                           ) : (
-                            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold">
+                            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-theme-primary to-theme-dark-primary flex items-center justify-center text-white font-semibold">
                               {user.name.charAt(0).toUpperCase()}
                             </div>
                           )}
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                          <div className="text-sm text-gray-500">{user.email}</div>
+                          <div className="text-sm font-medium text-theme-primary-text">{user.name}</div>
+                          <div className="text-sm text-theme-secondary-text">{user.email}</div>
                         </div>
                       </div>
                     </td>
@@ -272,7 +272,7 @@ export const UsersPage: React.FC = () => {
                         {getRoleName(user.role)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-secondary-text">
                       {user.phone || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -284,15 +284,15 @@ export const UsersPage: React.FC = () => {
                         {user.status === 'active' ? 'Activo' : 'Inactivo'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(user.createdAt).toLocaleDateString('es-ES')}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-theme-secondary-text">
+                      {new Date(user.createdAt).toLocaleDateString('es-BO')}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">
                         {permissions.canEditUser && (
                           <button
                             onClick={() => navigate(`/settings/users/${user.id}/edit`)}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="text-theme-primary hover:text-theme-dark-primary"
                           >
                             Editar
                           </button>

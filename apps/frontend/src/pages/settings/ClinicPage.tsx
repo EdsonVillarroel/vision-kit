@@ -113,16 +113,16 @@ export const ClinicPage: React.FC = () => {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Configuración de la Clínica</h1>
-        <p className="text-gray-600 mt-1">
+        <h1 className="text-2xl font-bold text-theme-primary-text">Configuración de la Clínica</h1>
+        <p className="text-theme-secondary-text mt-1">
           Administra la información general de tu óptica
         </p>
       </div>
 
       {/* Información General */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-xl shadow-sm border border-black/[0.06] p-6 mb-6">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">Información General</h3>
+          <h3 className="text-lg font-semibold text-theme-primary-text">Información General</h3>
           {!isEditing && (
             <Button variant="outline" onClick={() => setIsEditing(true)}>
               Editar
@@ -188,7 +188,7 @@ export const ClinicPage: React.FC = () => {
         </div>
 
         {isEditing && (
-          <div className="flex gap-3 mt-6 pt-6 border-t border-gray-200">
+          <div className="flex gap-3 mt-6 pt-6 border-t border-black/[0.06]">
             <Button onClick={handleSave} isLoading={isSaving}>
               Guardar Cambios
             </Button>
@@ -200,24 +200,24 @@ export const ClinicPage: React.FC = () => {
       </div>
 
       {/* Logo */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Logo de la Clínica</h3>
+      <div className="bg-white rounded-xl shadow-sm border border-black/[0.06] p-6 mb-6">
+        <h3 className="text-lg font-semibold text-theme-primary-text mb-4">Logo de la Clínica</h3>
         <div className="flex items-center gap-6">
           <div className="flex-shrink-0">
             {original?.logo ? (
               <img
                 src={original.logo}
                 alt="Logo de la clínica"
-                className="w-24 h-24 object-contain border border-gray-200 rounded-lg"
+                className="w-24 h-24 object-contain border border-black/[0.06] rounded-lg"
               />
             ) : (
-              <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+              <div className="w-24 h-24 bg-gradient-to-br from-theme-primary to-theme-dark-primary rounded-lg flex items-center justify-center">
                 <span className="text-white text-3xl font-bold">VK</span>
               </div>
             )}
           </div>
           <div className="flex-1">
-            <p className="text-sm text-gray-600 mb-2">
+            <p className="text-sm text-theme-secondary-text mb-2">
               Sube el logo de tu clínica. Se recomienda una imagen de 200x200 píxeles.
             </p>
             <Button variant="outline" disabled>
@@ -228,28 +228,28 @@ export const ClinicPage: React.FC = () => {
       </div>
 
       {/* Configuración de Facturación */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Configuración de Facturación</h3>
+      <div className="bg-white rounded-xl shadow-sm border border-black/[0.06] p-6 mb-6">
+        <h3 className="text-lg font-semibold text-theme-primary-text mb-4">Configuración de Facturación</h3>
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          <div className="flex items-center justify-between p-4 bg-theme-light-primary/20 rounded-lg">
             <div>
-              <h4 className="font-medium text-gray-900">IVA</h4>
-              <p className="text-sm text-gray-600">Porcentaje de IVA aplicado a las ventas</p>
+              <h4 className="font-medium text-theme-primary-text">IVA</h4>
+              <p className="text-sm text-theme-secondary-text">Porcentaje de IVA aplicado a las ventas</p>
             </div>
             <div className="text-right">
-              <span className="text-2xl font-bold text-gray-900">
+              <span className="text-2xl font-bold text-theme-primary-text">
                 {original?.taxRate != null ? `${original.taxRate}%` : '16%'}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          <div className="flex items-center justify-between p-4 bg-theme-light-primary/20 rounded-lg">
             <div>
-              <h4 className="font-medium text-gray-900">Moneda</h4>
-              <p className="text-sm text-gray-600">Moneda utilizada en las transacciones</p>
+              <h4 className="font-medium text-theme-primary-text">Moneda</h4>
+              <p className="text-sm text-theme-secondary-text">Moneda utilizada en las transacciones</p>
             </div>
             <div className="text-right">
-              <span className="text-xl font-semibold text-gray-900">
+              <span className="text-xl font-semibold text-theme-primary-text">
                 {original?.currency ?? 'MXN'}
               </span>
             </div>
@@ -258,9 +258,9 @@ export const ClinicPage: React.FC = () => {
       </div>
 
       {/* Horarios de Atención */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-black/[0.06] p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Horarios de Atención</h3>
+          <h3 className="text-lg font-semibold text-theme-primary-text">Horarios de Atención</h3>
           {!isEditingHours && (
             <Button variant="outline" onClick={() => setIsEditingHours(true)}>
               Editar Horarios
@@ -270,8 +270,8 @@ export const ClinicPage: React.FC = () => {
 
         <div className="space-y-2">
           {Object.entries(businessHours).map(([day, schedule]) => (
-            <div key={day} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <span className="font-medium text-gray-900 w-28 flex-shrink-0">{DAY_LABELS[day] ?? day}</span>
+            <div key={day} className="flex items-center gap-3 p-3 bg-theme-light-primary/20 rounded-lg">
+              <span className="font-medium text-theme-primary-text w-28 flex-shrink-0">{DAY_LABELS[day] ?? day}</span>
               {isEditingHours ? (
                 <div className="flex items-center gap-2 flex-1">
                   <input
@@ -282,9 +282,9 @@ export const ClinicPage: React.FC = () => {
                       ...prev,
                       [day]: { ...prev[day], open: e.target.value },
                     }))}
-                    className="px-2 py-1 border border-gray-300 rounded text-sm disabled:bg-gray-100 disabled:text-gray-400"
+                    className="px-2 py-1 border border-theme-divider rounded text-sm disabled:bg-gray-100 disabled:text-gray-400"
                   />
-                  <span className="text-gray-500 text-sm">—</span>
+                  <span className="text-theme-secondary-text text-sm">—</span>
                   <input
                     type="time"
                     value={schedule.close}
@@ -293,9 +293,9 @@ export const ClinicPage: React.FC = () => {
                       ...prev,
                       [day]: { ...prev[day], close: e.target.value },
                     }))}
-                    className="px-2 py-1 border border-gray-300 rounded text-sm disabled:bg-gray-100 disabled:text-gray-400"
+                    className="px-2 py-1 border border-theme-divider rounded text-sm disabled:bg-gray-100 disabled:text-gray-400"
                   />
-                  <label className="flex items-center gap-1 ml-2 text-sm text-gray-600 cursor-pointer">
+                  <label className="flex items-center gap-1 ml-2 text-sm text-theme-secondary-text cursor-pointer">
                     <input
                       type="checkbox"
                       checked={schedule.closed}
@@ -309,7 +309,7 @@ export const ClinicPage: React.FC = () => {
                   </label>
                 </div>
               ) : (
-                <span className="text-gray-600 text-sm">
+                <span className="text-theme-secondary-text text-sm">
                   {schedule.closed ? 'Cerrado' : `${schedule.open} — ${schedule.close}`}
                 </span>
               )}
@@ -318,7 +318,7 @@ export const ClinicPage: React.FC = () => {
         </div>
 
         {isEditingHours && (
-          <div className="flex gap-3 mt-4 pt-4 border-t border-gray-200">
+          <div className="flex gap-3 mt-4 pt-4 border-t border-black/[0.06]">
             <Button onClick={handleSaveHours} isLoading={isSavingHours}>
               Guardar Horarios
             </Button>

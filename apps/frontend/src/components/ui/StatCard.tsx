@@ -22,58 +22,25 @@ export const StatCard: React.FC<StatCardProps> = ({
   className
 }) => {
   const variants = {
-    default: {
-      bg: 'bg-gradient-to-br from-white to-theme-light-primary/20',
-      border: 'border-theme-divider/30',
-      iconBg: 'bg-theme-primary',
-      textColor: 'text-theme-primary',
-      accentBorder: ''
-    },
-    primary: {
-      bg: 'bg-gradient-to-br from-theme-light-primary/40 to-theme-light-primary/20',
-      border: 'border-theme-primary/30',
-      iconBg: 'bg-gradient-to-br from-theme-primary to-theme-dark-primary',
-      textColor: 'text-theme-dark-primary',
-      accentBorder: 'border-l-4 border-theme-primary'
-    },
-    success: {
-      bg: 'bg-gradient-to-br from-green-50 to-white',
-      border: 'border-green-200',
-      iconBg: 'bg-gradient-to-br from-green-600 to-green-700',
-      textColor: 'text-green-700',
-      accentBorder: 'border-l-4 border-green-500'
-    },
-    warning: {
-      bg: 'bg-gradient-to-br from-yellow-50 to-white',
-      border: 'border-yellow-200',
-      iconBg: 'bg-gradient-to-br from-yellow-500 to-yellow-600',
-      textColor: 'text-yellow-700',
-      accentBorder: 'border-l-4 border-yellow-500'
-    },
-    info: {
-      bg: 'bg-gradient-to-br from-blue-50 to-white',
-      border: 'border-blue-200',
-      iconBg: 'bg-gradient-to-br from-blue-600 to-blue-700',
-      textColor: 'text-blue-700',
-      accentBorder: 'border-l-4 border-blue-500'
-    }
+    default: { iconBg: 'bg-theme-light-primary/50', iconColor: 'text-theme-primary', textColor: 'text-theme-primary-text' },
+    primary: { iconBg: 'bg-theme-light-primary/60', iconColor: 'text-theme-dark-primary', textColor: 'text-theme-primary-text' },
+    success: { iconBg: 'bg-green-50', iconColor: 'text-green-600', textColor: 'text-theme-primary-text' },
+    warning: { iconBg: 'bg-amber-50', iconColor: 'text-amber-600', textColor: 'text-theme-primary-text' },
+    info: { iconBg: 'bg-blue-50', iconColor: 'text-blue-600', textColor: 'text-theme-primary-text' }
   };
 
   const config = variants[variant];
 
   return (
     <div className={clsx(
-      config.bg,
-      config.border,
-      config.accentBorder,
-      "border rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] backdrop-blur-sm",
+      "bg-white ring-1 ring-black/[0.06] rounded-2xl p-6 shadow-[0_1px_3px_rgba(16,24,40,0.06),0_1px_2px_rgba(16,24,40,0.04)]",
       className
     )}>
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-theme-secondary-text mb-2">{title}</p>
           <p className={clsx(
-            "text-3xl font-bold",
+            "text-3xl font-bold tnum tracking-tight",
             config.textColor
           )}>
             {value}
@@ -97,7 +64,8 @@ export const StatCard: React.FC<StatCardProps> = ({
         {icon && (
           <div className={clsx(
             config.iconBg,
-            "p-3 rounded-xl shadow-lg text-white"
+            config.iconColor,
+            "p-2.5 rounded-xl shrink-0"
           )}>
             {icon}
           </div>

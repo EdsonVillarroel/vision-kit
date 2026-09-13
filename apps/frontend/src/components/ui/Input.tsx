@@ -17,11 +17,11 @@ export const Input: React.FC<InputProps> = ({
   helperText,
   ...props
 }) => {
-  const baseStyles = "w-full px-4 py-3 transition-all duration-300 outline-none text-theme-primary-text placeholder:text-theme-secondary-text";
+  const baseStyles = "w-full px-4 py-3 transition-[background-color,border-color,box-shadow] duration-150 ease-[cubic-bezier(0.16,1,0.3,1)] outline-none text-theme-primary-text placeholder:text-theme-secondary-text";
 
   const filledStyles = "bg-theme-light-primary/30 border-0 border-b-2 border-theme-divider rounded-t-lg focus:border-b-theme-primary focus:bg-theme-light-primary/40 hover:bg-theme-light-primary/40";
 
-  const outlinedStyles = "bg-transparent border-2 border-theme-divider rounded-lg focus:border-theme-primary hover:border-theme-primary/50";
+  const outlinedStyles = "bg-transparent border border-theme-divider rounded-lg hover:border-theme-primary/50 focus:border-theme-primary focus-visible:ring-2 focus-visible:ring-theme-primary/25";
 
   const errorStyles = variant === 'filled'
     ? "border-b-red-500 text-red-900 placeholder:text-red-300 focus:border-b-red-500"

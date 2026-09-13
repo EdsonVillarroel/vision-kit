@@ -1,30 +1,42 @@
 @import "tailwindcss";
 
+/* ── Motion tokens (emil-taste) ─────────────────────────────────────────────
+   Duraciones cortas + ease-out en entradas. Reutilizar en componentes. */
+:root {
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 130ms;
+  --dur-base: 220ms;
+}
+
 @keyframes slideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  from { transform: translateX(12px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-.animate-slideIn {
-  animation: slideIn 0.3s ease-out;
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease-out;
+.animate-slideIn { animation: slideIn var(--dur-base) var(--ease-out); }
+.animate-fadeIn  { animation: fadeIn var(--dur-fast) var(--ease-out); }
+.animate-scaleIn { animation: scaleIn var(--dur-base) var(--ease-out); }
+
+/* Números que cambian no deben "saltar" */
+.tnum { font-variant-numeric: tabular-nums; }
+
+/* ── Accesibilidad: respetar prefers-reduced-motion ─────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
-/* V1ll@rr0elSupa */

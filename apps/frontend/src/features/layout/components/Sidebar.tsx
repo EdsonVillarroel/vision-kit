@@ -49,33 +49,36 @@ const MenuItemComponent: React.FC<{ item: MenuItem; level?: number }> = ({ item,
     </>
   );
 
+  const rowBase =
+    'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl group relative outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/40 transition-[background-color,color] duration-150 ease-[cubic-bezier(0.16,1,0.3,1)]';
+
   return (
     <div>
       {item.path && !hasChildren ? (
         <Link
           to={item.path}
           className={clsx(
-            'w-full flex items-center gap-3 px-4 py-3.5 transition-all duration-300 rounded-xl group relative overflow-hidden',
-            level > 0 && 'pl-12 ml-2',
+            rowBase,
+            level > 0 && 'pl-11',
             isActive
-              ? 'bg-gradient-to-r from-theme-primary to-theme-dark-primary text-theme-text-icons font-bold shadow-lg shadow-theme-primary/30 scale-[1.02] before:absolute before:inset-0 before:bg-white/10 before:rounded-xl'
-              : 'text-theme-primary-text hover:bg-gradient-to-r hover:from-theme-light-primary/60 hover:to-theme-light-primary/40 hover:text-theme-dark-primary hover:shadow-md hover:scale-[1.01] active:scale-[0.98]'
+              ? 'bg-theme-primary text-theme-text-icons font-semibold'
+              : 'text-theme-primary-text hover:bg-theme-light-primary/60 hover:text-theme-dark-primary'
           )}
         >
           {content}
           {isActive && (
-            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-theme-accent rounded-l-full" />
+            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-theme-accent rounded-l-full" />
           )}
         </Link>
       ) : (
         <button
           onClick={handleClick}
           className={clsx(
-            'w-full flex items-center gap-3 px-4 py-3.5 transition-all duration-300 rounded-xl group',
-            level > 0 && 'pl-12 ml-2',
+            rowBase,
+            level > 0 && 'pl-11',
             isExpanded
-              ? 'text-theme-dark-primary font-bold bg-gradient-to-r from-theme-light-primary/60 to-theme-light-primary/40 shadow-md scale-[1.01]'
-              : 'text-theme-primary-text hover:bg-gradient-to-r hover:from-theme-light-primary/40 hover:to-theme-light-primary/20 hover:text-theme-dark-primary hover:shadow-sm hover:scale-[1.01] active:scale-[0.98]'
+              ? 'text-theme-dark-primary font-semibold bg-theme-light-primary/50'
+              : 'text-theme-primary-text hover:bg-theme-light-primary/60 hover:text-theme-dark-primary'
           )}
         >
           {content}
@@ -83,7 +86,7 @@ const MenuItemComponent: React.FC<{ item: MenuItem; level?: number }> = ({ item,
       )}
 
       {hasChildren && isExpanded && !isCollapsed && (
-        <div className="mt-2 space-y-1.5 pl-3 ml-6 animate-fadeIn bg-gradient-to-br from-theme-light-primary/20 to-transparent rounded-2xl py-3 border-l-2 border-theme-accent/20">
+        <div className="mt-1 space-y-1 pl-3 ml-5 animate-fadeIn border-l border-theme-divider/50">
           {item.children?.map((child) => (
             <MenuItemComponent key={child.id} item={child} level={level + 1} />
           ))}
@@ -105,7 +108,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ menuItems }) => {
       {/* Overlay for mobile */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden animate-fadeIn"
           onClick={() => setIsOpen(false)}
         />
       )}
@@ -113,27 +116,27 @@ export const Sidebar: React.FC<SidebarProps> = ({ menuItems }) => {
       {/* Sidebar */}
       <aside
         className={clsx(
-          'fixed top-0 left-0 h-full bg-gradient-to-b from-theme-light-primary/90 via-white to-theme-light-primary/50 backdrop-blur-xl border-r border-theme-primary/10 shadow-2xl z-50 transition-all duration-300 ease-in-out',
+          'fixed top-0 left-0 h-full bg-white border-r border-black/[0.06] shadow-[0_0_0_1px_rgba(16,24,40,0.02),0_8px_24px_rgba(16,24,40,0.06)] z-50 transition-[width,transform] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
           isCollapsed ? 'w-20' : 'w-64',
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
       >
         {/* Header */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-theme-divider/50 bg-gradient-to-r from-theme-dark-primary to-theme-primary shadow-lg backdrop-blur-sm">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-theme-divider/40 bg-theme-primary">
           {!isCollapsed && (
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 min-w-0">
               {clinicLogo ? (
-                <img src={clinicLogo} alt={clinicName} className="w-9 h-9 rounded-xl object-cover shadow-lg" />
+                <img src={clinicLogo} alt={clinicName} className="w-9 h-9 rounded-xl object-cover shrink-0" />
               ) : (
-                <div className="w-9 h-9 bg-gradient-to-br from-theme-accent to-theme-primary rounded-xl flex items-center justify-center text-white font-bold shadow-lg transform hover:scale-110 transition-transform duration-300">
+                <div className="w-9 h-9 bg-theme-accent rounded-xl flex items-center justify-center text-white font-bold shrink-0">
                   {clinicInitial}
                 </div>
               )}
-              <h2 className="text-lg font-bold text-theme-text-icons tracking-tight truncate max-w-[140px]">{clinicName}</h2>
+              <h2 className="text-lg font-bold text-theme-text-icons tracking-tight truncate">{clinicName}</h2>
             </div>
           )}
           {isCollapsed && (
-            <div className="w-9 h-9 bg-gradient-to-br from-theme-accent to-theme-primary rounded-xl flex items-center justify-center text-white font-bold shadow-lg mx-auto transform hover:scale-110 transition-transform duration-300">
+            <div className="w-9 h-9 bg-theme-accent rounded-xl flex items-center justify-center text-white font-bold mx-auto overflow-hidden">
               {clinicLogo ? (
                 <img src={clinicLogo} alt={clinicName} className="w-9 h-9 rounded-xl object-cover" />
               ) : (
@@ -143,8 +146,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ menuItems }) => {
           )}
           <button
             onClick={toggleCollapse}
-            className="p-2.5 hover:bg-white/10 rounded-xl transition-all duration-300 hidden lg:block text-theme-text-icons hover:shadow-md hover:scale-110 active:scale-95"
-            aria-label="Toggle sidebar"
+            className="p-2 hover:bg-white/15 rounded-lg transition-colors duration-150 hidden lg:block text-theme-text-icons outline-none focus-visible:ring-2 focus-visible:ring-white/50 active:scale-95"
+            aria-label="Contraer menú"
           >
             <svg
               className={clsx('w-5 h-5 transition-transform duration-300', isCollapsed && 'rotate-180')}

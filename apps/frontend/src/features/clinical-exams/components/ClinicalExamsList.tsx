@@ -35,7 +35,7 @@ export const ClinicalExamsList = () => {
   if (loading && exams.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-16 w-16 border-4 border-theme-primary border-t-transparent shadow-lg"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-theme-primary border-t-transparent"></div>
       </div>
     );
   }
@@ -47,31 +47,31 @@ export const ClinicalExamsList = () => {
   const thisWeekExams = exams.filter(e => new Date(e.date) >= thisWeek);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fadeIn">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-bold text-theme-dark-primary">Exámenes Clínicos</h1>
-          <p className="text-theme-secondary-text mt-2">Registro de exámenes visuales</p>
+          <h1 className="text-3xl font-bold text-theme-dark-primary tracking-tight">Exámenes clínicos</h1>
+          <p className="text-theme-secondary-text mt-1">Registro de exámenes visuales</p>
         </div>
-        <Link to="/clinical-exams/new">
-          <Button>
+        <Link to="/clinical-exams/new" className="shrink-0">
+          <Button className="!w-auto px-5">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            Nuevo Examen
+            Nuevo examen
           </Button>
         </Link>
       </div>
 
       {/* Error Message */}
       {error && (
-        <div className="bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-4 rounded-2xl shadow-xl border border-red-400/20">
+        <div className="bg-red-50 ring-1 ring-inset ring-red-600/20 text-red-700 px-4 py-3 rounded-xl animate-fadeIn">
           <div className="flex items-center gap-3">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span className="font-semibold">{error}</span>
+            <span className="font-medium text-sm">{error}</span>
           </div>
         </div>
       )}
@@ -121,8 +121,8 @@ export const ClinicalExamsList = () => {
       </div>
 
       {/* Search Bar */}
-      <div className="bg-gradient-to-br from-white to-theme-light-primary/10 rounded-2xl shadow-lg p-6 border border-theme-divider/20">
-        <form onSubmit={handleSearch} className="flex gap-4">
+      <div className="bg-white ring-1 ring-black/[0.06] rounded-2xl shadow-[0_1px_3px_rgba(16,24,40,0.06),0_1px_2px_rgba(16,24,40,0.04)] p-4 sm:p-6">
+        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3">
           <Input
             type="text"
             value={searchQuery}
@@ -176,7 +176,7 @@ export const ClinicalExamsList = () => {
                   </span>
                 </TableCell>
                 <TableCell>
-                  {new Date(exam.date).toLocaleDateString('es-ES')}
+                  {new Date(exam.date).toLocaleDateString('es-BO')}
                 </TableCell>
                 <TableCell>
                   <span className="font-medium">{exam.patientName}</span>

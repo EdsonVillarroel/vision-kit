@@ -2,7 +2,7 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { ClsModule } from 'nestjs-cls';
+import { ClsModule, ClsMiddleware } from 'nestjs-cls';
 import { LoggerModule } from 'nestjs-pino';
 import { randomUUID } from 'crypto';
 import { AllExceptionsFilter } from './common/all-exceptions.filter';
@@ -131,8 +131,9 @@ import { HealthModule } from './health/health.module';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    // TenantClsMiddleware extrae tenantId del JWT y lo guarda en CLS + request.
-    // Se aplica a todas las rutas; si no hay JWT simplemente no hace nada.
-    consumer.apply(TenantClsMiddleware).forRoutes('*');
+    // ClsMiddleware DEBE ir primero: inicializa el contexto CLS por request.
+    // Luego TenantClsMiddleware extrae el tenantId del JWT y lo guarda en CLS + request.
+    // Sin este orden, cls.set() falla con "No CLS context available".
+    consumer.apply(ClsMiddleware, TenantClsMiddleware).forRoutes('*');
   }
 }

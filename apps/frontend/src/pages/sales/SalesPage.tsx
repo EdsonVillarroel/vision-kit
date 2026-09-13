@@ -26,6 +26,8 @@ const METHOD_LABELS: Record<string, string> = {
   mixed: 'Mixto',
 };
 
+const money = (n: number) => `Bs ${n.toLocaleString('es-BO')}`;
+
 export const SalesPage = () => {
   const navigate = useNavigate();
   const today = new Date().toISOString().split('T')[0];
@@ -62,74 +64,74 @@ export const SalesPage = () => {
   const pendingTotal = pendingSales.reduce((sum, s) => sum + s.total, 0);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 animate-fadeIn">
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Ventas</h1>
-          <p className="text-gray-600 mt-2">Registro y gestión de ventas</p>
+          <h1 className="text-3xl font-bold text-theme-dark-primary tracking-tight">Ventas</h1>
+          <p className="text-theme-secondary-text mt-1">Registro y gestión de ventas</p>
         </div>
         <button
           onClick={() => navigate('/sales/new')}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="shrink-0 px-5 py-2.5 bg-theme-primary hover:bg-theme-dark-primary text-theme-text-icons text-sm font-semibold rounded-full shadow-sm hover:shadow-md transition-[transform,box-shadow,background-color] duration-150 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-[0.97] outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/40 focus-visible:ring-offset-2"
         >
-          Nueva Venta
+          Nueva venta
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <p className="text-sm text-gray-600 mb-2">Ventas Hoy</p>
+        <div className="bg-white ring-1 ring-black/[0.06] rounded-2xl p-6 shadow-[0_1px_3px_rgba(16,24,40,0.06),0_1px_2px_rgba(16,24,40,0.04)]">
+          <p className="text-sm font-medium text-theme-secondary-text mb-2">Ventas hoy</p>
           {summaryLoading ? <SkeletonStatValue /> : (
-            <p className="text-3xl font-bold text-gray-900">${todayRevenue.toLocaleString()}</p>
+            <p className="text-3xl font-bold tnum tracking-tight text-theme-primary-text">{money(todayRevenue)}</p>
           )}
           {todayData && (
-            <p className="text-sm text-gray-500 mt-2">{todayData.count} transacciones</p>
+            <p className="text-sm text-theme-secondary-text mt-2"><span className="tnum">{todayData.count}</span> transacciones</p>
           )}
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <p className="text-sm text-gray-600 mb-2">Ventas del Mes</p>
+        <div className="bg-white ring-1 ring-black/[0.06] rounded-2xl p-6 shadow-[0_1px_3px_rgba(16,24,40,0.06),0_1px_2px_rgba(16,24,40,0.04)]">
+          <p className="text-sm font-medium text-theme-secondary-text mb-2">Ventas del mes</p>
           {summaryLoading ? <SkeletonStatValue /> : (
-            <p className="text-3xl font-bold text-gray-900">${(summary?.totalRevenue ?? 0).toLocaleString()}</p>
+            <p className="text-3xl font-bold tnum tracking-tight text-theme-primary-text">{money(summary?.totalRevenue ?? 0)}</p>
           )}
           {summary && (
-            <p className="text-sm text-gray-500 mt-2">{summary.totalSales} transacciones</p>
+            <p className="text-sm text-theme-secondary-text mt-2"><span className="tnum">{summary.totalSales}</span> transacciones</p>
           )}
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <p className="text-sm text-gray-600 mb-2">Ticket Promedio</p>
+        <div className="bg-white ring-1 ring-black/[0.06] rounded-2xl p-6 shadow-[0_1px_3px_rgba(16,24,40,0.06),0_1px_2px_rgba(16,24,40,0.04)]">
+          <p className="text-sm font-medium text-theme-secondary-text mb-2">Ticket promedio</p>
           {summaryLoading ? <SkeletonStatValue /> : (
-            <p className="text-3xl font-bold text-gray-900">${Math.round(summary?.averageTicket ?? 0).toLocaleString()}</p>
+            <p className="text-3xl font-bold tnum tracking-tight text-theme-primary-text">{money(Math.round(summary?.averageTicket ?? 0))}</p>
           )}
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <p className="text-sm text-gray-600 mb-2">Pendientes</p>
+        <div className="bg-white ring-1 ring-black/[0.06] rounded-2xl p-6 shadow-[0_1px_3px_rgba(16,24,40,0.06),0_1px_2px_rgba(16,24,40,0.04)]">
+          <p className="text-sm font-medium text-theme-secondary-text mb-2">Pendientes</p>
           {loading ? <SkeletonStatValue /> : (
-            <p className="text-3xl font-bold text-yellow-600">{pendingSales.length}</p>
+            <p className="text-3xl font-bold tnum tracking-tight text-amber-600">{pendingSales.length}</p>
           )}
           {!loading && pendingSales.length > 0 && (
-            <p className="text-sm text-gray-500 mt-2">
-              ${pendingTotal.toLocaleString()} total
+            <p className="text-sm text-theme-secondary-text mt-2">
+              <span className="tnum">{money(pendingTotal)}</span> total
             </p>
           )}
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex gap-4">
+      <div className="bg-white ring-1 ring-black/[0.06] rounded-2xl shadow-[0_1px_3px_rgba(16,24,40,0.06),0_1px_2px_rgba(16,24,40,0.04)] overflow-hidden">
+        <div className="p-4 sm:p-6 border-b border-black/[0.06]">
+          <div className="flex flex-col sm:flex-row gap-3">
             <input
               type="date"
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg"
+              className="px-4 py-2 border border-theme-divider rounded-lg outline-none transition-[border-color,box-shadow] duration-150 focus:border-theme-primary focus-visible:ring-2 focus-visible:ring-theme-primary/25"
             />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as SaleStatus | '')}
-              className="px-4 py-2 border border-gray-300 rounded-lg"
+              className="px-4 py-2 border border-theme-divider rounded-lg outline-none transition-[border-color,box-shadow] duration-150 focus:border-theme-primary focus-visible:ring-2 focus-visible:ring-theme-primary/25"
             >
               <option value="">Todas</option>
               <option value="completed">Completadas</option>
@@ -142,7 +144,7 @@ export const SalesPage = () => {
               placeholder="Buscar por número de venta o paciente..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
+              className="flex-1 px-4 py-2 border border-theme-divider rounded-lg outline-none transition-[border-color,box-shadow] duration-150 focus:border-theme-primary focus-visible:ring-2 focus-visible:ring-theme-primary/25 placeholder:text-theme-secondary-text"
             />
           </div>
         </div>
@@ -151,43 +153,50 @@ export const SalesPage = () => {
           {loading ? (
             <SkeletonTableRows rows={5} cols={8} />
           ) : filtered.length === 0 ? (
-            <div className="p-12 text-center text-gray-500">No se encontraron ventas</div>
+            <div className="flex flex-col items-center justify-center text-center py-16">
+              <div className="w-12 h-12 rounded-full bg-theme-light-primary/40 flex items-center justify-center mb-3 text-theme-secondary-text">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </div>
+              <p className="text-sm text-theme-secondary-text">No se encontraron ventas</p>
+            </div>
           ) : (
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-theme-light-primary/20 border-b border-black/[0.06]">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">N° Venta</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Paciente</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Items</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pago</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-theme-secondary-text uppercase tracking-wide">N° Venta</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-theme-secondary-text uppercase tracking-wide">Fecha</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-theme-secondary-text uppercase tracking-wide">Paciente</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-theme-secondary-text uppercase tracking-wide">Items</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-theme-secondary-text uppercase tracking-wide">Total</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-theme-secondary-text uppercase tracking-wide">Pago</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-theme-secondary-text uppercase tracking-wide">Estado</th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold text-theme-secondary-text uppercase tracking-wide">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-black/[0.05]">
                 {filtered.map((sale) => (
-                  <tr key={sale.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-sm font-medium text-blue-600">{sale.saleNumber}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{sale.date}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{sale.patientName}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{sale.items.length}</td>
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                      ${sale.total.toLocaleString()}
+                  <tr key={sale.id} className="hover:bg-theme-light-primary/20 transition-colors duration-100">
+                    <td className="px-6 py-4 text-sm font-semibold text-theme-primary">{sale.saleNumber}</td>
+                    <td className="px-6 py-4 text-sm text-theme-secondary-text tnum">{sale.date}</td>
+                    <td className="px-6 py-4 text-sm text-theme-primary-text">{sale.patientName}</td>
+                    <td className="px-6 py-4 text-sm text-theme-secondary-text tnum">{sale.items.length}</td>
+                    <td className="px-6 py-4 text-sm font-medium text-theme-primary-text tnum">
+                      {money(sale.total)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
+                    <td className="px-6 py-4 text-sm text-theme-secondary-text">
                       {METHOD_LABELS[sale.paymentMethod] ?? sale.paymentMethod}
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`px-2 py-1 text-xs rounded-full ${STATUS_COLORS[sale.status] ?? 'bg-gray-100 text-gray-800'}`}>
+                      <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${STATUS_COLORS[sale.status] ?? 'bg-gray-100 text-gray-700'}`}>
                         {STATUS_LABELS[sale.status] ?? sale.status}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right text-sm">
                       <button
                         onClick={() => navigate(`/sales/${sale.id}`)}
-                        className="text-blue-600 hover:text-blue-800"
+                        className="font-medium text-theme-primary hover:text-theme-dark-primary transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/40 rounded px-1"
                       >
                         Ver
                       </button>

@@ -5,8 +5,8 @@ export interface Patient {
   identificationId: string; // Cédula de identidad
   firstName: string;
   lastName: string;
-  dateOfBirth: string;
-  gender: 'male' | 'female' | 'other';
+  dateOfBirth?: string;
+  gender?: 'male' | 'female' | 'other';
   phone?: string;
   email?: string;
   address?: string;
@@ -18,7 +18,7 @@ export interface Patient {
     policyNumber: string;
     groupNumber?: string;
   };
-  emergencyContact: {
+  emergencyContact?: {
     name: string;
     relationship: string;
     phone: string;

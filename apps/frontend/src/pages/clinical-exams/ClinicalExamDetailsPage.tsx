@@ -52,6 +52,9 @@ export const ClinicalExamDetailsPage = () => {
     return value > 0 ? `+${value.toFixed(2)}` : value.toFixed(2);
   };
 
+  // DP y armazon son opcionales: mostrar guion cuando no hay dato
+  const mm = (value?: number) => (value != null ? `${value.toFixed(2)} mm` : '—');
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6 flex items-center justify-between">
@@ -182,18 +185,18 @@ export const ClinicalExamDetailsPage = () => {
 
         {/* Distancias Pupilares */}
         <Card>
-          <h2 className="text-2xl font-bold text-theme-dark-primary mb-6">Distancias Pupilares</h2>
+          <h2 className="text-2xl font-bold text-theme-dark-primary mb-6">Distancia Pupilar (DP)</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <p className="text-theme-secondary-text font-medium mb-1">Distancia Derecha</p>
+              <p className="text-theme-secondary-text font-medium mb-1">DP Ojo Derecho</p>
               <p className="text-theme-primary-text text-lg font-semibold font-mono">
-                {exam.pupillaryDistance.right.toFixed(2)} mm
+                {mm(exam.pupillaryDistance.right)}
               </p>
             </div>
             <div>
-              <p className="text-theme-secondary-text font-medium mb-1">Distancia Izquierda</p>
+              <p className="text-theme-secondary-text font-medium mb-1">DP Ojo Izquierdo</p>
               <p className="text-theme-primary-text text-lg font-semibold font-mono">
-                {exam.pupillaryDistance.left.toFixed(2)} mm
+                {mm(exam.pupillaryDistance.left)}
               </p>
             </div>
           </div>
@@ -206,19 +209,19 @@ export const ClinicalExamDetailsPage = () => {
             <div>
               <p className="text-theme-secondary-text font-medium mb-1">Altura</p>
               <p className="text-theme-primary-text text-lg font-semibold font-mono">
-                {exam.frameMeasurements.height.toFixed(2)} mm
+                {mm(exam.frameMeasurements.height)}
               </p>
             </div>
             <div>
               <p className="text-theme-secondary-text font-medium mb-1">Derecha</p>
               <p className="text-theme-primary-text text-lg font-semibold font-mono">
-                {exam.frameMeasurements.right.toFixed(2)} mm
+                {mm(exam.frameMeasurements.right)}
               </p>
             </div>
             <div>
               <p className="text-theme-secondary-text font-medium mb-1">Izquierda</p>
               <p className="text-theme-primary-text text-lg font-semibold font-mono">
-                {exam.frameMeasurements.left.toFixed(2)} mm
+                {mm(exam.frameMeasurements.left)}
               </p>
             </div>
           </div>

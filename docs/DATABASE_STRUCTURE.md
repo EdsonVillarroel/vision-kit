@@ -220,6 +220,8 @@ npx prisma studio                     # GUI para explorar datos
 | `014_clinic_settings_colors` | Agrega `primary_color` y `accent_color` a `clinic_settings` para branding por tenant |
 | `015_rls_tenant_isolation` | Habilita RLS y políticas por `tenant_id` en todas las tablas de negocio |
 | `016_bolivianize_clinic_defaults` | Cambia defaults de `clinic_settings`: `tax_rate` 0.16→0.13 (IVA Bolivia), `currency` MXN→BOB. No toca filas existentes |
+| `017_add_commission_rate_to_profiles` | Agrega `commission_rate` a `profiles` para comisiones por usuario |
+| `018_relax_measurement_required` | `clinical_exams`: `pd_right`, `pd_left`, `frame_height`, `frame_right`, `frame_left` pasan a NULL permitido. La medida óptica (visión de lejos) sigue obligatoria; DP y armazón quedan opcionales |
 
 ---
 

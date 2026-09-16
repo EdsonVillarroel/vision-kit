@@ -13,14 +13,13 @@ interface PatientFormProps {
 export const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, isEditing = false }) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<PatientFormData>({
     identificationId: patient?.identificationId || '',
     firstName: patient?.firstName || '',
     lastName: patient?.lastName || '',
     dateOfBirth: patient?.dateOfBirth || '',
-    gender: patient?.gender || 'male',
+    gender: patient?.gender,
     phone: patient?.phone || '',
     email: patient?.email || '',
     address: patient?.address || '',
@@ -60,6 +59,9 @@ export const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, isE
       setFormData(prev => ({
         ...prev,
         emergencyContact: {
+          name: '',
+          relationship: '',
+          phone: '',
           ...prev.emergencyContact,
           [field]: value
         }
@@ -72,20 +74,28 @@ export const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, isE
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
 
     try {
+      const ec = formData.emergencyContact;
+      const hasEmergencyContact = !!ec && [ec.name, ec.relationship, ec.phone].some((v) => v?.trim());
+
       const submitData: PatientFormData = {
         ...formData,
+        // Campos con validadores de formato: cadena vacia -> undefined
+        dateOfBirth: formData.dateOfBirth || undefined,
+        gender: formData.gender || undefined,
+        email: formData.email || undefined,
         insurance: hasInsurance ? formData.insurance : undefined,
+        emergencyContact: hasEmergencyContact ? ec : undefined,
         allergies: allergiesText ? allergiesText.split(',').map(a => a.trim()).filter(Boolean) : [],
         medicalConditions: conditionsText ? conditionsText.split(',').map(c => c.trim()).filter(Boolean) : []
       };
 
       await onSubmit(submitData);
       navigate('/patients');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al guardar paciente');
+    } catch {
+      // El error de la API se muestra como snackbar desde el hook; se mantiene
+      // al usuario en el formulario sin navegar.
     } finally {
       setLoading(false);
     }
@@ -93,15 +103,12 @@ export const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, isE
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
-          {error}
-        </div>
-      )}
-
       {/* Información Personal */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">Información Personal</h2>
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-gray-900">Información Personal</h2>
+          <p className="text-sm text-gray-500 mt-1">Solo el nombre y apellido son obligatorios.</p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Input
             label="Nombre"
@@ -121,21 +128,20 @@ export const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, isE
             label="Fecha de Nacimiento"
             type="date"
             name="dateOfBirth"
-            value={formData.dateOfBirth}
+            value={formData.dateOfBirth || ''}
             onChange={handleChange}
-            required
           />
           <div>
             <label className="block text-sm font-medium text-theme-primary-text mb-2">
-              Género *
+              Género
             </label>
             <select
               name="gender"
-              value={formData.gender}
+              value={formData.gender || ''}
               onChange={handleChange}
               className="w-full px-4 py-3 bg-theme-light-primary/30 border-0 border-b-2 border-theme-divider rounded-t-lg focus:border-b-theme-primary focus:bg-theme-light-primary/40 hover:bg-theme-light-primary/40 transition-all duration-300 outline-none text-theme-primary-text"
-              required
             >
+              <option value="">Sin especificar</option>
               <option value="male">Masculino</option>
               <option value="female">Femenino</option>
               <option value="other">Otro</option>
@@ -154,7 +160,6 @@ export const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, isE
             name="phone"
             value={formData.phone}
             onChange={handleChange}
-            required
           />
           <Input
             label="Email"
@@ -169,7 +174,6 @@ export const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, isE
               name="address"
               value={formData.address}
               onChange={handleChange}
-              required
             />
           </div>
           <Input
@@ -177,21 +181,18 @@ export const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, isE
             name="city"
             value={formData.city}
             onChange={handleChange}
-            required
           />
           <Input
             label="Pais/Estado"
             name="state"
             value={formData.state}
             onChange={handleChange}
-            required
           />
           <Input
             label="Código Postal"
             name="zipCode"
             value={formData.zipCode}
             onChange={handleChange}
-            required
           />
         </div>
       </div>
@@ -248,30 +249,30 @@ export const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, isE
 
       {/* Contacto de Emergencia */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">Contacto de Emergencia</h2>
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-gray-900">Contacto de Emergencia</h2>
+          <p className="text-sm text-gray-500 mt-1">Opcional.</p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Input
             label="Nombre"
             name="emergencyContact.name"
-            value={formData.emergencyContact.name}
+            value={formData.emergencyContact?.name || ''}
             onChange={handleChange}
-            required
           />
           <Input
             label="Relación"
             name="emergencyContact.relationship"
-            value={formData.emergencyContact.relationship}
+            value={formData.emergencyContact?.relationship || ''}
             onChange={handleChange}
             placeholder="Ej: Esposo, Hermana, Padre"
-            required
           />
           <Input
             label="Teléfono"
             type="tel"
             name="emergencyContact.phone"
-            value={formData.emergencyContact.phone}
+            value={formData.emergencyContact?.phone || ''}
             onChange={handleChange}
-            required
           />
         </div>
       </div>

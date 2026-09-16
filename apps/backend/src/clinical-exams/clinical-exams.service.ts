@@ -63,14 +63,14 @@ export class ClinicalExamsService {
         nearLeftCylinder: nearVision?.left.cylinder,
         nearLeftAxis: nearVision?.left.axis,
 
-        pdRight: pupillaryDistance.right,
-        pdLeft: pupillaryDistance.left,
-        pdNearRight: pupillaryDistance.nearRight,
-        pdNearLeft: pupillaryDistance.nearLeft,
+        pdRight: pupillaryDistance?.right,
+        pdLeft: pupillaryDistance?.left,
+        pdNearRight: pupillaryDistance?.nearRight,
+        pdNearLeft: pupillaryDistance?.nearLeft,
 
-        frameHeight: frameMeasurements.height,
-        frameRight: frameMeasurements.right,
-        frameLeft: frameMeasurements.left,
+        frameHeight: frameMeasurements?.height,
+        frameRight: frameMeasurements?.right,
+        frameLeft: frameMeasurements?.left,
 
         lensDataRight: rest.lensDataRight,
         lensDataLeft: rest.lensDataLeft,

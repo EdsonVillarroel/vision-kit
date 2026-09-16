@@ -29,8 +29,10 @@ class EmergencyContactDto {
 }
 
 export class CreatePatientDto {
-  @ApiProperty({ example: 'CURP123456' })
-  @IsString() identificationId: string;
+  // Unico dato obligatorio del cliente: nombre completo (nombre + apellido).
+  // El resto es opcional para agilizar el registro en mostrador.
+  @ApiPropertyOptional({ example: 'CURP123456', description: 'Se autogenera si no se envia' })
+  @IsOptional() @IsString() identificationId?: string;
 
   @ApiProperty({ example: 'Ana' })
   @IsString() firstName: string;
@@ -38,14 +40,14 @@ export class CreatePatientDto {
   @ApiProperty({ example: 'López' })
   @IsString() lastName: string;
 
-  @ApiProperty({ example: '1990-05-15' })
-  @IsDateString() dateOfBirth: string;
+  @ApiPropertyOptional({ example: '1990-05-15' })
+  @IsOptional() @IsDateString() dateOfBirth?: string;
 
-  @ApiProperty({ enum: PatientGender, example: PatientGender.female })
-  @IsEnum(PatientGender) gender: PatientGender;
+  @ApiPropertyOptional({ enum: PatientGender, example: PatientGender.female })
+  @IsOptional() @IsEnum(PatientGender) gender?: PatientGender;
 
-  @ApiProperty({ example: '+52 55 1234 5678' })
-  @IsString() phone: string;
+  @ApiPropertyOptional({ example: '+52 55 1234 5678' })
+  @IsOptional() @IsString() phone?: string;
 
   @ApiPropertyOptional({ example: 'ana@email.com' })
   @IsOptional() @IsEmail() email?: string;
@@ -77,8 +79,9 @@ export class CreatePatientDto {
   @Type(() => InsuranceDto)
   insurance?: InsuranceDto;
 
-  @ApiProperty({ type: EmergencyContactDto })
+  @ApiPropertyOptional({ type: EmergencyContactDto })
+  @IsOptional()
   @ValidateNested()
   @Type(() => EmergencyContactDto)
-  emergencyContact: EmergencyContactDto;
+  emergencyContact?: EmergencyContactDto;
 }

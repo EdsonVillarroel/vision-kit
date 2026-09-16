@@ -37,7 +37,8 @@ export const PatientsList = () => {
     }
   };
 
-  const calculateAge = (dateOfBirth: string) => {
+  const calculateAge = (dateOfBirth?: string): number | null => {
+    if (!dateOfBirth) return null;
     const today = new Date();
     const birthDate = new Date(dateOfBirth);
     let age = today.getFullYear() - birthDate.getFullYear();
@@ -46,6 +47,15 @@ export const PatientsList = () => {
       age--;
     }
     return age;
+  };
+
+  const genderShort = (gender?: string) =>
+    gender === 'male' ? 'M' : gender === 'female' ? 'F' : gender === 'other' ? 'O' : null;
+
+  const formatMeta = (dateOfBirth?: string, gender?: string) => {
+    const age = calculateAge(dateOfBirth);
+    const g = genderShort(gender);
+    return [age !== null ? `${age} años` : null, g].filter(Boolean).join(' • ') || 'Sin datos';
   };
 
   if (loading && patients.length === 0) {
@@ -199,7 +209,7 @@ export const PatientsList = () => {
                         {patient.firstName} {patient.lastName}
                       </div>
                       <div className="text-xs text-theme-secondary-text">
-                        {calculateAge(patient.dateOfBirth)} años • {patient.gender === 'male' ? 'M' : patient.gender === 'female' ? 'F' : 'O'}
+                        {formatMeta(patient.dateOfBirth, patient.gender)}
                       </div>
                     </div>
                   </TableCell>

@@ -93,23 +93,24 @@ Authorization: Bearer <token>
 | `search` | string | Busca en nombre, apellido, cédula, teléfono, email |
 
 ### POST `/patients`
+> **Único obligatorio: `firstName` + `lastName`.** El resto es opcional. Si no se envía `identificationId`, el backend lo autogenera (`SIN-ID-<timestamp>`). `emergencyContact` solo se crea si tiene algún dato.
 ```json
 {
-  "identificationId": "1234567890",
-  "firstName": "Juan",
-  "lastName": "Pérez",
-  "dateOfBirth": "1990-05-15",
-  "gender": "male",              // "male" | "female" | "other"
-  "phone": "+52 55 1234 5678",
-  "email": "juan@email.com",
-  "address": "Av. Principal 123",
-  "city": "Ciudad de México",
-  "state": "CDMX",
-  "zipCode": "06600",
+  "identificationId": "1234567890", // opcional (se autogenera si falta)
+  "firstName": "Juan",              // obligatorio
+  "lastName": "Pérez",              // obligatorio
+  "dateOfBirth": "1990-05-15",      // opcional
+  "gender": "male",              // opcional — "male" | "female" | "other"
+  "phone": "+52 55 1234 5678",   // opcional
+  "email": "juan@email.com",     // opcional
+  "address": "Av. Principal 123", // opcional
+  "city": "Ciudad de México",    // opcional
+  "state": "CDMX",               // opcional
+  "zipCode": "06600",            // opcional
   "allergies": ["Penicilina"],
   "medicalConditions": ["Diabetes"],
   "notes": "Paciente con historial...",
-  "emergencyContact": {
+  "emergencyContact": {          // opcional
     "name": "María Pérez",
     "relationship": "Esposa",
     "phone": "+52 55 9876 5432"
@@ -252,6 +253,7 @@ Mismos campos que POST pero todos opcionales. También acepta:
 | `patientId` | uuid | Filtrar por paciente |
 
 ### POST `/clinical-exams`
+> **Obligatorio:** `patientId`, `date` y `farVision` (la medida óptica). **`pupillaryDistance` (DP) y `frameMeasurements` son opcionales.**
 ```json
 {
   "patientId": "uuid",
@@ -265,13 +267,13 @@ Mismos campos que POST pero todos opcionales. También acepta:
     "right": { "sphere": -2.00, "cylinder": -0.75, "axis": 180 },
     "left":  { "sphere": -1.75, "cylinder": -0.50, "axis": 175 }
   },
-  "pupillaryDistance": {
+  "pupillaryDistance": {           // opcional (DP) — todos sus campos opcionales
     "right": 32.0,
     "left": 32.0,
     "nearRight": 30.5,             // opcional
     "nearLeft": 30.5               // opcional
   },
-  "frameMeasurements": {
+  "frameMeasurements": {           // opcional
     "height": 36.0,
     "right": 28.5,
     "left": 28.5

@@ -41,12 +41,19 @@ export class PatientsService {
 
   async create(dto: CreatePatientDto) {
     const { insurance, emergencyContact, ...data } = dto;
+    const hasEmergencyContact =
+      !!emergencyContact &&
+      Object.values(emergencyContact).some((v) => v && String(v).trim());
     return this.tenantPrisma.client.patient.create({
       data: {
         ...data,
-        dateOfBirth: new Date(data.dateOfBirth),
+        // identification_id es unico; si no se envia se autogenera
+        identificationId: data.identificationId?.trim() || `SIN-ID-${Date.now()}`,
+        dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
         insurance: insurance ? { create: insurance } : undefined,
-        emergencyContact: { create: emergencyContact },
+        emergencyContact: hasEmergencyContact
+          ? { create: emergencyContact }
+          : undefined,
       },
       include: PATIENT_INCLUDE,
     });

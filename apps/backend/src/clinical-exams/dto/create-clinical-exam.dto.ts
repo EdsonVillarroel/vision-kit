@@ -36,16 +36,16 @@ class NearVisionDto {
 }
 
 class PupillaryDistanceDto {
-  @IsNumber() right: number;
-  @IsNumber() left: number;
+  @IsOptional() @IsNumber() right?: number;
+  @IsOptional() @IsNumber() left?: number;
   @IsOptional() @IsNumber() nearRight?: number;
   @IsOptional() @IsNumber() nearLeft?: number;
 }
 
 class FrameMeasurementsDto {
-  @IsNumber() height: number;
-  @IsNumber() right: number;
-  @IsNumber() left: number;
+  @IsOptional() @IsNumber() height?: number;
+  @IsOptional() @IsNumber() right?: number;
+  @IsOptional() @IsNumber() left?: number;
 }
 
 export class CreateClinicalExamDto {
@@ -56,11 +56,13 @@ export class CreateClinicalExamDto {
   @ValidateNested() @Type(() => FarVisionDto) farVision: FarVisionDto;
   @IsOptional() @ValidateNested() @Type(() => NearVisionDto) nearVision?: NearVisionDto;
 
+  @IsOptional()
   @ValidateNested() @Type(() => PupillaryDistanceDto)
-  pupillaryDistance: PupillaryDistanceDto;
+  pupillaryDistance?: PupillaryDistanceDto;
 
+  @IsOptional()
   @ValidateNested() @Type(() => FrameMeasurementsDto)
-  frameMeasurements: FrameMeasurementsDto;
+  frameMeasurements?: FrameMeasurementsDto;
 
   @IsOptional() @IsString() lensDataRight?: string;
   @IsOptional() @IsString() lensDataLeft?: string;

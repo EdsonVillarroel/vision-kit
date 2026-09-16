@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import clsx from 'clsx';
 import type { SaleFormData, SaleItem, PaymentMethod } from '../types';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
@@ -7,19 +8,28 @@ import { inventoryService } from '../../inventory/services/inventoryService';
 import type { Product } from '../../inventory/types';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { PatientSearch } from '../../patients/components/PatientSearch';
+import { patientService } from '../../patients/services/patientService';
+import { clinicalExamService } from '../../clinical-exams/services/clinicalExamService';
+import type { ClinicalExamFormData } from '../../clinical-exams/types';
+import { useClinicSettings } from '../../settings/context/ClinicSettingsContext';
+import { useSnackbar } from '../../../components/Snackbar';
 import type { Patient } from '../../patients/types';
 
 interface SaleFormProps {
   onSubmit: (data: SaleFormData) => Promise<void>;
 }
 
-const TAX_RATE = 0.16;
-
 export const SaleForm: React.FC<SaleFormProps> = ({ onSubmit }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const patientId = searchParams.get('patientId');
   const { user } = useAuth();
+  const { settings } = useClinicSettings();
+  const { showSuccess, showError } = useSnackbar();
+
+  // IVA desde configuración de la clínica (Bolivia = 13%)
+  const TAX_RATE = settings?.taxRate ?? 0.13;
+  const TAX_PCT = Math.round(TAX_RATE * 100);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,8 +38,20 @@ export const SaleForm: React.FC<SaleFormProps> = ({ onSubmit }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [, setLoadingProducts] = useState(true);
 
-  // Form state
-  const [, setSelectedPatient] = useState<Patient | null>(null);
+  // Cliente
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [clientMode, setClientMode] = useState<'search' | 'new'>('search');
+  const [creatingClient, setCreatingClient] = useState(false);
+  const [newClient, setNewClient] = useState({ firstName: '', lastName: '', phone: '' });
+
+  // Medida opcional (visión de lejos + DP), se guarda como examen del cliente
+  const [showMeasurement, setShowMeasurement] = useState(false);
+  const [measurement, setMeasurement] = useState({
+    odSphere: '', odCylinder: '', odAxis: '',
+    oiSphere: '', oiCylinder: '', oiAxis: '',
+    pdRight: '', pdLeft: ''
+  });
+
   const [formData, setFormData] = useState({
     patientId: patientId || '',
     patientName: '',
@@ -46,6 +68,34 @@ export const SaleForm: React.FC<SaleFormProps> = ({ onSubmit }) => {
       patientName: `${patient.firstName} ${patient.lastName}`
     });
   };
+
+  const handleCreateClient = async () => {
+    if (!newClient.firstName.trim() || !newClient.lastName.trim()) {
+      showError('Nombre y apellido son obligatorios');
+      return;
+    }
+    setCreatingClient(true);
+    try {
+      const created = await patientService.create({
+        firstName: newClient.firstName.trim(),
+        lastName: newClient.lastName.trim(),
+        phone: newClient.phone.trim() || undefined,
+      } as Parameters<typeof patientService.create>[0]);
+      handlePatientSelect(created);
+      setClientMode('search');
+      setNewClient({ firstName: '', lastName: '', phone: '' });
+      showSuccess('Cliente creado y seleccionado');
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Error al crear cliente');
+    } finally {
+      setCreatingClient(false);
+    }
+  };
+
+  const hasMeasurement =
+    !!measurement.odSphere || !!measurement.odCylinder || !!measurement.odAxis ||
+    !!measurement.oiSphere || !!measurement.oiCylinder || !!measurement.oiAxis ||
+    !!measurement.pdRight || !!measurement.pdLeft;
 
   const [items, setItems] = useState<Array<Omit<SaleItem, 'subtotal' | 'total'>>>([]);
   const [searchProduct, setSearchProduct] = useState('');
@@ -189,7 +239,34 @@ export const SaleForm: React.FC<SaleFormProps> = ({ onSubmit }) => {
       }
     }
 
+    // 1) Medida opcional → se guarda como examen del cliente antes de la venta
+    if (hasMeasurement) {
+      const num = (v: string) => (v === '' ? 0 : parseFloat(v));
+      const examData: ClinicalExamFormData = {
+        patientId: formData.patientId,
+        date: new Date().toISOString().split('T')[0],
+        examinerId: user?.id || '',
+        farVision: {
+          right: { sphere: num(measurement.odSphere), cylinder: num(measurement.odCylinder), axis: num(measurement.odAxis), prism: 0, base: '' },
+          left: { sphere: num(measurement.oiSphere), cylinder: num(measurement.oiCylinder), axis: num(measurement.oiAxis), prism: 0, base: '' },
+        },
+        pupillaryDistance: {
+          right: measurement.pdRight ? parseFloat(measurement.pdRight) : undefined,
+          left: measurement.pdLeft ? parseFloat(measurement.pdLeft) : undefined,
+        },
+      };
+      try {
+        await clinicalExamService.create(examData);
+        showSuccess('Medida registrada');
+      } catch (err) {
+        showError(err instanceof Error ? err.message : 'Error al registrar la medida');
+        setLoading(false);
+        return; // abortar antes de la venta para que el usuario reintente
+      }
+    }
+
     try {
+      // 2) Venta (el hook de ventas muestra el error de API como snackbar)
       const submitData: SaleFormData = {
         patientId: formData.patientId,
         items,
@@ -205,8 +282,9 @@ export const SaleForm: React.FC<SaleFormProps> = ({ onSubmit }) => {
 
       await onSubmit(submitData);
       navigate('/sales');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al crear venta');
+    } catch {
+      // El error de API de la venta ya se muestra como snackbar desde el hook;
+      // se mantiene al usuario en el formulario sin navegar.
     } finally {
       setLoading(false);
     }
@@ -225,11 +303,122 @@ export const SaleForm: React.FC<SaleFormProps> = ({ onSubmit }) => {
         <div className="lg:col-span-2 space-y-6">
           {/* Información del Cliente */}
           <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Información del Cliente</h2>
-            <PatientSearch
-              onSelect={handlePatientSelect}
-              autoFocus={true}
-            />
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <h2 className="text-xl font-bold text-gray-900">Cliente</h2>
+              <div className="inline-flex rounded-lg bg-gray-100 p-1 text-sm">
+                <button
+                  type="button"
+                  onClick={() => setClientMode('search')}
+                  className={clsx(
+                    'px-3 py-1.5 rounded-md font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/40',
+                    clientMode === 'search' ? 'bg-white text-theme-dark-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                  )}
+                >
+                  Buscar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setClientMode('new')}
+                  className={clsx(
+                    'px-3 py-1.5 rounded-md font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/40',
+                    clientMode === 'new' ? 'bg-white text-theme-dark-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                  )}
+                >
+                  + Cliente nuevo
+                </button>
+              </div>
+            </div>
+
+            {clientMode === 'search' ? (
+              <PatientSearch
+                onSelect={handlePatientSelect}
+                showCreateButton={false}
+                autoFocus={true}
+              />
+            ) : (
+              <div className="animate-fadeIn">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <Input
+                    label="Nombre *"
+                    value={newClient.firstName}
+                    onChange={(e) => setNewClient({ ...newClient, firstName: e.target.value })}
+                    autoFocus
+                  />
+                  <Input
+                    label="Apellido *"
+                    value={newClient.lastName}
+                    onChange={(e) => setNewClient({ ...newClient, lastName: e.target.value })}
+                  />
+                  <Input
+                    label="Teléfono"
+                    type="tel"
+                    value={newClient.phone}
+                    onChange={(e) => setNewClient({ ...newClient, phone: e.target.value })}
+                    placeholder="Opcional"
+                  />
+                </div>
+                <div className="mt-3 flex items-center gap-3">
+                  <Button type="button" onClick={handleCreateClient} disabled={creatingClient} className="!w-auto px-5">
+                    {creatingClient ? 'Creando...' : 'Crear y usar cliente'}
+                  </Button>
+                  <p className="text-xs text-gray-500">Solo nombre y apellido son obligatorios.</p>
+                </div>
+              </div>
+            )}
+
+            {selectedPatient && clientMode === 'search' && (
+              <div className="mt-3 flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-800 ring-1 ring-inset ring-green-600/20">
+                <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Cliente seleccionado: <span className="font-semibold">{formData.patientName}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Medida del cliente (opcional) */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <button
+              type="button"
+              onClick={() => setShowMeasurement((v) => !v)}
+              className="flex w-full items-center justify-between gap-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/40 rounded-lg"
+            >
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Medida del cliente <span className="text-sm font-normal text-gray-500">(opcional)</span></h2>
+                <p className="text-sm text-gray-500 mt-1">Se guarda como examen del cliente junto con la venta.</p>
+              </div>
+              <svg className={clsx('h-5 w-5 text-gray-500 transition-transform duration-200', showMeasurement && 'rotate-180')} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {showMeasurement && (
+              <div className="mt-5 space-y-5 animate-fadeIn">
+                <div>
+                  <h3 className="text-sm font-semibold text-theme-primary mb-2">Ojo Derecho (D)</h3>
+                  <div className="grid grid-cols-3 gap-3">
+                    <Input label="Esférico" type="number" step="0.25" value={measurement.odSphere} onChange={(e) => setMeasurement({ ...measurement, odSphere: e.target.value })} />
+                    <Input label="Cilíndrico" type="number" step="0.25" value={measurement.odCylinder} onChange={(e) => setMeasurement({ ...measurement, odCylinder: e.target.value })} />
+                    <Input label="Eje" type="number" min="0" max="180" value={measurement.odAxis} onChange={(e) => setMeasurement({ ...measurement, odAxis: e.target.value })} />
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-theme-primary mb-2">Ojo Izquierdo (I)</h3>
+                  <div className="grid grid-cols-3 gap-3">
+                    <Input label="Esférico" type="number" step="0.25" value={measurement.oiSphere} onChange={(e) => setMeasurement({ ...measurement, oiSphere: e.target.value })} />
+                    <Input label="Cilíndrico" type="number" step="0.25" value={measurement.oiCylinder} onChange={(e) => setMeasurement({ ...measurement, oiCylinder: e.target.value })} />
+                    <Input label="Eje" type="number" min="0" max="180" value={measurement.oiAxis} onChange={(e) => setMeasurement({ ...measurement, oiAxis: e.target.value })} />
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-theme-primary mb-2">Distancia Pupilar (DP) <span className="font-normal text-gray-500">— opcional</span></h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input label="DP Derecha" type="number" step="0.5" placeholder="Opcional" value={measurement.pdRight} onChange={(e) => setMeasurement({ ...measurement, pdRight: e.target.value })} />
+                    <Input label="DP Izquierda" type="number" step="0.5" placeholder="Opcional" value={measurement.pdLeft} onChange={(e) => setMeasurement({ ...measurement, pdLeft: e.target.value })} />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Agregar Productos */}
@@ -375,7 +564,7 @@ export const SaleForm: React.FC<SaleFormProps> = ({ onSubmit }) => {
                 </div>
               )}
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">IVA (16%):</span>
+                <span className="text-gray-600">IVA ({TAX_PCT}%):</span>
                 <span className="font-medium text-gray-900">
                   Bs {totals.tax.toLocaleString('es-BO', { minimumFractionDigits: 2 })}
                 </span>

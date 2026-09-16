@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../features/auth/hooks/useAuth';
 import { api } from '../../lib/api';
 import { StatCard, Card, Badge } from '../../components/ui';
@@ -101,6 +102,58 @@ export const DashboardPage = () => {
       <div>
         <h1 className="text-3xl font-bold text-theme-dark-primary tracking-tight">Dashboard</h1>
         <p className="text-theme-secondary-text mt-1">Bienvenido, {user?.name}</p>
+      </div>
+
+      {/* Accesos rápidos */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {[
+          {
+            to: '/sales/new',
+            title: 'Nueva venta',
+            subtitle: 'Cobrar y registrar',
+            icon: (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            ),
+          },
+          {
+            to: '/patients/new',
+            title: 'Registrar cliente',
+            subtitle: 'Alta rápida',
+            icon: (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+            ),
+          },
+          {
+            to: '/clinical-exams/new',
+            title: 'Registrar medida',
+            subtitle: 'Nuevo examen',
+            icon: (
+              <>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </>
+            ),
+          },
+        ].map((a) => (
+          <Link
+            key={a.to}
+            to={a.to}
+            className="group flex items-center gap-4 rounded-2xl bg-white p-4 ring-1 ring-black/[0.06] shadow-[0_1px_3px_rgba(16,24,40,0.06),0_1px_2px_rgba(16,24,40,0.04)] outline-none transition-transform duration-150 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-theme-primary/40"
+          >
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-theme-light-primary/60 text-theme-primary">
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {a.icon}
+              </svg>
+            </span>
+            <div className="min-w-0">
+              <p className="font-semibold text-theme-dark-primary">{a.title}</p>
+              <p className="text-sm text-theme-secondary-text">{a.subtitle}</p>
+            </div>
+            <svg className="ml-auto h-5 w-5 shrink-0 text-theme-secondary-text transition-transform duration-150 ease-out group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        ))}
       </div>
 
       {/* Stat cards */}

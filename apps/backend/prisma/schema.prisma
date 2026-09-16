@@ -457,16 +457,16 @@ model ClinicalExam {
   nearLeftPrism     Decimal? @db.Decimal(5, 2) @map("near_left_prism")
   nearLeftBase      String?  @map("near_left_base")
 
-  // Pupillary distance
-  pdRight     Decimal  @db.Decimal(4, 1) @map("pd_right")
-  pdLeft      Decimal  @db.Decimal(4, 1) @map("pd_left")
+  // Pupillary distance (DP) — opcional
+  pdRight     Decimal? @db.Decimal(4, 1) @map("pd_right")
+  pdLeft      Decimal? @db.Decimal(4, 1) @map("pd_left")
   pdNearRight Decimal? @db.Decimal(4, 1) @map("pd_near_right")
   pdNearLeft  Decimal? @db.Decimal(4, 1) @map("pd_near_left")
 
-  // Frame measurements
-  frameHeight Decimal @db.Decimal(5, 1) @map("frame_height")
-  frameRight  Decimal @db.Decimal(5, 1) @map("frame_right")
-  frameLeft   Decimal @db.Decimal(5, 1) @map("frame_left")
+  // Frame measurements — opcional
+  frameHeight Decimal? @db.Decimal(5, 1) @map("frame_height")
+  frameRight  Decimal? @db.Decimal(5, 1) @map("frame_right")
+  frameLeft   Decimal? @db.Decimal(5, 1) @map("frame_left")
 
   lensDataRight String?  @map("lens_data_right")
   lensDataLeft  String?  @map("lens_data_left")

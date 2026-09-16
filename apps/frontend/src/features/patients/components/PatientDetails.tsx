@@ -7,7 +7,8 @@ interface PatientDetailsProps {
 }
 
 export const PatientDetails: React.FC<PatientDetailsProps> = ({ patient }) => {
-  const calculateAge = (dateOfBirth: string) => {
+  const calculateAge = (dateOfBirth?: string): number | null => {
+    if (!dateOfBirth) return null;
     const today = new Date();
     const birthDate = new Date(dateOfBirth);
     let age = today.getFullYear() - birthDate.getFullYear();
@@ -18,7 +19,8 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({ patient }) => {
     return age;
   };
 
-  const formatGender = (gender: string) => {
+  const formatGender = (gender?: string) => {
+    if (!gender) return null;
     const genders: Record<string, string> = {
       male: 'Masculino',
       female: 'Femenino',
@@ -26,6 +28,9 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({ patient }) => {
     };
     return genders[gender] || gender;
   };
+
+  const age = calculateAge(patient.dateOfBirth);
+  const genderLabel = formatGender(patient.gender);
 
   return (
     <div className="space-y-6">
@@ -41,10 +46,18 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({ patient }) => {
                 {patient.firstName} {patient.lastName}
               </h1>
               <div className="flex items-center gap-4 mt-2 text-gray-600">
-                <span>{calculateAge(patient.dateOfBirth)} años</span>
-                <span>•</span>
-                <span>{formatGender(patient.gender)}</span>
-                <span>•</span>
+                {age !== null && (
+                  <>
+                    <span>{age} años</span>
+                    <span>•</span>
+                  </>
+                )}
+                {genderLabel && (
+                  <>
+                    <span>{genderLabel}</span>
+                    <span>•</span>
+                  </>
+                )}
                 <span>ID: {patient.id}</span>
               </div>
             </div>
@@ -117,20 +130,24 @@ export const PatientDetails: React.FC<PatientDetailsProps> = ({ patient }) => {
           {/* Contacto de Emergencia */}
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Contacto de Emergencia</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-gray-600">Nombre</p>
-                <p className="text-base font-medium text-gray-900">{patient.emergencyContact.name}</p>
+            {patient.emergencyContact ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600">Nombre</p>
+                  <p className="text-base font-medium text-gray-900">{patient.emergencyContact.name}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Relación</p>
+                  <p className="text-base font-medium text-gray-900">{patient.emergencyContact.relationship}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Teléfono</p>
+                  <p className="text-base font-medium text-gray-900">{patient.emergencyContact.phone}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-gray-600">Relación</p>
-                <p className="text-base font-medium text-gray-900">{patient.emergencyContact.relationship}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Teléfono</p>
-                <p className="text-base font-medium text-gray-900">{patient.emergencyContact.phone}</p>
-              </div>
-            </div>
+            ) : (
+              <p className="text-gray-600">Sin contacto de emergencia registrado</p>
+            )}
           </div>
 
           {/* Información Médica */}

@@ -11,18 +11,18 @@ export interface EyeMeasurement {
 }
 
 export interface PupillaryDistance {
-  right: number;
-  left: number;
+  right?: number;
+  left?: number;
   near?: {
-    right: number;
-    left: number;
+    right?: number;
+    left?: number;
   };
 }
 
 export interface FrameMeasurements {
-  height: number;
-  right: number;
-  left: number;
+  height?: number;
+  right?: number;
+  left?: number;
 }
 
 export interface ClinicalExam {
@@ -81,8 +81,8 @@ export interface ClinicalExamFormData {
     left: EyeMeasurement;
   };
 
-  pupillaryDistance: PupillaryDistance;
-  frameMeasurements: FrameMeasurements;
+  pupillaryDistance?: PupillaryDistance;
+  frameMeasurements?: FrameMeasurements;
   lensData?: {
     right: string;
     left: string;

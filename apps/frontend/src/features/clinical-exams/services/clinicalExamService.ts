@@ -65,6 +65,11 @@ interface BackendClinicalExam {
 
 // ─── Mapper backend → frontend ───────────────────────────────────────────────
 
+/** Convierte un valor numerico del backend a number, o undefined si es null/vacio. */
+function numOrUndef(v: number | string | null | undefined): number | undefined {
+  return v == null || v === '' ? undefined : Number(v);
+}
+
 function mapExam(b: BackendClinicalExam): ClinicalExam {
   const farRight: EyeMeasurement = {
     sphere: Number(b.farRightSphere),
@@ -123,16 +128,16 @@ function mapExam(b: BackendClinicalExam): ClinicalExam {
         ? { right: nearRight, left: nearLeft }
         : undefined,
     pupillaryDistance: {
-      right: Number(b.pdRight),
-      left: Number(b.pdLeft),
+      right: numOrUndef(b.pdRight),
+      left: numOrUndef(b.pdLeft),
       near: hasNearPd
-        ? { right: Number(b.pdNearRight), left: Number(b.pdNearLeft) }
+        ? { right: numOrUndef(b.pdNearRight), left: numOrUndef(b.pdNearLeft) }
         : undefined,
     },
     frameMeasurements: {
-      height: Number(b.frameHeight),
-      right: Number(b.frameRight),
-      left: Number(b.frameLeft),
+      height: numOrUndef(b.frameHeight),
+      right: numOrUndef(b.frameRight),
+      left: numOrUndef(b.frameLeft),
     },
     lensData:
       b.lensDataRight || b.lensDataLeft
@@ -147,6 +152,19 @@ function mapExam(b: BackendClinicalExam): ClinicalExam {
 }
 
 // ─── Mapper frontend form → body de la API ───────────────────────────────────
+
+/**
+ * Deja solo los numeros validos de un grupo (DP, armazon). Si el grupo queda
+ * vacio devuelve undefined, para que la medida sea realmente opcional.
+ */
+function cleanNumeric<T extends Record<string, number | undefined>>(
+  group: T,
+): Partial<T> | undefined {
+  const entries = Object.entries(group).filter(
+    ([, v]) => v != null && !Number.isNaN(v),
+  );
+  return entries.length ? (Object.fromEntries(entries) as Partial<T>) : undefined;
+}
 
 function buildRequestBody(data: ClinicalExamFormData) {
   return {
@@ -182,17 +200,17 @@ function buildRequestBody(data: ClinicalExamFormData) {
           },
         }
       : undefined,
-    pupillaryDistance: {
-      right: data.pupillaryDistance.right,
-      left: data.pupillaryDistance.left,
-      nearRight: data.pupillaryDistance.near?.right,
-      nearLeft: data.pupillaryDistance.near?.left,
-    },
-    frameMeasurements: {
-      height: data.frameMeasurements.height,
-      right: data.frameMeasurements.right,
-      left: data.frameMeasurements.left,
-    },
+    pupillaryDistance: cleanNumeric({
+      right: data.pupillaryDistance?.right,
+      left: data.pupillaryDistance?.left,
+      nearRight: data.pupillaryDistance?.near?.right,
+      nearLeft: data.pupillaryDistance?.near?.left,
+    }),
+    frameMeasurements: cleanNumeric({
+      height: data.frameMeasurements?.height,
+      right: data.frameMeasurements?.right,
+      left: data.frameMeasurements?.left,
+    }),
     lensDataRight: data.lensData?.right,
     lensDataLeft: data.lensData?.left,
     observations: data.observations,

@@ -24,7 +24,6 @@ export const ClinicalExamForm: React.FC<ClinicalExamFormProps> = ({
 }) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<ClinicalExamFormData>({
     patientId: exam?.patientId || '',
@@ -43,14 +42,14 @@ export const ClinicalExamForm: React.FC<ClinicalExamFormProps> = ({
     },
 
     pupillaryDistance: {
-      right: exam?.pupillaryDistance.right || 0,
-      left: exam?.pupillaryDistance.left || 0
+      right: exam?.pupillaryDistance?.right,
+      left: exam?.pupillaryDistance?.left
     },
 
     frameMeasurements: {
-      height: exam?.frameMeasurements.height || 0,
-      right: exam?.frameMeasurements.right || 0,
-      left: exam?.frameMeasurements.left || 0
+      height: exam?.frameMeasurements?.height,
+      right: exam?.frameMeasurements?.right,
+      left: exam?.frameMeasurements?.left
     },
 
     lensData: {
@@ -84,17 +83,17 @@ export const ClinicalExamForm: React.FC<ClinicalExamFormProps> = ({
       ...prev,
       pupillaryDistance: {
         ...prev.pupillaryDistance,
-        [eye]: parseFloat(value) || 0
+        [eye]: value === '' ? undefined : parseFloat(value)
       }
     }));
   };
 
-  const handleFrameChange = (field: keyof typeof formData.frameMeasurements, value: string) => {
+  const handleFrameChange = (field: 'height' | 'right' | 'left', value: string) => {
     setFormData(prev => ({
       ...prev,
       frameMeasurements: {
         ...prev.frameMeasurements,
-        [field]: parseFloat(value) || 0
+        [field]: value === '' ? undefined : parseFloat(value)
       }
     }));
   };
@@ -102,13 +101,13 @@ export const ClinicalExamForm: React.FC<ClinicalExamFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
 
     try {
       await onSubmit(formData);
       navigate('/clinical-exams');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al guardar examen');
+    } catch {
+      // El error de la API se muestra como snackbar desde el hook; se mantiene
+      // al usuario en el formulario sin navegar.
     } finally {
       setLoading(false);
     }
@@ -116,17 +115,6 @@ export const ClinicalExamForm: React.FC<ClinicalExamFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {error && (
-        <div className="bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-4 rounded-2xl shadow-xl border border-red-400/20">
-          <div className="flex items-center gap-3">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="font-semibold">{error}</span>
-          </div>
-        </div>
-      )}
-
       {/* Información General */}
       <Card>
         <h2 className="text-2xl font-bold text-theme-dark-primary mb-6">Información General</h2>
@@ -244,50 +232,61 @@ export const ClinicalExamForm: React.FC<ClinicalExamFormProps> = ({
         </div>
       </Card>
 
-      {/* Distancias Pupilares */}
+      {/* Distancias Pupilares (DP) — opcional */}
       <Card>
-        <h2 className="text-2xl font-bold text-theme-dark-primary mb-6">Distancias Pupilares</h2>
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-theme-dark-primary">Distancia Pupilar (DP)</h2>
+          <p className="text-sm text-theme-secondary-text mt-1">Opcional — déjalo en blanco si no lo mides.</p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Input
-            label="Distancia Derecha"
+            label="DP Ojo Derecho (D)"
             type="number"
             step="0.5"
-            value={formData.pupillaryDistance.right}
+            placeholder="Opcional"
+            value={formData.pupillaryDistance?.right ?? ''}
             onChange={(e) => handlePDChange('right', e.target.value)}
           />
           <Input
-            label="Distancia Izquierda"
+            label="DP Ojo Izquierdo (I)"
             type="number"
             step="0.5"
-            value={formData.pupillaryDistance.left}
+            placeholder="Opcional"
+            value={formData.pupillaryDistance?.left ?? ''}
             onChange={(e) => handlePDChange('left', e.target.value)}
           />
         </div>
       </Card>
 
-      {/* Medidas del Armazón */}
+      {/* Medidas del Armazón — opcional */}
       <Card>
-        <h2 className="text-2xl font-bold text-theme-dark-primary mb-6">Medidas del Armazón</h2>
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-theme-dark-primary">Medidas del Armazón</h2>
+          <p className="text-sm text-theme-secondary-text mt-1">Opcional.</p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Input
             label="Altura"
             type="number"
             step="0.5"
-            value={formData.frameMeasurements.height}
+            placeholder="Opcional"
+            value={formData.frameMeasurements?.height ?? ''}
             onChange={(e) => handleFrameChange('height', e.target.value)}
           />
           <Input
             label="Derecha"
             type="number"
             step="0.5"
-            value={formData.frameMeasurements.right}
+            placeholder="Opcional"
+            value={formData.frameMeasurements?.right ?? ''}
             onChange={(e) => handleFrameChange('right', e.target.value)}
           />
           <Input
             label="Izquierda"
             type="number"
             step="0.5"
-            value={formData.frameMeasurements.left}
+            placeholder="Opcional"
+            value={formData.frameMeasurements?.left ?? ''}
             onChange={(e) => handleFrameChange('left', e.target.value)}
           />
         </div>

@@ -1,8 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import clsx from 'clsx';
 import type { MedicalRecord, MedicalRecordFormData } from '../types';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
+import { PatientSearch } from '../../patients/components/PatientSearch';
+import { patientService } from '../../patients/services/patientService';
+import { useSnackbar } from '../../../components/Snackbar';
+import type { Patient } from '../../patients/types';
 
 interface MedicalRecordFormProps {
   record?: MedicalRecord;
@@ -18,8 +23,16 @@ export const MedicalRecordForm: React.FC<MedicalRecordFormProps> = ({
   isEditing = false
 }) => {
   const navigate = useNavigate();
+  const { showSuccess, showError } = useSnackbar();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Cliente: si no viene fijado por prop/registro, se elige aquí
+  const patientLocked = !!patientId || !!record?.patientId;
+  const [selectedPatientName, setSelectedPatientName] = useState('');
+  const [clientMode, setClientMode] = useState<'search' | 'new'>('search');
+  const [creatingClient, setCreatingClient] = useState(false);
+  const [newClient, setNewClient] = useState({ firstName: '', lastName: '', phone: '' });
 
   const [formData, setFormData] = useState<MedicalRecordFormData>({
     patientId: patientId || record?.patientId || '',
@@ -73,8 +86,43 @@ export const MedicalRecordForm: React.FC<MedicalRecordFormProps> = ({
     }));
   };
 
+  const handlePatientSelect = (patient: Patient) => {
+    setFormData(prev => ({ ...prev, patientId: patient.id }));
+    setSelectedPatientName(`${patient.firstName} ${patient.lastName}`);
+  };
+
+  const handleCreateClient = async () => {
+    if (!newClient.firstName.trim() || !newClient.lastName.trim()) {
+      showError('Nombre y apellido son obligatorios');
+      return;
+    }
+    setCreatingClient(true);
+    try {
+      const created = await patientService.create({
+        firstName: newClient.firstName.trim(),
+        lastName: newClient.lastName.trim(),
+        phone: newClient.phone.trim() || undefined,
+      } as Parameters<typeof patientService.create>[0]);
+      handlePatientSelect(created);
+      setClientMode('search');
+      setNewClient({ firstName: '', lastName: '', phone: '' });
+      showSuccess('Cliente creado y seleccionado');
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Error al crear cliente');
+    } finally {
+      setCreatingClient(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!formData.patientId) {
+      setError('Debe seleccionar un cliente para el examen');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -98,6 +146,73 @@ export const MedicalRecordForm: React.FC<MedicalRecordFormProps> = ({
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
           {error}
+        </div>
+      )}
+
+      {/* Cliente */}
+      {patientLocked ? (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Cliente</h2>
+          <p className="text-sm text-gray-600">
+            {selectedPatientName
+              ? <>Examen para <span className="font-semibold">{selectedPatientName}</span></>
+              : 'Examen asociado al paciente seleccionado.'}
+          </p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="text-xl font-bold text-gray-900">Cliente</h2>
+            <div className="inline-flex rounded-lg bg-gray-100 p-1 text-sm">
+              <button
+                type="button"
+                onClick={() => setClientMode('search')}
+                className={clsx(
+                  'px-3 py-1.5 rounded-md font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/40',
+                  clientMode === 'search' ? 'bg-white text-theme-dark-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                )}
+              >
+                Buscar
+              </button>
+              <button
+                type="button"
+                onClick={() => setClientMode('new')}
+                className={clsx(
+                  'px-3 py-1.5 rounded-md font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/40',
+                  clientMode === 'new' ? 'bg-white text-theme-dark-primary shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                )}
+              >
+                + Cliente nuevo
+              </button>
+            </div>
+          </div>
+
+          {clientMode === 'search' ? (
+            <PatientSearch onSelect={handlePatientSelect} showCreateButton={false} autoFocus />
+          ) : (
+            <div className="animate-fadeIn">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <Input label="Nombre *" value={newClient.firstName} onChange={(e) => setNewClient({ ...newClient, firstName: e.target.value })} autoFocus />
+                <Input label="Apellido *" value={newClient.lastName} onChange={(e) => setNewClient({ ...newClient, lastName: e.target.value })} />
+                <Input label="Teléfono" type="tel" placeholder="Opcional" value={newClient.phone} onChange={(e) => setNewClient({ ...newClient, phone: e.target.value })} />
+              </div>
+              <div className="mt-3 flex items-center gap-3">
+                <Button type="button" onClick={handleCreateClient} disabled={creatingClient} className="!w-auto px-5">
+                  {creatingClient ? 'Creando...' : 'Crear y usar cliente'}
+                </Button>
+                <p className="text-xs text-gray-500">Solo nombre y apellido son obligatorios.</p>
+              </div>
+            </div>
+          )}
+
+          {formData.patientId && clientMode === 'search' && selectedPatientName && (
+            <div className="mt-3 flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-800 ring-1 ring-inset ring-green-600/20">
+              <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Cliente seleccionado: <span className="font-semibold">{selectedPatientName}</span>
+            </div>
+          )}
         </div>
       )}
 

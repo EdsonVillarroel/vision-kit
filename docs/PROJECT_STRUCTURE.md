@@ -128,7 +128,7 @@ apps/frontend/
 │   │   │   └── types/              ← BusinessHours, DaySchedule
 │   │   │
 │   │   └── layout/
-│   │       ├── components/         ← MainLayout, Sidebar
+│   │       ├── components/         ← MainLayout, Sidebar, QuickActionsFab (acceso directo global)
 │   │       ├── hooks/              ← useSidebar
 │   │       ├── types/              ← NavItem
 │   │       └── index.ts

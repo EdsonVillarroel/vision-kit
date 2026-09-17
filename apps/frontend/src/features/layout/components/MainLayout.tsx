@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Sidebar } from './Sidebar';
+import { QuickActionsFab } from './QuickActionsFab';
 import { useSidebar } from '../hooks/useSidebar';
 import type { MenuItem } from '../types';
 import clsx from 'clsx';
@@ -59,6 +60,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children, menuItems, nav
           {children}
         </main>
       </div>
+
+      {/* Acceso directo global (nueva venta / cliente / medida) */}
+      <QuickActionsFab />
     </div>
   );
 };

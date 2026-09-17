@@ -22,11 +22,6 @@ export const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, isE
     gender: patient?.gender,
     phone: patient?.phone || '',
     email: patient?.email || '',
-    address: patient?.address || '',
-    city: patient?.city || '',
-    state: patient?.state || '',
-    zipCode: patient?.zipCode || '',
-    insurance: patient?.insurance || undefined,
     emergencyContact: patient?.emergencyContact || {
       name: '',
       relationship: '',
@@ -34,27 +29,18 @@ export const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, isE
     },
     allergies: patient?.allergies || [],
     medicalConditions: patient?.medicalConditions || [],
-    notes: patient?.notes || '',
-    warningReason: patient?.warningReason || ''
+    notes: patient?.notes || ''
+    // warningReason NO se envía en alta/edición: es un campo de estado que se
+    // gestiona por separado (PATCH). El backend rechaza props fuera del DTO.
   });
 
-  const [hasInsurance, setHasInsurance] = useState(!!patient?.insurance);
   const [allergiesText, setAllergiesText] = useState(patient?.allergies?.join(', ') || '');
   const [conditionsText, setConditionsText] = useState(patient?.medicalConditions?.join(', ') || '');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
 
-    if (name.startsWith('insurance.')) {
-      const field = name.split('.')[1];
-      setFormData(prev => ({
-        ...prev,
-        insurance: {
-          ...prev.insurance!,
-          [field]: value
-        }
-      }));
-    } else if (name.startsWith('emergencyContact.')) {
+    if (name.startsWith('emergencyContact.')) {
       const field = name.split('.')[1];
       setFormData(prev => ({
         ...prev,
@@ -85,7 +71,6 @@ export const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, isE
         dateOfBirth: formData.dateOfBirth || undefined,
         gender: formData.gender || undefined,
         email: formData.email || undefined,
-        insurance: hasInsurance ? formData.insurance : undefined,
         emergencyContact: hasEmergencyContact ? ec : undefined,
         allergies: allergiesText ? allergiesText.split(',').map(a => a.trim()).filter(Boolean) : [],
         medicalConditions: conditionsText ? conditionsText.split(',').map(c => c.trim()).filter(Boolean) : []
@@ -168,83 +153,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, isE
             value={formData.email}
             onChange={handleChange}
           />
-          <div className="md:col-span-2">
-            <Input
-              label="Dirección"
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-            />
-          </div>
-          <Input
-            label="Ciudad"
-            name="city"
-            value={formData.city}
-            onChange={handleChange}
-          />
-          <Input
-            label="Pais/Estado"
-            name="state"
-            value={formData.state}
-            onChange={handleChange}
-          />
-          <Input
-            label="Código Postal"
-            name="zipCode"
-            value={formData.zipCode}
-            onChange={handleChange}
-          />
         </div>
-      </div>
-
-      {/* Seguro Médico */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-900">Seguro Médico</h2>
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={hasInsurance}
-              onChange={(e) => {
-                setHasInsurance(e.target.checked);
-                if (!e.target.checked) {
-                  setFormData(prev => ({ ...prev, insurance: undefined }));
-                } else {
-                  setFormData(prev => ({
-                    ...prev,
-                    insurance: { provider: '', policyNumber: '', groupNumber: '' }
-                  }));
-                }
-              }}
-              className="w-5 h-5 rounded-md accent-theme-primary cursor-pointer"
-            />
-            <span className="text-sm text-theme-primary-text">¿Tiene seguro médico?</span>
-          </label>
-        </div>
-        {hasInsurance && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Input
-              label="Proveedor"
-              name="insurance.provider"
-              value={formData.insurance?.provider || ''}
-              onChange={handleChange}
-              required={hasInsurance}
-            />
-            <Input
-              label="Número de Póliza"
-              name="insurance.policyNumber"
-              value={formData.insurance?.policyNumber || ''}
-              onChange={handleChange}
-              required={hasInsurance}
-            />
-            <Input
-              label="Número de Grupo"
-              name="insurance.groupNumber"
-              value={formData.insurance?.groupNumber || ''}
-              onChange={handleChange}
-            />
-          </div>
-        )}
       </div>
 
       {/* Contacto de Emergencia */}

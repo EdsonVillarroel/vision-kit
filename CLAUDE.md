@@ -112,7 +112,7 @@ npx supabase db pull                  # sync schema desde remoto
 └── index.ts       ← Exports públicos del módulo
 ```
 
-**Features existentes (frontend):** `auth`, `patients`, `medical-records`, `clinical-exams`, `appointments`, `inventory`, `sales` (venta rápida: alta de cliente inline + medida opcional en el mismo flujo), `users`, `layout` (incluye `QuickActionsFab`: acceso directo global a nueva venta / cliente / medida), `subscription` (plan actual + `hasFeature()` + quota checks), `commissions` (reporte + export PDF con pdfmake), `metrics` (recharts: totales, series por día, top vendedores, mix de pagos)
+**Features existentes (frontend):** `auth`, `patients` (alta simplificada: solo nombre+apellido obligatorios; sin seguro médico ni dirección/ciudad/país/CP en el formulario), `medical-records`, `clinical-exams`, `appointments`, `inventory`, `sales` (venta rápida: alta de cliente inline + medida opcional en el mismo flujo), `users`, `layout` (incluye `QuickActionsFab`: acceso directo global a nueva venta / cliente / medida), `subscription` (plan actual + `hasFeature()` + quota checks), `commissions` (reporte + export PDF con pdfmake), `metrics` (recharts: totales, series por día, top vendedores, mix de pagos)
 
 ---
 
@@ -294,6 +294,7 @@ Cada módulo en `apps/backend/src/<modulo>/` tiene:
 - **Tipos:** siempre en `types/index.ts` del feature
 - **Hooks:** encapsulan estado + llamadas al service; los componentes solo usan hooks
 - **DTOs backend:** validación con `class-validator`, `PartialType` para updates
+- **Whitelist estricto (evitar 400):** el `ValidationPipe` global usa `whitelist: true` + `forbidNonWhitelisted: true`. Un body con CUALQUIER propiedad que no esté declarada en el DTO → **HTTP 400**. Regla para el frontend: **enviar solo campos declarados en el DTO**; los campos de estado (ej. `status`, `warningReason` de paciente) NO van en POST — se gestionan por PATCH. Además, cadenas vacías en campos con `@IsEmail`/`@IsDateString`/`@IsEnum` fallan aunque sean opcionales → mandar `undefined`, no `""`. (Nota: los PATCH tipados como `Partial<Dto>`/objeto inline NO validan; ver Gotchas en `AGENT.md`.)
 - **Nunca** exponer el campo `passwordHash` en respuestas — usar `select` en Prisma
 - **Rutas protegidas:** `JwtAuthGuard` en el controller, `RolesGuard` solo cuando se necesita rol específico
 - **Stock:** al ajustar stock, recalcular automáticamente el `status` del producto

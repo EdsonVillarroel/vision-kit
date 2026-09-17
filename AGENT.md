@@ -34,6 +34,8 @@
 | `appointments.patient_name` era NOT NULL, bloqueaba seed | Migración 008 lo marcó nullable |
 | PgBouncer no soporta `ON CONFLICT` en transacciones Prisma | Usar `$executeRawUnsafe` con SQL puro en seed |
 | Supabase Storage: `service_role` key bypasea RLS | Solo usar en backend (NestJS upload service), nunca exponer al frontend |
+| `ValidationPipe` global con `forbidNonWhitelisted: true` → 400 si el body trae props fuera del DTO (ej. `warningReason` en `POST /patients`) | El frontend debe enviar solo campos del DTO; los de estado van por PATCH. Cadena vacía en `@IsEmail/@IsDateString/@IsEnum` también falla → mandar `undefined` |
+| `forbidNonWhitelisted` NO valida cuando el `@Body()` es `Partial<Dto>` u objeto inline (metatype `Object`) | Varios PATCH (clinical-exams, medical-records, inventory, sales/status) no validan hoy. **Riesgo latente:** el front de `medical-records` puede mandar `eyeHealth` y `prescription.{frameType,lensType,coatings}` que NO están en `CreateMedicalRecordDto`; rompería si esos PATCH pasaran a clase DTO real. Alinear el DTO antes de endurecerlos |
 
 ---
 
@@ -52,3 +54,10 @@
 | 009 | `sale_cancellation_reason` | cancellation_reason en sales |
 | 010 | `add_business_hours` | business_hours JSONB en clinic_settings |
 | 011 | `public_bookings` | Tabla public_bookings + RLS + trigger |
+| 012 | `multi_tenant_foundation` | tenants, subscription_plans, subscriptions, platform_admins; `tenant_id` nullable |
+| 013 | `backfill_tenant_not_null` | Tenant default + backfill + `tenant_id` NOT NULL + unique tenant-scoped |
+| 014 | `clinic_settings_colors` | primary_color / accent_color en clinic_settings (branding por tenant) |
+| 015 | `rls_tenant_isolation` | RLS + políticas por `tenant_id` en tablas de negocio |
+| 016 | `bolivianize_clinic_defaults` | Defaults BO: tax_rate 0.13, currency BOB |
+| 017 | `add_commission_rate_to_profiles` | commission_rate en profiles |
+| 018 | `relax_measurement_required` | clinical_exams: pd_* y frame_* nullable (DP y armazón opcionales) |

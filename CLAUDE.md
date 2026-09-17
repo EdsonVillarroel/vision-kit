@@ -112,7 +112,7 @@ npx supabase db pull                  # sync schema desde remoto
 └── index.ts       ← Exports públicos del módulo
 ```
 
-**Features existentes (frontend):** `auth`, `patients` (alta simplificada: solo nombre+apellido obligatorios; sin seguro médico ni dirección/ciudad/país/CP en el formulario), `medical-records`, `clinical-exams`, `appointments`, `inventory`, `sales` (venta rápida: alta de cliente inline + medida opcional en el mismo flujo), `users`, `layout` (incluye `QuickActionsFab`: acceso directo global a nueva venta / cliente / medida), `subscription` (plan actual + `hasFeature()` + quota checks), `commissions` (reporte + export PDF con pdfmake), `metrics` (recharts: totales, series por día, top vendedores, mix de pagos)
+**Features existentes (frontend):** `auth`, `patients` (alta simplificada: solo nombre+apellido obligatorios; sin seguro médico ni dirección/ciudad/país/CP en el formulario), `medical-records` (examen oftalmológico rediseñado: selector de cliente inline obligatorio, graduación como tabla RX OD/OI con `DioptryStepper` y DP por ojo, agudeza/diagnóstico plegables, barra de acción fija), `clinical-exams`, `appointments`, `inventory`, `sales` (venta rápida: alta de cliente inline + medida opcional en el mismo flujo), `users`, `layout` (incluye `QuickActionsFab`: acceso directo global a nueva venta / cliente / medida), `subscription` (plan actual + `hasFeature()` + quota checks), `commissions` (reporte + export PDF con pdfmake), `metrics` (recharts: totales, series por día, top vendedores, mix de pagos)
 
 ---
 
@@ -162,7 +162,7 @@ Portal público multi-tenant. Consume la Public API del backend (sin JWT). Rutas
 
 **Variable de entorno:** `VITE_API_URL` (default: `http://localhost:3000/api/v1`)
 
-**UI Components** (en `apps/frontend/src/components/ui/`): `Button`, `Input`, `Card`, `Badge`, `StatCard`, `Table`
+**UI Components** (en `apps/frontend/src/components/ui/`): `Button`, `Input`, `Card`, `Badge`, `StatCard`, `Table`, `DioptryStepper` (control de valor dióptrico con botones −/+ en pasos de 0.25, signo y `tabular-nums`; para esfera/cilindro/ADD)
 
 **Páginas** en `apps/frontend/src/pages/<feature>/` — una página por ruta.
 

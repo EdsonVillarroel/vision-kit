@@ -47,6 +47,7 @@ apps/frontend/
 │   │       ├── Button.tsx          ← variantes: primary, secondary, outline, danger, warning
 │   │       ├── Card.tsx
 │   │       ├── ConfirmModal.tsx    ← modal de confirmación (danger/warning/default)
+│   │       ├── DioptryStepper.tsx  ← control de dioptrías (−/+ en pasos de 0.25) para exámenes
 │   │       ├── Input.tsx
 │   │       ├── Skeleton.tsx        ← 7 variantes de loading skeleton
 │   │       ├── StatCard.tsx

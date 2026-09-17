@@ -18,6 +18,8 @@ export const PatientSearch = ({ onSelect, showCreateButton = true, autoFocus = f
   const [showResults, setShowResults] = useState(false);
 
   useEffect(() => {
+    // Si ya hay un paciente seleccionado, no re-buscar (el input muestra su nombre)
+    if (selectedPatient) return;
     if (searchQuery.trim().length < 2) {
       setSearchResults([]);
       setShowResults(false);
@@ -39,7 +41,7 @@ export const PatientSearch = ({ onSelect, showCreateButton = true, autoFocus = f
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchQuery]);
+  }, [searchQuery, selectedPatient]);
 
   const handleSelectPatient = (patient: Patient) => {
     setSelectedPatient(patient);
@@ -228,7 +230,7 @@ export const PatientSearch = ({ onSelect, showCreateButton = true, autoFocus = f
       )}
 
       {/* No hay resultados */}
-      {showResults && searchResults.length === 0 && !isSearching && searchQuery.trim().length >= 2 && (
+      {showResults && !selectedPatient && searchResults.length === 0 && !isSearching && searchQuery.trim().length >= 2 && (
         <div className="absolute z-10 mt-2 w-full bg-white border border-theme-divider rounded-lg shadow-lg p-4">
           <p className="text-gray-600 text-center">
             No se encontraron pacientes con "{searchQuery}"

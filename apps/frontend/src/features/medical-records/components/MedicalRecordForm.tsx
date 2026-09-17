@@ -4,6 +4,7 @@ import clsx from 'clsx';
 import type { MedicalRecord, MedicalRecordFormData } from '../types';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
+import { DioptryStepper } from '../../../components/ui/DioptryStepper';
 import { PatientSearch } from '../../patients/components/PatientSearch';
 import { patientService } from '../../patients/services/patientService';
 import { useSnackbar } from '../../../components/Snackbar';
@@ -59,17 +60,22 @@ export const MedicalRecordForm: React.FC<MedicalRecordFormProps> = ({
   });
 
   const [diagnosisText, setDiagnosisText] = useState(record?.diagnosis?.join(', ') || '');
+  const [showAcuity, setShowAcuity] = useState(false);
+  const [showDiagnosis, setShowDiagnosis] = useState(false);
 
-  const handleRefractionChange = (eye: 'right' | 'left', field: string, value: string) => {
+  // Setter numérico (para DioptryStepper y campos numéricos de la tabla RX)
+  const setRefraction = (eye: 'right' | 'left', field: 'sphere' | 'cylinder' | 'axis' | 'add' | 'pd', value: number) => {
     setFormData(prev => ({
       ...prev,
-      refraction: {
-        ...prev.refraction,
-        [eye]: {
-          ...prev.refraction[eye],
-          [field]: parseFloat(value) || 0
-        }
-      }
+      refraction: { ...prev.refraction, [eye]: { ...prev.refraction[eye], [field]: value } }
+    }));
+  };
+
+  // Copia la graduación del ojo derecho al izquierdo (caso muy frecuente)
+  const copyODtoOI = () => {
+    setFormData(prev => ({
+      ...prev,
+      refraction: { ...prev.refraction, left: { ...prev.refraction.right } }
     }));
   };
 
@@ -141,8 +147,51 @@ export const MedicalRecordForm: React.FC<MedicalRecordFormProps> = ({
     }
   };
 
+  const RX_FIELDS = [
+    { key: 'sphere', label: 'Esfera' },
+    { key: 'cylinder', label: 'Cilindro' },
+    { key: 'axis', label: 'Eje' },
+    { key: 'add', label: 'ADD' },
+    { key: 'pd', label: 'DP' },
+  ] as const;
+
+  const cellInput =
+    'h-10 w-full min-w-0 rounded-lg bg-white ring-1 ring-black/[0.08] px-2 text-center text-base font-semibold tnum text-theme-primary-text outline-none focus:ring-2 focus:ring-theme-primary/40';
+
+  const renderControl = (eye: 'right' | 'left', field: (typeof RX_FIELDS)[number]['key']) => {
+    const eyeLabel = eye === 'right' ? 'OD' : 'OI';
+    const r = formData.refraction[eye];
+    if (field === 'sphere' || field === 'cylinder' || field === 'add') {
+      return (
+        <DioptryStepper
+          value={r[field] ?? 0}
+          onChange={(v) => setRefraction(eye, field, v)}
+          showSign
+          ariaLabel={`${field} ${eyeLabel}`}
+        />
+      );
+    }
+    if (field === 'axis') {
+      return (
+        <input
+          type="number" min={0} max={180} value={r.axis ?? 0}
+          onChange={(e) => setRefraction(eye, 'axis', Math.min(180, Math.max(0, parseInt(e.target.value) || 0)))}
+          className={cellInput} aria-label={`Eje ${eyeLabel}`}
+        />
+      );
+    }
+    // pd
+    return (
+      <input
+        type="number" step={0.5} value={r.pd ?? ''} placeholder="—"
+        onChange={(e) => setRefraction(eye, 'pd', parseFloat(e.target.value) || 0)}
+        className={cellInput} aria-label={`DP ${eyeLabel}`}
+      />
+    );
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form onSubmit={handleSubmit} className="space-y-6 pb-24">
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
           {error}
@@ -216,225 +265,188 @@ export const MedicalRecordForm: React.FC<MedicalRecordFormProps> = ({
         </div>
       )}
 
-      {/* Información General */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">Información del Examen</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Datos del examen */}
+      <div className="bg-white rounded-2xl ring-1 ring-black/[0.06] shadow-[0_1px_3px_rgba(16,24,40,0.06),0_1px_2px_rgba(16,24,40,0.04)] p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <Input
-            label="Fecha del Examen"
+            label="Fecha del examen"
             type="date"
             value={formData.date}
             onChange={(e) => setFormData({ ...formData, date: e.target.value })}
             required
           />
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tipo de Examen *
+            <label className="block text-sm font-medium text-theme-primary-text mb-2">
+              Tipo de examen
             </label>
             <select
               value={formData.examType}
               onChange={(e) => setFormData({ ...formData, examType: e.target.value as any })}
-              className="w-full px-4 py-2 border border-theme-divider rounded-lg focus:ring-2 focus:ring-theme-primary/30"
-              required
+              className="w-full px-4 py-3 bg-white border border-theme-divider rounded-lg outline-none focus:ring-2 focus:ring-theme-primary/40"
             >
-              <option value="routine">Examen de Rutina</option>
+              <option value="routine">Examen de rutina</option>
               <option value="emergency">Emergencia</option>
               <option value="followup">Seguimiento</option>
-              <option value="contact-lens">Lentes de Contacto</option>
+              <option value="contact-lens">Lentes de contacto</option>
             </select>
           </div>
-          <Input
-            label="Distancia Pupilar (DP)"
-            type="number"
-            step="0.5"
-            value={formData.refraction.right.pd || ''}
-            onChange={(e) => handleRefractionChange('right', 'pd', e.target.value)}
-            placeholder="Ej: 65"
-          />
         </div>
       </div>
 
-      {/* Agudeza Visual */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">Agudeza Visual (AV)</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Ojo Derecho */}
+      {/* Graduación (RX) */}
+      <div className="bg-white rounded-2xl ring-1 ring-black/[0.06] shadow-[0_1px_3px_rgba(16,24,40,0.06),0_1px_2px_rgba(16,24,40,0.04)] p-6">
+        <div className="mb-5 flex items-start justify-between gap-3">
           <div>
-            <h3 className="font-semibold text-gray-900 mb-4">Ojo Derecho (OD)</h3>
-            <div className="space-y-4">
-              <Input
-                label="Sin Corrección"
-                value={formData.visualAcuity.right.uncorrected}
-                onChange={(e) => handleVisualAcuityChange('right', 'uncorrected', e.target.value)}
-                placeholder="Ej: 20/40"
-              />
-              <Input
-                label="Con Corrección"
-                value={formData.visualAcuity.right.corrected}
-                onChange={(e) => handleVisualAcuityChange('right', 'corrected', e.target.value)}
-                placeholder="Ej: 20/20"
-              />
+            <h2 className="text-xl font-bold text-theme-dark-primary">Graduación</h2>
+            <p className="text-sm text-theme-secondary-text mt-1">Receta de lentes — ajusta en pasos de 0.25.</p>
+          </div>
+          <button
+            type="button"
+            onClick={copyODtoOI}
+            className="shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium text-theme-primary ring-1 ring-inset ring-theme-primary/30 transition-colors duration-150 hover:bg-theme-light-primary/50 outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/50"
+          >
+            Copiar OD → OI
+          </button>
+        </div>
+
+        {/* Desktop: tabla alineada */}
+        <div className="hidden md:block">
+          <div className="grid grid-cols-[3rem_repeat(5,1fr)] items-center gap-3">
+            <div />
+            {RX_FIELDS.map((f) => (
+              <div key={f.key} className="text-center text-xs font-semibold uppercase tracking-wide text-theme-secondary-text">{f.label}</div>
+            ))}
+            {(['right', 'left'] as const).map((eye) => (
+              <div key={eye} className="contents">
+                <div className="text-sm font-bold text-theme-dark-primary">{eye === 'right' ? 'OD' : 'OI'}</div>
+                {RX_FIELDS.map((f) => (
+                  <div key={f.key}>{renderControl(eye, f.key)}</div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Móvil: por ojo con etiquetas */}
+        <div className="md:hidden space-y-6">
+          {(['right', 'left'] as const).map((eye) => (
+            <div key={eye}>
+              <h3 className="mb-3 font-semibold text-theme-dark-primary">{eye === 'right' ? 'Ojo Derecho (OD)' : 'Ojo Izquierdo (OI)'}</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {RX_FIELDS.map((f) => (
+                  <div key={f.key}>
+                    <label className="mb-1 block text-xs font-medium text-theme-secondary-text">{f.label}</label>
+                    {renderControl(eye, f.key)}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-
-          {/* Ojo Izquierdo */}
-          <div>
-            <h3 className="font-semibold text-gray-900 mb-4">Ojo Izquierdo (OI)</h3>
-            <div className="space-y-4">
-              <Input
-                label="Sin Corrección"
-                value={formData.visualAcuity.left.uncorrected}
-                onChange={(e) => handleVisualAcuityChange('left', 'uncorrected', e.target.value)}
-                placeholder="Ej: 20/50"
-              />
-              <Input
-                label="Con Corrección"
-                value={formData.visualAcuity.left.corrected}
-                onChange={(e) => handleVisualAcuityChange('left', 'corrected', e.target.value)}
-                placeholder="Ej: 20/20"
-              />
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 
-      {/* Refracción / Receta de Lentes */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">Receta de Lentes</h2>
-
-        {/* Ojo Derecho (OD) */}
-        <div className="mb-6">
-          <h3 className="font-semibold text-gray-900 mb-4 bg-blue-50 px-4 py-2 rounded">Ojo Derecho (OD)</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Input
-              label="Esfera"
-              type="number"
-              step="0.25"
-              value={formData.refraction.right.sphere}
-              onChange={(e) => handleRefractionChange('right', 'sphere', e.target.value)}
-              placeholder="-3.25"
-            />
-            <Input
-              label="Cilindro"
-              type="number"
-              step="0.25"
-              value={formData.refraction.right.cylinder}
-              onChange={(e) => handleRefractionChange('right', 'cylinder', e.target.value)}
-              placeholder="0.00"
-            />
-            <Input
-              label="Eje"
-              type="number"
-              min="0"
-              max="180"
-              value={formData.refraction.right.axis}
-              onChange={(e) => handleRefractionChange('right', 'axis', e.target.value)}
-              placeholder="0"
-            />
-            <Input
-              label="ADD (Adición)"
-              type="number"
-              step="0.25"
-              value={formData.refraction.right.add || ''}
-              onChange={(e) => handleRefractionChange('right', 'add', e.target.value)}
-              placeholder="1.0"
-            />
-          </div>
-        </div>
-
-        {/* Ojo Izquierdo (OI) */}
-        <div>
-          <h3 className="font-semibold text-gray-900 mb-4 bg-green-50 px-4 py-2 rounded">Ojo Izquierdo (OI)</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Input
-              label="Esfera"
-              type="number"
-              step="0.25"
-              value={formData.refraction.left.sphere}
-              onChange={(e) => handleRefractionChange('left', 'sphere', e.target.value)}
-              placeholder="-2.25"
-            />
-            <Input
-              label="Cilindro"
-              type="number"
-              step="0.25"
-              value={formData.refraction.left.cylinder}
-              onChange={(e) => handleRefractionChange('left', 'cylinder', e.target.value)}
-              placeholder="0.00"
-            />
-            <Input
-              label="Eje"
-              type="number"
-              min="0"
-              max="180"
-              value={formData.refraction.left.axis}
-              onChange={(e) => handleRefractionChange('left', 'axis', e.target.value)}
-              placeholder="0"
-            />
-            <Input
-              label="ADD (Adición)"
-              type="number"
-              step="0.25"
-              value={formData.refraction.left.add || ''}
-              onChange={(e) => handleRefractionChange('left', 'add', e.target.value)}
-              placeholder="1.0"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Diagnóstico y Observaciones */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">Diagnóstico y Observaciones</h2>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Diagnósticos
-            </label>
-            <textarea
-              value={diagnosisText}
-              onChange={(e) => setDiagnosisText(e.target.value)}
-              placeholder="Separar por comas (Ej: Miopía leve bilateral, Astigmatismo)"
-              className="w-full px-4 py-2 border border-theme-divider rounded-lg focus:ring-2 focus:ring-theme-primary/30"
-              rows={2}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Observaciones / Notas del Examen
-            </label>
-            <textarea
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="Notas adicionales, recomendaciones, observaciones del paciente..."
-              className="w-full px-4 py-2 border border-theme-divider rounded-lg focus:ring-2 focus:ring-theme-primary/30"
-              rows={4}
-            />
-          </div>
-
-          <Input
-            label="Próxima Visita Recomendada"
-            type="date"
-            value={formData.nextVisitRecommended}
-            onChange={(e) => setFormData({ ...formData, nextVisitRecommended: e.target.value })}
-          />
-        </div>
-      </div>
-
-      {/* Botones */}
-      <div className="flex justify-end gap-4">
-        <Button
+      {/* Agudeza Visual (opcional, plegable) */}
+      <div className="bg-white rounded-2xl ring-1 ring-black/[0.06] shadow-[0_1px_3px_rgba(16,24,40,0.06),0_1px_2px_rgba(16,24,40,0.04)] p-6">
+        <button
           type="button"
-          variant="secondary"
-          onClick={() => navigate('/medical-records')}
-          disabled={loading}
+          onClick={() => setShowAcuity((v) => !v)}
+          className="flex w-full items-center justify-between gap-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/40 rounded-lg"
         >
-          Cancelar
-        </Button>
-        <Button type="submit" disabled={loading}>
-          {loading ? 'Guardando...' : isEditing ? 'Actualizar Historial' : 'Guardar Historial'}
-        </Button>
+          <div>
+            <h2 className="text-xl font-bold text-theme-dark-primary">Agudeza visual (AV) <span className="text-sm font-normal text-theme-secondary-text">— opcional</span></h2>
+          </div>
+          <svg className={clsx('h-5 w-5 text-theme-secondary-text transition-transform duration-200', showAcuity && 'rotate-180')} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        {showAcuity && (
+          <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-6 animate-fadeIn">
+            {(['right', 'left'] as const).map((eye) => (
+              <div key={eye}>
+                <h3 className="mb-3 font-semibold text-theme-dark-primary">{eye === 'right' ? 'Ojo Derecho (OD)' : 'Ojo Izquierdo (OI)'}</h3>
+                <div className="space-y-3">
+                  <Input
+                    label="Sin corrección"
+                    value={formData.visualAcuity[eye].uncorrected}
+                    onChange={(e) => handleVisualAcuityChange(eye, 'uncorrected', e.target.value)}
+                    placeholder="Ej: 20/40"
+                  />
+                  <Input
+                    label="Con corrección"
+                    value={formData.visualAcuity[eye].corrected}
+                    onChange={(e) => handleVisualAcuityChange(eye, 'corrected', e.target.value)}
+                    placeholder="Ej: 20/20"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Diagnóstico y observaciones (opcional, plegable) */}
+      <div className="bg-white rounded-2xl ring-1 ring-black/[0.06] shadow-[0_1px_3px_rgba(16,24,40,0.06),0_1px_2px_rgba(16,24,40,0.04)] p-6">
+        <button
+          type="button"
+          onClick={() => setShowDiagnosis((v) => !v)}
+          className="flex w-full items-center justify-between gap-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/40 rounded-lg"
+        >
+          <h2 className="text-xl font-bold text-theme-dark-primary">Diagnóstico y observaciones <span className="text-sm font-normal text-theme-secondary-text">— opcional</span></h2>
+          <svg className={clsx('h-5 w-5 text-theme-secondary-text transition-transform duration-200', showDiagnosis && 'rotate-180')} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        {showDiagnosis && (
+          <div className="mt-5 space-y-4 animate-fadeIn">
+            <div>
+              <label className="block text-sm font-medium text-theme-primary-text mb-2">Diagnósticos</label>
+              <textarea
+                value={diagnosisText}
+                onChange={(e) => setDiagnosisText(e.target.value)}
+                placeholder="Separar por comas (Ej: Miopía leve bilateral, Astigmatismo)"
+                className="w-full px-4 py-3 bg-white border border-theme-divider rounded-lg outline-none focus:ring-2 focus:ring-theme-primary/40"
+                rows={2}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-theme-primary-text mb-2">Observaciones / notas del examen</label>
+              <textarea
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                placeholder="Notas adicionales, recomendaciones, observaciones del paciente..."
+                className="w-full px-4 py-3 bg-white border border-theme-divider rounded-lg outline-none focus:ring-2 focus:ring-theme-primary/40"
+                rows={4}
+              />
+            </div>
+            <Input
+              label="Próxima visita recomendada"
+              type="date"
+              value={formData.nextVisitRecommended}
+              onChange={(e) => setFormData({ ...formData, nextVisitRecommended: e.target.value })}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Barra de acción fija */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-black/[0.06] bg-white/90 backdrop-blur-sm lg:pl-64">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
+          <p className="hidden text-sm text-theme-secondary-text sm:block">
+            {formData.patientId
+              ? <>Examen para <span className="font-semibold text-theme-primary-text">{selectedPatientName || 'el paciente seleccionado'}</span></>
+              : 'Selecciona un cliente para guardar'}
+          </p>
+          <div className="flex w-full items-center justify-end gap-3 sm:w-auto">
+            <Button type="button" variant="secondary" onClick={() => navigate('/medical-records')} disabled={loading} className="!w-auto px-5">
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={loading} className="!w-auto px-6">
+              {loading ? 'Guardando...' : isEditing ? 'Actualizar examen' : 'Guardar examen'}
+            </Button>
+          </div>
+        </div>
       </div>
     </form>
   );

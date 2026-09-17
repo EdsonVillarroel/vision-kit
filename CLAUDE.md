@@ -112,7 +112,7 @@ npx supabase db pull                  # sync schema desde remoto
 └── index.ts       ← Exports públicos del módulo
 ```
 
-**Features existentes (frontend):** `auth`, `patients` (alta simplificada: solo nombre+apellido obligatorios; sin seguro médico ni dirección/ciudad/país/CP en el formulario), `medical-records`, `clinical-exams`, `appointments`, `inventory`, `sales` (venta rápida: alta de cliente inline + medida opcional en el mismo flujo), `users`, `layout` (incluye `QuickActionsFab`: acceso directo global a nueva venta / cliente / medida), `subscription` (plan actual + `hasFeature()` + quota checks), `commissions` (reporte + export PDF con pdfmake), `metrics` (recharts: totales, series por día, top vendedores, mix de pagos)
+**Features existentes (frontend):** `auth`, `patients` (alta simplificada: solo nombre+apellido obligatorios; sin seguro médico ni dirección/ciudad/país/CP en el formulario), `medical-records`, `clinical-exams`, `appointments`, `inventory` (alta de producto adaptativa: datos básicos + especificaciones unificados en una sección por categoría, SKU auto-generado, solo nombre+precios obligatorios), `sales` (venta rápida: alta de cliente inline + medida opcional en el mismo flujo), `users`, `layout` (incluye `QuickActionsFab`: acceso directo global a nueva venta / cliente / medida), `subscription` (plan actual + `hasFeature()` + quota checks), `commissions` (reporte + export PDF con pdfmake), `metrics` (recharts: totales, series por día, top vendedores, mix de pagos)
 
 ---
 

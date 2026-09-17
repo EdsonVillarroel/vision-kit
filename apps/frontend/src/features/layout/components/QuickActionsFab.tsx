@@ -70,6 +70,10 @@ export const QuickActionsFab = () => {
     navigate(to);
   };
 
+  // En pantallas de alta/edición ya hay una barra de acción propia (Guardar):
+  // el FAB sería redundante y podría taparla, así que se oculta.
+  if (/\/(new|edit)(\/|$)/.test(location.pathname)) return null;
+
   return (
     <>
       {/* Backdrop */}

@@ -180,7 +180,8 @@ function buildRequestBody(data: MedicalRecordFormData) {
     eyeHealth: data.eyeHealth,
     diagnosis: data.diagnosis,
     notes: data.notes,
-    nextVisitRecommended: data.nextVisitRecommended,
+    // cadena vacía -> undefined: @IsDateString rechaza "" aunque sea opcional
+    nextVisitRecommended: data.nextVisitRecommended || undefined,
   };
 }
 

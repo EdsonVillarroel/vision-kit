@@ -4,6 +4,8 @@ import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { useNavigate } from 'react-router-dom';
 import { usePermissions } from '../../features/auth/hooks/usePermissions';
 import { userService } from '../../features/users/services/userService';
+import { ResetPasswordModal } from '../../features/users/components/ResetPasswordModal';
+import { useAuth } from '../../features/auth/hooks/useAuth';
 import { useSnackbar } from '../../components/Snackbar/SnackbarContext';
 import type { User, UserRole } from '../../features/auth/types';
 import { Button } from '../../components/ui/Button';
@@ -12,11 +14,14 @@ export const UsersPage: React.FC = () => {
   const navigate = useNavigate();
   const permissions = usePermissions();
   const { showError, showSuccess } = useSnackbar();
+  const { user: currentUser } = useAuth();
 
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [resetTarget, setResetTarget] = useState<User | null>(null);
+  const [isResetting, setIsResetting] = useState(false);
   const [filter, setFilter] = useState<{
     role?: UserRole;
     status?: 'active' | 'inactive';
@@ -68,6 +73,27 @@ export const UsersPage: React.FC = () => {
       showError(error.message ?? 'Error al eliminar usuario');
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  // Misma regla que el backend: solo admin/super_admin, nunca la propia cuenta,
+  // y la cuenta super_admin solo la restablece otro super_admin
+  const canResetPassword = (target: User) =>
+    permissions.canDeleteUser &&
+    target.id !== currentUser?.id &&
+    (target.role !== 'super_admin' || currentUser?.role === 'super_admin');
+
+  const handleResetConfirm = async (newPassword: string) => {
+    if (!resetTarget) return;
+    setIsResetting(true);
+    try {
+      await userService.resetPassword(resetTarget.id, newPassword);
+      showSuccess(`Contraseña de "${resetTarget.name}" restablecida`);
+      setResetTarget(null);
+    } catch (error: any) {
+      showError(error.message ?? 'Error al restablecer la contraseña');
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -305,6 +331,16 @@ export const UsersPage: React.FC = () => {
                             {user.status === 'active' ? 'Desactivar' : 'Activar'}
                           </button>
                         )}
+                        {canResetPassword(user) && (
+                          <button
+                            onClick={() => setResetTarget(user)}
+                            title="Restablecer contraseña"
+                            aria-label="Restablecer contraseña"
+                            className="text-theme-primary hover:text-theme-dark-primary"
+                          >
+                            Contraseña
+                          </button>
+                        )}
                         {permissions.canDeleteUser && (
                           <button
                             onClick={() => setDeleteTarget(user)}
@@ -331,6 +367,13 @@ export const UsersPage: React.FC = () => {
         isLoading={isDeleting}
         onConfirm={handleDeleteConfirm}
         onCancel={() => setDeleteTarget(null)}
+      />
+
+      <ResetPasswordModal
+        userName={resetTarget?.name ?? null}
+        isLoading={isResetting}
+        onConfirm={handleResetConfirm}
+        onCancel={() => setResetTarget(null)}
       />
     </div>
   );

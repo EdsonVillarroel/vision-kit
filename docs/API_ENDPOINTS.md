@@ -58,6 +58,17 @@ Authorization: Bearer <token>
 | `POST` | `/users` | super_admin, admin | Crear nuevo usuario (no permite rol super_admin) |
 | `PATCH` | `/users/:id` | super_admin, admin | Actualizar usuario |
 | `DELETE` | `/users/:id` | super_admin, admin | Eliminar usuario |
+| `PATCH` | `/users/:id/password` | propio usuario, admin, super_admin | Cambiar contraseña — pide la actual |
+| `PATCH` | `/users/:id/reset-password` | super_admin, admin | Restablecer contraseña de otro usuario **sin** la actual (olvido) |
+
+> `super_admin` pasa cualquier `@Roles(...)` del tenant aunque no esté listado (ver `RolesGuard`).
+
+### PATCH `/users/:id/reset-password`
+```json
+{ "newPassword": "nueva123" }   // mínimo 6 caracteres; cualquier otro campo → 400
+```
+Respuesta: `{ "message": "Contraseña restablecida exitosamente" }`. **403** si es la propia cuenta
+(usar `/users/:id/password`) o si un `admin` intenta restablecer la cuenta `super_admin`. **404** si el usuario no es del tenant.
 
 ### POST / PATCH `/users`
 ```json
@@ -642,6 +653,8 @@ GET    /users/:id
 POST   /users
 PATCH  /users/:id
 DELETE /users/:id
+PATCH  /users/:id/password
+PATCH  /users/:id/reset-password
 
 GET    /patients
 GET    /patients/:id
@@ -699,7 +712,7 @@ GET    /public/:tenantSlug/clinic
 POST   /public/:tenantSlug/bookings
 ```
 
-**Total: 51 tenant + public endpoints** (47 tenant + 4 public)
+**Total: 52 tenant + public endpoints** (48 tenant + 4 public)
 > Nota: 47 tenant = 43 base + 1 `/sales/metrics` + 3 `/commissions/*`.
 
 ---
@@ -809,7 +822,7 @@ POST   /public/:tenantSlug/bookings
 
 **Total nuevos endpoints sesión 5: 12 (platform management)**
 
-**Total global: 68 endpoints**
+**Total global: 70 endpoints**
 - 43 tenant base
 - 1 `/subscriptions/current`
 - 1 `/sales/metrics` (requiere feature `commissions`)

@@ -119,6 +119,7 @@ apps/frontend/
 │   │   │   └── index.ts
 │   │   │
 │   │   ├── users/
+│   │   │   ├── components/         ← ResetPasswordModal (admin restablece contraseña, genera una aleatoria)
 │   │   │   ├── services/           ← userService → /users
 │   │   │   ├── types/              ← UserFormData
 │   │   │   └── index.ts
@@ -234,7 +235,7 @@ apps/backend/
 │   ├── auth/                       ← POST /auth/login, GET /auth/me, POST /auth/refresh — JWT strategy, guards, decorators
 │   ├── platform-auth/              ← POST /platform/auth/login, GET /platform/auth/me, POST /platform/auth/refresh — jwt-platform strategy, PlatformAuthGuard
 │   ├── platform/                   ← GET/POST/PATCH /platform/tenants|plans|subscriptions|stats — PlatformAuthGuard, usa PrismaService RAW
-│   ├── users/                      ← GET/POST/PATCH/DELETE /users, PATCH /users/:id/password
+│   ├── users/                      ← GET/POST/PATCH/DELETE /users, PATCH /users/:id/password, PATCH /users/:id/reset-password
 │   ├── patients/                   ← /patients CRUD + /patients/:id/medical-records|sales
 │   ├── appointments/               ← /appointments CRUD + /appointments/slots
 │   ├── medical-records/            ← /medical-records CRUD, mapea DTO → columnas flat

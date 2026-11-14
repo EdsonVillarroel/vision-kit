@@ -16,6 +16,8 @@ export class RolesGuard implements CanActivate {
     if (!requiredRoles) return true;
 
     const { user } = context.switchToHttp().getRequest();
-    return requiredRoles.includes(user.role);
+    // super_admin tiene acceso total dentro de su tenant (el aislamiento lo da TenantPrismaService)
+    if (user?.role === 'super_admin') return true;
+    return requiredRoles.includes(user?.role);
   }
 }

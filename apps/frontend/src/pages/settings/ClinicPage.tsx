@@ -238,7 +238,7 @@ export const ClinicPage: React.FC = () => {
             </div>
             <div className="text-right">
               <span className="text-2xl font-bold text-theme-primary-text">
-                {original?.taxRate != null ? `${original.taxRate}%` : '16%'}
+                {`${Math.round((original?.taxRate ?? 0.13) * 100)}%`}
               </span>
             </div>
           </div>

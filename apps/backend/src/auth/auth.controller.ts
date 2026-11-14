@@ -1,3 +1,5 @@
+import { Throttle } from '@nestjs/throttler';
+import { LOGIN_THROTTLE } from './login-throttle';
 import { Controller, Post, Get, Body, UseGuards, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
@@ -12,6 +14,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Iniciar sesión', description: 'Retorna JWT + datos del usuario' })
   @ApiResponse({ status: 200, description: 'Login exitoso — retorna access_token' })
   @ApiResponse({ status: 401, description: 'Credenciales inválidas o usuario inactivo' })
+  @Throttle(LOGIN_THROTTLE)
   @Post('login')
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);

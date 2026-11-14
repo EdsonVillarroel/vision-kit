@@ -4,7 +4,11 @@ export type ProductCategory =
   | 'sunglasses'
   | 'contact-lenses'
   | 'accessories'
-  | 'solutions';
+  | 'solutions'
+  | 'lens-options'; // Lentes y materiales cobrables en la venta (sin stock)
+
+// Grupo de una opción de lente; se guarda en specifications.lensType
+export type LensOptionGroup = 'design' | 'material' | 'treatment';
 
 export type ProductStatus = 'in-stock' | 'low-stock' | 'out-of-stock' | 'discontinued';
 
@@ -41,7 +45,7 @@ export interface Product {
     };
 
     // Para lentes
-    lensType?: 'single' | 'bifocal' | 'progressive';
+    lensType?: 'single' | 'bifocal' | 'progressive' | LensOptionGroup;
     lensMaterial?: 'plastic' | 'polycarbonate' | 'high-index' | 'glass' | string;
     index?: number; // Índice de refracción
     coatings?: string[];

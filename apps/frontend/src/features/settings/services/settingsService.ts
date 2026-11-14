@@ -37,9 +37,15 @@ export const DEFAULT_BUSINESS_HOURS: BusinessHours = {
   sunday:    { open: '09:00', close: '14:00', closed: true  },
 };
 
+// Prisma serializa los Decimal como string ("0.13"); se normaliza para que taxRate sea un número real
+const normalize = (settings: ClinicSettings): ClinicSettings => ({
+  ...settings,
+  taxRate: settings.taxRate != null ? Number(settings.taxRate) : undefined,
+});
+
 export const settingsService = {
-  get: (): Promise<ClinicSettings> => api.get<ClinicSettings>('/settings'),
+  get: (): Promise<ClinicSettings> => api.get<ClinicSettings>('/settings').then(normalize),
 
   update: (data: Partial<ClinicSettings>): Promise<ClinicSettings> =>
-    api.patch<ClinicSettings>('/settings', data),
+    api.patch<ClinicSettings>('/settings', data).then(normalize),
 };

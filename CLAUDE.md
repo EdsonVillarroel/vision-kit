@@ -112,7 +112,7 @@ npx supabase db pull                  # sync schema desde remoto
 └── index.ts       ← Exports públicos del módulo
 ```
 
-**Features existentes (frontend):** `auth`, `patients` (alta simplificada: solo nombre+apellido obligatorios; sin seguro médico ni dirección/ciudad/país/CP en el formulario), `medical-records`, `clinical-exams`, `appointments`, `inventory` (alta de producto adaptativa: datos básicos + especificaciones unificados en una sección por categoría, SKU auto-generado, solo nombre+precios obligatorios), `sales` (venta rápida: alta de cliente inline + medida opcional en el mismo flujo), `users`, `layout` (incluye `QuickActionsFab`: acceso directo global a nueva venta / cliente / medida), `subscription` (plan actual + `hasFeature()` + quota checks), `commissions` (reporte + export PDF con pdfmake), `metrics` (recharts: totales, series por día, top vendedores, mix de pagos)
+**Features existentes (frontend):** `auth`, `patients` (alta simplificada: solo nombre+apellido obligatorios; sin seguro médico ni dirección/ciudad/país/CP en el formulario), `medical-records`, `clinical-exams`, `appointments`, `inventory` (alta de producto adaptativa: datos básicos + especificaciones unificados en una sección por categoría, SKU auto-generado, solo nombre+precios obligatorios. `useLensOptions` + `/inventory/lenses` gestionan el catálogo de lentes y materiales cobrables), `sales` (venta rápida: alta de cliente inline + medida opcional + cobro de lentes y materiales con precio ajustable en la línea), `users`, `layout` (incluye `QuickActionsFab`: acceso directo global a nueva venta / cliente / medida), `subscription` (plan actual + `hasFeature()` + quota checks), `commissions` (reporte + export PDF con pdfmake), `metrics` (recharts: totales, series por día, top vendedores, mix de pagos)
 
 ---
 
@@ -202,14 +202,15 @@ Cada módulo en `apps/backend/src/<modulo>/` tiene:
 - **Sentry:** opt-in via `SENTRY_DSN`. Init antes de `NestFactory.create` para capturar errores de bootstrap. Tags automáticos: `requestId`, `tenantId`. Sample rate de traces configurable. Si `SENTRY_DSN` está vacío, queda deshabilitado (no falla).
 - **AllExceptionsFilter** (global via `APP_FILTER`): sanitiza respuestas (no leak stack traces ni mensajes de Prisma al cliente), mapea errores conocidos de Prisma (`P2002`→409, `P2025`→404, `P2003`→400), incluye `requestId` en todas las respuestas de error. Solo errores **no-HttpException** (true unhandled) se reportan a Sentry — esto evita ruido por `ServiceUnavailableException` esperado del `/health`.
 
-**Seguridad:** `helmet` (headers HTTP) + `@nestjs/throttler` (10/seg · 100/min · 1000/h global; `POST /public/:tenantSlug/bookings` con límite propio 2/10s · 3/min). CORS multi-origen via `CORS_ORIGINS` (separados por coma). `SubscriptionGuard` (APP_GUARD global) devuelve HTTP 402 si el tenant no está `active`. `PlanQuotaGuard` (por-handler con `@QuotaLimit('patients'|'products'|'sales_per_month'|'users')`) devuelve HTTP 402 + body `{ error: 'PlanQuotaExceeded', limit, current, planName }` al exceder el plan; cableado en `POST /patients`, `POST /inventory`, `POST /sales`. `PlanFeatureGuard` (por-handler/controller con `@PlanFeature('commissions')`) devuelve HTTP 402 + body `{ error: 'FeatureNotInPlan', feature, planSlug, planName }` cuando el flag booleano del plan no está activo; cableado en controller `commissions/*` y en `GET /sales/metrics`. Rutas sin tenantId en CLS (public/platform) se saltan. RLS habilitado en todas las tablas via migración 015.
+**Seguridad:** `helmet` (headers HTTP) + `@nestjs/throttler` (10/seg · 100/min · 1000/h global; `POST /public/:tenantSlug/bookings` con límite propio 2/10s · 3/min). CORS multi-origen via `CORS_ORIGINS` (separados por coma). `SubscriptionGuard` (APP_GUARD global) devuelve HTTP 402 si el tenant no está `active`. `PlanQuotaGuard` (por-handler con `@QuotaLimit('patients'|'products'|'sales_per_month'|'users')`) devuelve HTTP 402 + body `{ error: 'PlanQuotaExceeded', limit, current, planName }` al exceder el plan; cableado en `POST /patients`, `POST /inventory` (salvo `category: lens_options`), `POST /sales`. `PlanFeatureGuard` (por-handler/controller con `@PlanFeature('commissions')`) devuelve HTTP 402 + body `{ error: 'FeatureNotInPlan', feature, planSlug, planName }` cuando el flag booleano del plan no está activo; cableado en controller `commissions/*` y en `GET /sales/metrics`. Rutas sin tenantId en CLS (public/platform) se saltan. RLS habilitado en todas las tablas via migración 015.
 
 **Total endpoints:** 69 (43 tenant + 1 subscriptions + 1 sales/metrics + 3 commissions + 4 public + 3 platform-auth + 13 platform-management + 1 health) — ver `docs/API_ENDPOINTS.md`
 
-**Tests:** Jest. 41 tests críticos en `apps/backend/src/**/*.spec.ts`:
+**Tests:** Jest. 45 tests críticos en `apps/backend/src/**/*.spec.ts`:
 - `auth.service.spec.ts` — login OK, password incorrecto, usuario inexistente/inactivo, garantiza que `passwordHash` NUNCA se filtra en respuestas.
 - `subscription.guard.spec.ts` — pasa sin tenantId (rutas public/platform), suspended → 402, cache 5 min funciona.
 - `plan-quota.guard.spec.ts` — sin decorator → pasa, sin sub → 402, dentro de límite → pasa, exceso → 402 con body `PlanQuotaExceeded`, UNLIMITED (-1) → pasa, `sales_per_month` lee `features.max_sales_per_month`.
+- `sales.service.spec.ts` — los lentes y materiales se cobran pero no mueven stock al vender ni al cancelar; el total aplica descuento por línea, descuento global e IVA.
 - `tenant-prisma.service.spec.ts` — el más crítico para aislamiento: verifica que el query extension inyecta `tenantId` en `where` (find/update/delete/count/aggregate/groupBy), en `data` (create/createMany), en `where + create` (upsert pero NO en update); NO inyecta en `findUnique` (rompería unique constraints), en modelos no scoped (`Tenant`, `SubscriptionPlan`), ni en rutas sin tenantId en CLS. Cubre los 16 modelos en `TENANT_SCOPED_MODELS`. Cobertura del archivo: 100% líneas, 95% branches.
 - Comando: `npm test --workspace=apps/backend` o `cd apps/backend && npx jest`. Coverage: `npm test -- --coverage`.
 
@@ -275,7 +276,7 @@ Cada módulo en `apps/backend/src/<modulo>/` tiene:
 | `appointments` | `Appointment` | `@@unique([tenantId, appointmentNumber])` |
 | `medical_records` | `MedicalRecord` | Historial clínico — columnas planas |
 | `clinical_exams` | `ClinicalExam` | `@@unique([tenantId, examNumber])` |
-| `products` | `Product` | `@@unique([tenantId, sku])` |
+| `products` | `Product` | `@@unique([tenantId, sku])`. Categoría `lens_options` = lentes y materiales cobrables (sin stock, grupo en `specifications.lensType`: `design`/`material`/`treatment`) |
 | `product_specifications` | `ProductSpecification` | Specs técnicas (1:1 con product) |
 | `product_suppliers` | `ProductSupplier` | Proveedor (1:1 con product) |
 | `stock_movements` | `StockMovement` | Entradas/salidas/ajustes de stock |
@@ -298,6 +299,7 @@ Cada módulo en `apps/backend/src/<modulo>/` tiene:
 - **Nunca** exponer el campo `passwordHash` en respuestas — usar `select` en Prisma
 - **Rutas protegidas:** `JwtAuthGuard` en el controller, `RolesGuard` solo cuando se necesita rol específico
 - **Stock:** al ajustar stock, recalcular automáticamente el `status` del producto
+- **Lentes y materiales (`lens_options`):** usar `LENS_OPTIONS_CATEGORY` de `inventory/inventory.constants.ts`. Toda consulta nueva de productos que represente inventario físico debe excluir esta categoría (ya excluida en `GET /inventory` sin filtro, catálogo público, cuotas y uso del plan; las ventas no mueven su stock)
 
 ---
 

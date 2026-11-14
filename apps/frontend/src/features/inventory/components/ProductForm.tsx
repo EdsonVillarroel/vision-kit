@@ -61,7 +61,11 @@ export const ProductForm = ({ product, onSubmit }: ProductFormProps) => {
   const [sizeTemple, setSizeTemple] = useState(product?.specifications?.size?.temple.toString() || '');
 
   // Specs — lentes
-  const [lensType, setLensType] = useState<'single' | 'bifocal' | 'progressive' | ''>(product?.specifications?.lensType || '');
+  // lensType también guarda el grupo de los lens_options (design/material/treatment); aquí solo aplica a lentes oftálmicos
+  const savedLensType = product?.specifications?.lensType;
+  const [lensType, setLensType] = useState<'single' | 'bifocal' | 'progressive' | ''>(
+    savedLensType === 'single' || savedLensType === 'bifocal' || savedLensType === 'progressive' ? savedLensType : ''
+  );
   const [lensMaterial, setLensMaterial] = useState<string>(product?.specifications?.lensMaterial || '');
   const [index, setIndex] = useState(product?.specifications?.index?.toString() || '');
   const [coatings, setCoatings] = useState(product?.specifications?.coatings?.join(', ') || '');

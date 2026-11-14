@@ -10,6 +10,7 @@ import { ClsService } from 'nestjs-cls';
 import { PrismaService } from '../prisma/prisma.service';
 import { TENANT_ID_KEY } from './tenant.constants';
 import { QUOTA_METADATA_KEY, QuotaResource } from './quota-limit.decorator';
+import { LENS_OPTIONS_CATEGORY } from '../inventory/inventory.constants';
 
 // `-1` en el plan = sin límite. Cualquier otro entero es el tope.
 const UNLIMITED = -1;
@@ -31,6 +32,14 @@ export class PlanQuotaGuard implements CanActivate {
       ctx.getHandler(),
     );
     if (!resource) return true;
+
+    // Los lentes y materiales son lista de precios, no inventario: no consumen cupo
+    if (
+      resource === 'products' &&
+      ctx.switchToHttp().getRequest().body?.category === LENS_OPTIONS_CATEGORY
+    ) {
+      return true;
+    }
 
     const tenantId = this.cls.get<string | undefined>(TENANT_ID_KEY);
     if (!tenantId) return true;
@@ -96,7 +105,9 @@ export class PlanQuotaGuard implements CanActivate {
       case 'patients':
         return this.prisma.patient.count({ where: { tenantId } });
       case 'products':
-        return this.prisma.product.count({ where: { tenantId } });
+        return this.prisma.product.count({
+          where: { tenantId, category: { not: LENS_OPTIONS_CATEGORY } },
+        });
       case 'users':
         return this.prisma.user.count({ where: { tenantId } });
       case 'sales_per_month': {

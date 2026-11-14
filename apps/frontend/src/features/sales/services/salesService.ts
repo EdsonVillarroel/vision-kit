@@ -160,7 +160,7 @@ export const salesService = {
         discount: item.discount,
       })),
       discount: data.discount,
-      tax: 0.16,
+      tax: data.tax,
       paymentMethod: data.paymentMethod,
       payments: data.payments,
       notes: data.notes,

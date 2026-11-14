@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import clsx from 'clsx';
 import type { SaleFormData, SaleItem, PaymentMethod } from '../types';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { inventoryService } from '../../inventory/services/inventoryService';
+import { useLensOptions } from '../../inventory/hooks/useLensOptions';
+import { LENS_GROUPS } from '../../inventory/lensOptions';
 import type { Product } from '../../inventory/types';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { PatientSearch } from '../../patients/components/PatientSearch';
@@ -37,6 +39,11 @@ export const SaleForm: React.FC<SaleFormProps> = ({ onSubmit }) => {
   // Productos del inventario
   const [products, setProducts] = useState<Product[]>([]);
   const [, setLoadingProducts] = useState(true);
+
+  // Lentes y materiales: solo los activos se pueden cobrar
+  const { options: lensOptions } = useLensOptions();
+  const activeLensOptions = lensOptions.filter((o) => o.status !== 'discontinued');
+  const lensOptionIds = new Set(lensOptions.map((o) => o.id));
 
   // Cliente
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -186,6 +193,26 @@ export const SaleForm: React.FC<SaleFormProps> = ({ onSubmit }) => {
     setItems(items.filter((_, i) => i !== index));
   };
 
+  const toggleLensOption = (option: Product) => {
+    if (items.some((item) => item.productId === option.id)) {
+      setItems(items.filter((item) => item.productId !== option.id));
+      return;
+    }
+    setItems([...items, {
+      productId: option.id,
+      productName: option.name,
+      productSku: option.sku,
+      quantity: 1,
+      unitPrice: option.sellingPrice,
+      discount: 0
+    }]);
+  };
+
+  // El precio del lente varía según la graduación, por eso se ajusta en la venta
+  const updateItemPrice = (index: number, unitPrice: number) => {
+    setItems(items.map((item, i) => (i === index ? { ...item, unitPrice } : item)));
+  };
+
   const addPayment = () => {
     const amount = parseFloat(currentPayment.amount);
     if (isNaN(amount) || amount <= 0) {
@@ -271,6 +298,7 @@ export const SaleForm: React.FC<SaleFormProps> = ({ onSubmit }) => {
         patientId: formData.patientId,
         items,
         discount: formData.globalDiscount,
+        tax: TAX_RATE,
         paymentMethod: formData.paymentMethod,
         payments: formData.paymentMethod === 'mixed' ? payments : undefined,
         notes: formData.notes,
@@ -489,6 +517,58 @@ export const SaleForm: React.FC<SaleFormProps> = ({ onSubmit }) => {
             </div>
           </div>
 
+          {/* Lentes y materiales */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-bold text-gray-900">Lentes y materiales</h2>
+            <p className="text-sm text-gray-500 mt-1 mb-4">
+              Toca para cobrar. Puedes ajustar el precio en la lista de abajo.
+            </p>
+            {activeLensOptions.length === 0 ? (
+              <p className="text-sm text-gray-500">
+                Aún no hay opciones cargadas.{' '}
+                <Link to="/inventory/lenses" className="font-medium text-theme-primary hover:text-theme-dark-primary">
+                  Agregar lentes y materiales
+                </Link>
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {LENS_GROUPS.map((group) => {
+                  const options = activeLensOptions.filter((o) => o.specifications?.lensType === group.value);
+                  if (options.length === 0) return null;
+                  return (
+                    <div key={group.value}>
+                      <h3 className="text-sm font-semibold text-gray-700 mb-2">{group.label}</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {options.map((option) => {
+                          const selected = items.some((item) => item.productId === option.id);
+                          return (
+                            <button
+                              key={option.id}
+                              type="button"
+                              aria-pressed={selected}
+                              onClick={() => toggleLensOption(option)}
+                              className={clsx(
+                                'rounded-lg border px-3 py-2 text-sm transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-theme-primary/40',
+                                selected
+                                  ? 'border-theme-primary bg-theme-primary text-theme-text-icons'
+                                  : 'border-theme-divider text-gray-700 hover:border-theme-primary'
+                              )}
+                            >
+                              <span className="font-medium">{selected && '✓ '}{option.name}</span>
+                              <span className={clsx('ml-2 tabular-nums', selected ? 'opacity-80' : 'text-gray-500')}>
+                                Bs {option.sellingPrice.toLocaleString()}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
           {/* Lista de Items */}
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Productos en la Venta</h2>
@@ -515,7 +595,19 @@ export const SaleForm: React.FC<SaleFormProps> = ({ onSubmit }) => {
                           <td className="py-2 text-sm text-gray-900">{item.productName}</td>
                           <td className="py-2 text-sm text-gray-900 text-center">{item.quantity}</td>
                           <td className="py-2 text-sm text-gray-900 text-right">
-                            Bs {item.unitPrice.toLocaleString()}
+                            {lensOptionIds.has(item.productId) ? (
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                aria-label={`Precio de ${item.productName}`}
+                                value={item.unitPrice}
+                                onChange={(e) => updateItemPrice(index, parseFloat(e.target.value) || 0)}
+                                className="w-24 rounded-lg border border-theme-divider px-2 py-1 text-right tabular-nums focus:ring-2 focus:ring-theme-primary/30"
+                              />
+                            ) : (
+                              <>Bs {item.unitPrice.toLocaleString()}</>
+                            )}
                           </td>
                           <td className="py-2 text-sm text-gray-600 text-right">
                             {item.discount > 0 ? `${item.discount}%` : '-'}

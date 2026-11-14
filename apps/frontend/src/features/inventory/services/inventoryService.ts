@@ -3,7 +3,7 @@ import type { Product, ProductFormData, StockMovement, InventoryFilters } from '
 
 // ─── Mappers entre valores frontend (hyphen) y backend (underscore) ───────────
 
-type BackendCategory = 'frames' | 'lenses' | 'sunglasses' | 'contact_lenses' | 'accessories' | 'solutions';
+type BackendCategory = 'frames' | 'lenses' | 'sunglasses' | 'contact_lenses' | 'accessories' | 'solutions' | 'lens_options';
 type BackendStatus = 'in_stock' | 'low_stock' | 'out_of_stock' | 'discontinued';
 
 const CATEGORY_TO_FRONTEND: Record<BackendCategory, Product['category']> = {
@@ -13,6 +13,7 @@ const CATEGORY_TO_FRONTEND: Record<BackendCategory, Product['category']> = {
   contact_lenses: 'contact-lenses',
   accessories: 'accessories',
   solutions: 'solutions',
+  lens_options: 'lens-options',
 };
 
 const CATEGORY_TO_BACKEND: Record<Product['category'], BackendCategory> = {
@@ -22,6 +23,7 @@ const CATEGORY_TO_BACKEND: Record<Product['category'], BackendCategory> = {
   'contact-lenses': 'contact_lenses',
   accessories: 'accessories',
   solutions: 'solutions',
+  'lens-options': 'lens_options',
 };
 
 const STATUS_TO_FRONTEND: Record<BackendStatus, Product['status']> = {
@@ -128,7 +130,7 @@ function mapProduct(b: BackendProduct): Product {
                   temple: Number(b.specifications.temple ?? 0),
                 }
               : undefined,
-          lensType: b.specifications.lensType as ('single' | 'bifocal' | 'progressive' | undefined),
+          lensType: b.specifications.lensType as NonNullable<Product['specifications']>['lensType'],
           lensMaterial: b.specifications.lensMaterial,
           index: b.specifications.index != null ? Number(b.specifications.index) : undefined,
           coatings: b.specifications.coatings,
@@ -254,6 +256,13 @@ export const inventoryService = {
       `/inventory/${id}`,
       buildProductPayload(data as ProductFormData)
     );
+    return mapProduct(result);
+  },
+
+  setProductActive: async (id: string, active: boolean): Promise<Product> => {
+    const result = await api.patch<BackendProduct>(`/inventory/${id}`, {
+      status: STATUS_TO_BACKEND[active ? 'in-stock' : 'discontinued'],
+    });
     return mapProduct(result);
   },
 

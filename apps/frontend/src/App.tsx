@@ -132,7 +132,7 @@ const menuItems: MenuItem[] = [
       },
       {
         id: 'inventory-lenses',
-        label: 'Lentes',
+        label: 'Lentes y materiales',
         icon: '🔬',
         path: '/inventory/lenses'
       },

@@ -91,7 +91,7 @@ apps/frontend/
 │   │   │
 │   │   ├── inventory/
 │   │   │   ├── components/         ← InventoryList, ProductDetails, ProductForm, StockAdjustment
-│   │   │   ├── hooks/              ← useInventory
+│   │   │   ├── hooks/              ← useInventory, useLensOptions
 │   │   │   ├── services/           ← inventoryService → /inventory
 │   │   │   ├── types/              ← Product, ProductCategory, StockMovement
 │   │   │   └── index.ts
@@ -284,7 +284,7 @@ apps/backend/
 | `/inventory` | InventoryListPage |
 | `/inventory/new` | NewProductPage |
 | `/inventory/frames` | FramesPage |
-| `/inventory/lenses` | LensesPage |
+| `/inventory/lenses` | LensesPage (catálogo de lentes y materiales cobrables en la venta) |
 | `/inventory/stock` | StockControlPage |
 | `/inventory/alerts` | AlertsPage |
 | `/inventory/:id` | ViewProductPage |

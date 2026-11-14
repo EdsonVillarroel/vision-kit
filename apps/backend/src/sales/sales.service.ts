@@ -3,6 +3,7 @@ import { SaleStatus } from '@prisma/client';
 import { TenantPrismaService } from '../tenant/tenant-prisma.service';
 import { CreateSaleDto } from './dto/create-sale.dto';
 import { SalesMetricsQueryDto } from './dto/sales-metrics-query.dto';
+import { LENS_OPTIONS_CATEGORY } from '../inventory/inventory.constants';
 
 const SALE_INCLUDE = {
   patient: { select: { id: true, firstName: true, lastName: true } },
@@ -68,8 +69,9 @@ export class SalesService {
     });
 
     const subtotal = saleItems.reduce((s, i) => s + i.subtotal, 0);
+    const itemsTotal = saleItems.reduce((s, i) => s + i.total, 0);
     const discountAmt = subtotal * ((dto.discount ?? 0) / 100);
-    const taxableBase = subtotal - discountAmt;
+    const taxableBase = itemsTotal - discountAmt;
     const total = taxableBase + taxableBase * dto.tax;
 
     const sale = await this.tenantPrisma.client.sale.create({
@@ -94,11 +96,11 @@ export class SalesService {
       include: SALE_INCLUDE,
     });
 
-    // Descontar stock por cada ítem vendido
+    // Descontar stock por cada ítem vendido (los lentes y materiales no tienen stock)
     await Promise.all(
       dto.items.map(async (item) => {
         const product = await this.tenantPrisma.client.product.findFirst({ where: { id: item.productId } });
-        if (!product) return;
+        if (!product || product.category === LENS_OPTIONS_CATEGORY) return;
         const newStock = Math.max(0, product.stock - item.quantity);
         const status =
           newStock === 0 ? 'out_of_stock'
@@ -164,7 +166,7 @@ export class SalesService {
       await Promise.all(
         (saleWithItems?.items ?? []).map(async (item) => {
           const product = await this.tenantPrisma.client.product.findFirst({ where: { id: item.productId } });
-          if (!product) return;
+          if (!product || product.category === LENS_OPTIONS_CATEGORY) return;
           const newStock = product.stock + item.quantity;
           const productStatus =
             newStock === 0 ? 'out_of_stock'

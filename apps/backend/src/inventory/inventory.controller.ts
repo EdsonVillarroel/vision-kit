@@ -51,18 +51,18 @@ export class InventoryController {
     return this.service.getMovements(id);
   }
 
-  @ApiOperation({ summary: 'Crear producto — roles: admin, manager — aplica cuota del plan' })
+  @ApiOperation({ summary: 'Crear producto — roles: super_admin, admin, manager — aplica cuota del plan' })
   @UseGuards(RolesGuard, PlanQuotaGuard)
-  @Roles('admin', 'manager')
+  @Roles('super_admin', 'admin', 'manager')
   @QuotaLimit('products')
   @Post()
   create(@Body() dto: CreateProductDto) {
     return this.service.create(dto);
   }
 
-  @ApiOperation({ summary: 'Actualizar producto — roles: admin, manager' })
+  @ApiOperation({ summary: 'Actualizar producto — roles: super_admin, admin, manager' })
   @UseGuards(RolesGuard)
-  @Roles('admin', 'manager')
+  @Roles('super_admin', 'admin', 'manager')
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: Partial<CreateProductDto>) {
     return this.service.update(id, dto);

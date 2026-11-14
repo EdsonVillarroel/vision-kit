@@ -302,7 +302,7 @@ Mismos campos que POST pero todos opcionales. También acepta:
 ### Query params — GET `/inventory`
 | Param | Tipo | Descripción |
 |-------|------|-------------|
-| `category` | string | `frames\|lenses\|sunglasses\|contact_lenses\|accessories\|solutions` |
+| `category` | string | `frames\|lenses\|sunglasses\|contact_lenses\|accessories\|solutions\|lens_options`. Sin este parámetro **no** se devuelven los `lens_options` (lentes y materiales sin stock) |
 | `status` | string | `in_stock\|low_stock\|out_of_stock\|discontinued` |
 | `search` | string | Busca en nombre, SKU, marca |
 
@@ -311,7 +311,7 @@ Mismos campos que POST pero todos opcionales. También acepta:
 {
   "sku": "ARM-001",
   "name": "Ray-Ban Aviator Clásico",
-  "category": "frames",          // "frames" | "lenses" | "sunglasses" | "contact_lenses" | "accessories" | "solutions"
+  "category": "frames",          // "frames" | "lenses" | "sunglasses" | "contact_lenses" | "accessories" | "solutions" | "lens_options" (no consume cuota; specifications.lensType: design | material | treatment)
   "brand": "Ray-Ban",
   "model": "RB3025",
   "costPrice": 850.00,

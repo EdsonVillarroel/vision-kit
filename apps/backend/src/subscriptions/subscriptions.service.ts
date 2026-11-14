@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { ClsService } from 'nestjs-cls';
 import { PrismaService } from '../prisma/prisma.service';
 import { TENANT_ID_KEY } from '../tenant/tenant.constants';
+import { LENS_OPTIONS_CATEGORY } from '../inventory/inventory.constants';
 
 @Injectable()
 export class SubscriptionsService {
@@ -29,7 +30,7 @@ export class SubscriptionsService {
 
     const [patients, products, users, salesThisMonth] = await Promise.all([
       this.prisma.patient.count({ where: { tenantId } }),
-      this.prisma.product.count({ where: { tenantId } }),
+      this.prisma.product.count({ where: { tenantId, category: { not: LENS_OPTIONS_CATEGORY } } }),
       this.prisma.user.count({ where: { tenantId } }),
       this.prisma.sale.count({ where: { tenantId, createdAt: { gte: startOfMonth } } }),
     ]);

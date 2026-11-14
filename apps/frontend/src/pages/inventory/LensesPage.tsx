@@ -1,231 +1,186 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useInventory } from '../../features/inventory/hooks/useInventory';
+import clsx from 'clsx';
+import { Button, Input } from '../../components/ui';
 import { SkeletonPageWithStats } from '../../components/ui/Skeleton';
+import { useAuth } from '../../features/auth/hooks/useAuth';
+import { useLensOptions } from '../../features/inventory/hooks/useLensOptions';
+import { LENS_GROUPS } from '../../features/inventory/lensOptions';
+import type { LensOptionGroup, Product } from '../../features/inventory/types';
+
+const EMPTY_FORM = { name: '', group: 'material' as LensOptionGroup, sellingPrice: '', costPrice: '' };
 
 export const LensesPage = () => {
-  const navigate = useNavigate();
-  const [search, setSearch] = useState('');
-  const [lensType, setLensType] = useState<'lenses' | 'contact-lenses' | ''>('');
+  const { user } = useAuth();
+  const canManage = user?.role !== 'optician';
+  const { options, loading, createOption, updateOption, setActive } = useLensOptions();
 
-  const { products, loading, error } = useInventory({
-    search: search || undefined,
-    category: lensType || undefined
-  });
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  const lenses = products.filter(
-    p => p.category === 'lenses' || p.category === 'contact-lenses'
-  );
+  const groupInfo = LENS_GROUPS.find((g) => g.value === form.group);
+  const price = parseFloat(form.sellingPrice);
+  const canSave = form.name.trim().length > 0 && price > 0;
 
-  const opticalLenses = lenses.filter(p => p.category === 'lenses');
-  const contactLenses = lenses.filter(p => p.category === 'contact-lenses');
+  const resetForm = () => {
+    setForm(EMPTY_FORM);
+    setEditingId(null);
+  };
+
+  const startEdit = (option: Product) => {
+    setEditingId(option.id);
+    setForm({
+      name: option.name,
+      group: (option.specifications?.lensType as LensOptionGroup) ?? 'material',
+      sellingPrice: option.sellingPrice.toString(),
+      costPrice: option.costPrice ? option.costPrice.toString() : '',
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canSave) return;
+    setSaving(true);
+    const input = {
+      name: form.name.trim(),
+      group: form.group,
+      sellingPrice: price,
+      costPrice: parseFloat(form.costPrice) || 0,
+    };
+    const saved = editingId ? await updateOption(editingId, input) : await createOption(input);
+    setSaving(false);
+    if (saved) resetForm();
+  };
 
   if (loading) {
-    return <SkeletonPageWithStats statCount={3} tableRows={6} tableCols={6} />;
+    return <SkeletonPageWithStats statCount={3} tableRows={6} tableCols={4} />;
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Lentes</h1>
-          <p className="text-gray-600 mt-1">Lentes oftálmicos y de contacto</p>
-        </div>
-        <button
-          onClick={() => navigate('/inventory/new')}
-          className="px-4 py-2 bg-theme-primary text-white rounded-lg hover:bg-theme-dark-primary font-medium"
-        >
-          + Nuevo Producto
-        </button>
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Lentes y materiales</h1>
+        <p className="text-gray-600 mt-1">
+          Lo que cobras al armar unos lentes. Aparece en cada venta y no lleva control de stock.
+        </p>
       </div>
 
-      {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-sm text-gray-600">Total Lentes</div>
-          <div className="text-2xl font-bold text-gray-900">{lenses.length}</div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-sm text-gray-600">Lentes Oftálmicos</div>
-          <div className="text-2xl font-bold text-theme-primary">{opticalLenses.length}</div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="text-sm text-gray-600">Lentes de Contacto</div>
-          <div className="text-2xl font-bold text-purple-600">{contactLenses.length}</div>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Buscar
-            </label>
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Nombre, SKU, marca..."
-              className="w-full px-3 py-2 border border-theme-divider rounded-lg focus:ring-2 focus:ring-theme-primary/30 focus:border-transparent"
+      {canManage && (
+        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            {editingId ? 'Editar opción' : 'Agregar opción'}
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label htmlFor="lens-group" className="block text-sm font-medium text-gray-700 mb-2">Grupo</label>
+              <select
+                id="lens-group"
+                value={form.group}
+                onChange={(e) => setForm({ ...form, group: e.target.value as LensOptionGroup })}
+                className="w-full px-3 py-2 border border-theme-divider rounded-lg focus:ring-2 focus:ring-theme-primary/30"
+              >
+                {LENS_GROUPS.map((g) => (
+                  <option key={g.value} value={g.value}>{g.label}</option>
+                ))}
+              </select>
+            </div>
+            <Input
+              label="Nombre"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              placeholder={groupInfo?.placeholder}
+              required
+            />
+            <Input
+              label="Precio de venta (Bs)"
+              type="number"
+              min="0"
+              step="0.01"
+              value={form.sellingPrice}
+              onChange={(e) => setForm({ ...form, sellingPrice: e.target.value })}
+              required
+            />
+            <Input
+              label="Costo (Bs)"
+              type="number"
+              min="0"
+              step="0.01"
+              value={form.costPrice}
+              onChange={(e) => setForm({ ...form, costPrice: e.target.value })}
+              placeholder="Opcional"
             />
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tipo de Lente
-            </label>
-            <select
-              value={lensType}
-              onChange={(e) => setLensType(e.target.value as any)}
-              className="w-full px-3 py-2 border border-theme-divider rounded-lg focus:ring-2 focus:ring-theme-primary/30 focus:border-transparent"
-            >
-              <option value="">Todos</option>
-              <option value="lenses">Lentes Oftálmicos</option>
-              <option value="contact-lenses">Lentes de Contacto</option>
-            </select>
+          <div className="mt-4 flex gap-3">
+            <Button type="submit" isLoading={saving} disabled={!canSave} className="!w-auto px-5">
+              {editingId ? 'Guardar cambios' : 'Agregar'}
+            </Button>
+            {editingId && (
+              <Button type="button" variant="outline" onClick={resetForm} className="!w-auto px-5">
+                Cancelar
+              </Button>
+            )}
           </div>
-        </div>
-      </div>
-
-      {/* Error */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
-          {error}
-        </div>
+        </form>
       )}
 
-      {/* Products Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Producto
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Tipo
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Especificaciones
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Stock
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Precio
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {lenses.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-16 text-center">
-                    <div className="flex flex-col items-center">
-                      <div className="text-5xl mb-3">🔬</div>
-                      <p className="text-base font-semibold text-gray-900 mb-1">
-                        {search || lensType ? 'Sin resultados' : 'Sin lentes en inventario'}
-                      </p>
-                      <p className="text-sm text-gray-500 mb-5">
-                        {search || lensType
-                          ? 'Prueba ajustando los filtros de búsqueda.'
-                          : 'Agrega lentes oftálmicos o de contacto al inventario.'}
-                      </p>
-                      <button
-                        onClick={() => navigate('/inventory/new')}
-                        className="px-4 py-2 bg-theme-primary text-white rounded-lg hover:bg-theme-dark-primary text-sm font-medium"
-                      >
-                        + Agregar producto
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                lenses.map((product) => (
-                  <tr key={product.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <div className="font-medium text-gray-900">{product.name}</div>
-                        <div className="text-sm text-gray-500">
-                          {product.brand} • {product.sku}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      {product.category === 'lenses' ? (
-                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                          Oftálmico
-                        </span>
-                      ) : (
-                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
-                          Contacto
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {product.specifications && (
-                        <div className="space-y-1">
-                          {product.specifications.lensType && (
-                            <div>
-                              {product.specifications.lensType === 'single' && 'Monofocal'}
-                              {product.specifications.lensType === 'bifocal' && 'Bifocal'}
-                              {product.specifications.lensType === 'progressive' && 'Progresivo'}
-                            </div>
-                          )}
-                          {product.specifications.lensMaterial && (
-                            <div className="text-xs">{product.specifications.lensMaterial}</div>
-                          )}
-                          {product.specifications.index && (
-                            <div className="text-xs">Índice: {product.specifications.index}</div>
-                          )}
-                          {product.specifications.baseCurve && (
-                            <div className="text-xs">
-                              BC: {product.specifications.baseCurve} • DIA:{' '}
-                              {product.specifications.diameter}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm">
-                        <div
-                          className={`font-medium ${
-                            product.stock === 0
-                              ? 'text-red-600'
-                              : product.stock <= product.minStock
-                              ? 'text-yellow-600'
-                              : 'text-gray-900'
-                          }`}
-                        >
-                          {product.stock} uds
-                        </div>
-                        <div className="text-gray-500 text-xs">Min: {product.minStock}</div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      ${product.sellingPrice.toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 text-sm">
-                      <button
-                        onClick={() => navigate(`/inventory/${product.id}`)}
-                        className="text-theme-primary hover:text-theme-dark-primary font-medium"
-                      >
-                        Ver
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      {options.length === 0 ? (
+        <div className="bg-white rounded-lg shadow px-6 py-16 text-center">
+          <p className="text-base font-semibold text-gray-900 mb-1">Aún no hay lentes ni materiales</p>
+          <p className="text-sm text-gray-500">
+            Agrega Progresivo, MR8, Blue Block, Antirreflejo y lo demás que cobras para usarlos en las ventas.
+          </p>
         </div>
-      </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {LENS_GROUPS.map((group) => {
+            const groupOptions = options.filter((o) => o.specifications?.lensType === group.value);
+            return (
+              <section key={group.value} className="bg-white rounded-lg shadow p-4">
+                <h2 className="font-semibold text-gray-900 mb-2">{group.label}</h2>
+                {groupOptions.length === 0 ? (
+                  <p className="py-4 text-sm text-gray-500">Sin opciones todavía.</p>
+                ) : (
+                  <ul className="divide-y divide-gray-100">
+                    {groupOptions.map((option) => {
+                      const active = option.status !== 'discontinued';
+                      return (
+                        <li key={option.id} className="flex items-center justify-between gap-3 py-3">
+                          <div className={clsx('min-w-0', !active && 'opacity-50')}>
+                            <p className="truncate font-medium text-gray-900">{option.name}</p>
+                            <p className="text-sm text-gray-500 tabular-nums">
+                              Bs {option.sellingPrice.toLocaleString()}
+                              {!active && ' · Inactivo'}
+                            </p>
+                          </div>
+                          {canManage && (
+                            <div className="flex shrink-0 gap-3 text-sm font-medium">
+                              <button
+                                type="button"
+                                onClick={() => startEdit(option)}
+                                className="text-theme-primary hover:text-theme-dark-primary"
+                              >
+                                Editar
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setActive(option.id, !active)}
+                                className="text-gray-500 hover:text-gray-700"
+                              >
+                                {active ? 'Desactivar' : 'Activar'}
+                              </button>
+                            </div>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </section>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

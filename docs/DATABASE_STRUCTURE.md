@@ -134,6 +134,7 @@ enum ProductCategory {
   sunglasses
   accessories
   solutions
+  lens_options   @map("lens-options")
 }
 
 // ProductStatus usa valores propios (DB tiene: active, inactive, in_stock, low_stock, out_of_stock, discontinued)
@@ -221,6 +222,7 @@ npx prisma studio                     # GUI para explorar datos
 | `015_rls_tenant_isolation` | Habilita RLS y políticas por `tenant_id` en todas las tablas de negocio |
 | `016_bolivianize_clinic_defaults` | Cambia defaults de `clinic_settings`: `tax_rate` 0.16→0.13 (IVA Bolivia), `currency` MXN→BOB. No toca filas existentes |
 | `017_add_commission_rate_to_profiles` | Agrega `commission_rate` a `profiles` para comisiones por usuario |
+| `019_lens_options_category` | `product_category`: agrega `lens-options` para los lentes y materiales que se cobran en la venta. `ALTER TYPE ... ADD VALUE` no se puede revertir |
 | `018_relax_measurement_required` | `clinical_exams`: `pd_right`, `pd_left`, `frame_height`, `frame_right`, `frame_left` pasan a NULL permitido. La medida óptica (visión de lejos) sigue obligatoria; DP y armazón quedan opcionales |
 
 ---

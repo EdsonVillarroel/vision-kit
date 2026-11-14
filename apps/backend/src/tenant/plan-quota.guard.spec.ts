@@ -18,9 +18,10 @@ describe('PlanQuotaGuard', () => {
     sale: { count: jest.Mock };
   };
 
-  const buildCtx = (): ExecutionContext =>
+  const buildCtx = (body: unknown = {}): ExecutionContext =>
     ({
       getHandler: () => () => undefined,
+      switchToHttp: () => ({ getRequest: () => ({ body }) }),
     }) as unknown as ExecutionContext;
 
   const setQuotaMeta = (resource: QuotaResource | undefined) => {
@@ -120,6 +121,14 @@ describe('PlanQuotaGuard', () => {
         planSlug: 'pro',
       });
     }
+  });
+
+  it('no aplica cuota de productos a lentes y materiales', async () => {
+    setQuotaMeta('products');
+    cls.get.mockReturnValue('tenant-A');
+
+    await expect(guard.canActivate(buildCtx({ category: 'lens_options' }))).resolves.toBe(true);
+    expect(prisma.subscription.findFirst).not.toHaveBeenCalled();
   });
 
   it('sales_per_month lee features.max_sales_per_month del plan', async () => {

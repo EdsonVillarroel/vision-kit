@@ -4,7 +4,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ProductCategory } from '@prisma/client';
+import { ProductCategory, ProductStatus } from '@prisma/client';
 
 class SpecificationDto {
   @ApiPropertyOptional({ example: 'full-rim' }) @IsOptional() @IsString() frameType?: string;
@@ -13,7 +13,7 @@ class SpecificationDto {
   @ApiPropertyOptional({ example: 52.0 })       @IsOptional() @IsNumber() lensSize?: number;
   @ApiPropertyOptional({ example: 18.0 })       @IsOptional() @IsNumber() bridge?: number;
   @ApiPropertyOptional({ example: 140.0 })      @IsOptional() @IsNumber() temple?: number;
-  @ApiPropertyOptional({ example: 'progressive' }) @IsOptional() @IsString() lensType?: string;
+  @ApiPropertyOptional({ example: 'progressive', description: 'En lens_options es el grupo: design | material | treatment' }) @IsOptional() @IsString() lensType?: string;
   @ApiPropertyOptional({ example: 'Policarbonato' }) @IsOptional() @IsString() lensMaterial?: string;
   @ApiPropertyOptional({ example: 1.67 })       @IsOptional() @IsNumber() index?: number;
   @ApiPropertyOptional({ example: ['AR', 'UV'], type: [String] }) @IsOptional() @IsArray() @IsString({ each: true }) coatings?: string[];
@@ -60,6 +60,9 @@ export class CreateProductDto {
 
   @ApiPropertyOptional({ example: 10 })
   @IsOptional() @IsNumber() @Min(0) discount?: number;
+
+  @ApiPropertyOptional({ enum: ProductStatus, description: 'Usar `discontinued` para retirar un producto de la venta' })
+  @IsOptional() @IsEnum(ProductStatus) status?: ProductStatus;
 
   @ApiProperty({ example: 15 })
   @IsInt() @Min(0) stock: number;

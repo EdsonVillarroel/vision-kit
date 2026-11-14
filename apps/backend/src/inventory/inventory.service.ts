@@ -3,6 +3,7 @@ import { ProductCategory, ProductStatus } from '@prisma/client';
 import { TenantPrismaService } from '../tenant/tenant-prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { AdjustStockDto } from './dto/adjust-stock.dto';
+import { LENS_OPTIONS_CATEGORY } from './inventory.constants';
 
 const PRODUCT_INCLUDE = { specifications: true, supplier: true };
 
@@ -13,7 +14,8 @@ export class InventoryService {
   async findAll(category?: ProductCategory, status?: ProductStatus, search?: string) {
     return this.tenantPrisma.client.product.findMany({
       where: {
-        category,
+        // Los lentes y materiales solo se listan cuando se piden explícitamente
+        category: category ?? { not: LENS_OPTIONS_CATEGORY },
         status,
         OR: search
           ? [

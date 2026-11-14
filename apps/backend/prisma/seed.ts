@@ -362,6 +362,26 @@ async function main() {
         phone: '+591 2 277 3344',
       },
     },
+    ...[
+      { sku: 'LEN-MONO', name: 'Monofocal', group: 'design', price: 120 },
+      { sku: 'LEN-BIFO', name: 'Bifocal', group: 'design', price: 280 },
+      { sku: 'LEN-PROG', name: 'Progresivo', group: 'design', price: 650 },
+      { sku: 'LEN-ORG', name: 'Orgánico blanco', group: 'material', price: 150 },
+      { sku: 'LEN-MR8', name: 'MR8', group: 'material', price: 380 },
+      { sku: 'LEN-BLUE', name: 'Blue Block', group: 'treatment', price: 220 },
+      { sku: 'LEN-AR', name: 'Antirreflejo', group: 'treatment', price: 180 },
+      { sku: 'LEN-FOTO', name: 'Fotocromático', group: 'treatment', price: 300 },
+    ].map(({ sku, name, group, price }) => ({
+      sku,
+      name,
+      category: 'lens_options' as const,
+      costPrice: 0,
+      sellingPrice: price,
+      stock: 0,
+      minStock: 0,
+      specifications: { lensType: group },
+      supplier: undefined,
+    })),
   ];
 
   const createdProducts: string[] = [];
@@ -375,7 +395,9 @@ async function main() {
     const created = await prisma.product.create({
       data: {
         ...product,
-        status: product.stock === 0
+        status: product.category === 'lens_options'
+          ? 'in_stock'
+          : product.stock === 0
           ? 'out_of_stock'
           : product.stock <= product.minStock
             ? 'low_stock'

@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { LENS_OPTIONS_CATEGORY } from '../inventory/inventory.constants';
 
 @Injectable()
 export class PublicService {
@@ -30,6 +31,7 @@ export class PublicService {
     const where: Record<string, unknown> = {
       tenantId: tenant.id,
       status: 'in_stock',
+      NOT: { category: LENS_OPTIONS_CATEGORY },
     };
 
     if (category) where.category = category;
@@ -89,7 +91,7 @@ export class PublicService {
     if (tenant.status !== 'active') throw new NotFoundException('Óptica no disponible');
 
     const product = await this.prisma.product.findFirst({
-      where: { id, tenantId: tenant.id, status: 'in_stock' },
+      where: { id, tenantId: tenant.id, status: 'in_stock', NOT: { category: LENS_OPTIONS_CATEGORY } },
       select: {
         id: true,
         sku: true,

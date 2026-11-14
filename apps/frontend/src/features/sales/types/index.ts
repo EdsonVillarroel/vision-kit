@@ -72,6 +72,7 @@ export interface SaleFormData {
   patientId: string;
   items: Omit<SaleItem, 'subtotal' | 'total'>[];
   discount?: number;
+  tax: number; // Tasa de IVA de la clínica (ej: 0.13 = 13%)
   paymentMethod: PaymentMethod;
   payments?: {
     method: PaymentMethod;

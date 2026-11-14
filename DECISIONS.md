@@ -27,6 +27,7 @@
 | Columnas planas en `medical_records` y `clinical_exams` | Mejor type safety en Prisma que JSONB. Las 20+ columnas de refracción/AV/PIO se consultan individualmente | No cambiar salvo rediseño del dominio médico |
 | `directUrl` en Prisma datasource | PgBouncer (pooling) no soporta transacciones de migración. `directUrl` bypasea el pooler solo para migraciones, mientras `DATABASE_URL` sigue usando pooling para queries | No — arquitectura requerida por Supabase |
 | `PublicBooking` separado de `Appointment` | Las reservas públicas son anónimas (sin FK a Patient/User). El staff las revisa y convierte manualmente en citas reales del sistema | Sí si se automatiza el flujo de conversión |
+| Lentes y materiales como categoría `lens_options` de `products` (no tabla propia) | Son líneas de venta: reutilizar `Product` mantiene `sale_items.product_id`, comisiones y métricas sin cambios ni endpoints nuevos. No tienen stock (se fabrican a pedido), por eso se excluyen de listados, cuotas y catálogo público. El grupo vive en `specifications.lensType` | Sí si necesitan compatibilidades o precios por rango de graduación |
 | `serviceType` en `PublicBooking` es `String` libre | El público escribe texto legible. El staff mapea al enum interno al confirmar la cita. Evita confusión con terminología técnica en el portal público | Sí si se agrega un selector en el portal |
 
 ---

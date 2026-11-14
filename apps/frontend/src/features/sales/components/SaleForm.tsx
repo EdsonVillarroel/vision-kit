@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { calculateSaleTotals } from '../utils/saleTotals';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import clsx from 'clsx';
 import type { SaleFormData, SaleItem, PaymentMethod } from '../types';
@@ -135,29 +136,7 @@ export const SaleForm: React.FC<SaleFormProps> = ({ onSubmit }) => {
     loadProducts();
   }, []);
 
-  // Calcular totales
-  const calculateTotals = () => {
-    const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
-    const itemDiscounts = items.reduce((sum, item) => {
-      const itemSubtotal = item.quantity * item.unitPrice;
-      return sum + (itemSubtotal * item.discount / 100);
-    }, 0);
-    const globalDiscountAmount = (subtotal * formData.globalDiscount) / 100;
-    const subtotalAfterDiscount = subtotal - itemDiscounts - globalDiscountAmount;
-    const tax = subtotalAfterDiscount * TAX_RATE;
-    const total = subtotalAfterDiscount + tax;
-
-    return {
-      subtotal,
-      itemDiscounts,
-      globalDiscountAmount,
-      totalDiscount: itemDiscounts + globalDiscountAmount,
-      tax,
-      total
-    };
-  };
-
-  const totals = calculateTotals();
+  const totals = calculateSaleTotals(items, formData.globalDiscount, TAX_RATE);
 
   const filteredProducts = products.filter((p: Product) =>
     p.name.toLowerCase().includes(searchProduct.toLowerCase()) ||

@@ -35,6 +35,10 @@ export const userService = {
     return api.patch(`/users/${id}/password`, { currentPassword, newPassword });
   },
 
+  resetPassword: async (id: string, newPassword: string): Promise<{ message: string }> => {
+    return api.patch(`/users/${id}/reset-password`, { newPassword });
+  },
+
   getByRole: async (role: string): Promise<User[]> => {
     const all = await api.get<User[]>('/users');
     return all.filter((u) => u.role === role && u.status === 'active');

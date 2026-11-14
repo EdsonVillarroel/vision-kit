@@ -1,3 +1,5 @@
+import { Throttle } from '@nestjs/throttler';
+import { LOGIN_THROTTLE } from '../auth/login-throttle';
 import { Controller, Post, Get, Body, UseGuards, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { PlatformAuthService } from './platform-auth.service';
@@ -12,6 +14,7 @@ export class PlatformAuthController {
   @ApiOperation({ summary: 'Login para platform admins' })
   @ApiResponse({ status: 200, description: 'Login exitoso — retorna access_token' })
   @ApiResponse({ status: 401, description: 'Credenciales inválidas o admin inactivo' })
+  @Throttle(LOGIN_THROTTLE)
   @Post('login')
   login(@Body() dto: PlatformLoginDto) {
     return this.platformAuthService.login(dto);

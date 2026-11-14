@@ -1,3 +1,4 @@
+import { NestExpressApplication } from '@nestjs/platform-express';
 import * as Sentry from '@sentry/node';
 
 // ── Sentry: init ANTES de NestFactory para capturar errores de bootstrap ──
@@ -20,7 +21,12 @@ import helmet from 'helmet';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true });
+
+  // Detrás del proxy de Render, req.ip sería la IP del proxy y TODOS los usuarios compartirían
+  // el mismo límite de rate limiting. Confiar en N saltos de X-Forwarded-For (no en "true",
+  // que permitiría falsificar la IP y saltarse el límite).
+  app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS ?? 1));
 
   // Reemplaza el logger por defecto de Nest con Pino (estructurado, redact)
   app.useLogger(app.get(PinoLogger));

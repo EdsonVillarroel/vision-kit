@@ -72,6 +72,7 @@ vision-kit/
 | Landing (público) | React 19, TypeScript, Vite 6, React Router DOM v7, TailwindCSS v4 |
 | Backend | NestJS 10, Prisma 5, PostgreSQL (Supabase), JWT (Passport), bcrypt, class-validator, @nestjs/throttler, helmet |
 | Base de datos | Supabase (PostgreSQL) — project ref: `fobfltxxsudplapdwlfj` |
+| Tests | Jest (backend), Vitest + Testing Library (frontend), Playwright (E2E en `e2e/`) |
 | Monorepo | npm workspaces, concurrently |
 
 ---
@@ -91,6 +92,10 @@ npm run db:seed:plans  # seed con 7 filas en subscription_plans (4 tiers × mens
 npm run db:seed:admin  # crea/actualiza el platform admin (NO está en db:seed) — configurable con PLATFORM_ADMIN_EMAIL/PASSWORD/NAME
 npm run db:studio      # GUI Prisma Studio
 npm run build          # build frontend + backend
+npm test               # tests unitarios backend (Jest) + frontend (Vitest)
+npm run test:e2e       # Playwright: levanta backend + frontend contra una base de prueba
+                       #   antes: E2E_DATABASE_URL=postgresql://... npm run db:prepare --workspace=e2e
+                       #   (Postgres local, p. ej. docker run -p 55433:5432 -e POSTGRES_PASSWORD=pg postgres:16-alpine)
 
 # Supabase CLI (desde raíz del monorepo)
 npx supabase migration new <nombre>   # nueva migración SQL
@@ -202,20 +207,27 @@ Cada módulo en `apps/backend/src/<modulo>/` tiene:
 - **Sentry:** opt-in via `SENTRY_DSN`. Init antes de `NestFactory.create` para capturar errores de bootstrap. Tags automáticos: `requestId`, `tenantId`. Sample rate de traces configurable. Si `SENTRY_DSN` está vacío, queda deshabilitado (no falla).
 - **AllExceptionsFilter** (global via `APP_FILTER`): sanitiza respuestas (no leak stack traces ni mensajes de Prisma al cliente), mapea errores conocidos de Prisma (`P2002`→409, `P2025`→404, `P2003`→400), incluye `requestId` en todas las respuestas de error. Solo errores **no-HttpException** (true unhandled) se reportan a Sentry — esto evita ruido por `ServiceUnavailableException` esperado del `/health`.
 
-**Seguridad:** `helmet` (headers HTTP) + `@nestjs/throttler` (10/seg · 100/min · 1000/h global; `POST /public/:tenantSlug/bookings` con límite propio 2/10s · 3/min). CORS multi-origen via `CORS_ORIGINS` (separados por coma). `SubscriptionGuard` (APP_GUARD global) devuelve HTTP 402 si el tenant no está `active`. `PlanQuotaGuard` (por-handler con `@QuotaLimit('patients'|'products'|'sales_per_month'|'users')`) devuelve HTTP 402 + body `{ error: 'PlanQuotaExceeded', limit, current, planName }` al exceder el plan; cableado en `POST /patients`, `POST /inventory` (salvo `category: lens_options`), `POST /sales`. `PlanFeatureGuard` (por-handler/controller con `@PlanFeature('commissions')`) devuelve HTTP 402 + body `{ error: 'FeatureNotInPlan', feature, planSlug, planName }` cuando el flag booleano del plan no está activo; cableado en controller `commissions/*` y en `GET /sales/metrics`. Rutas sin tenantId en CLS (public/platform) se saltan. RLS habilitado en todas las tablas via migración 015.
+**Seguridad:** `helmet` (headers HTTP) + `@nestjs/throttler` (10/seg · 100/min · 1000/h global; `POST /public/:tenantSlug/bookings` con límite propio 2/10s · 3/min). CORS multi-origen via `CORS_ORIGINS` (separados por coma). Login (`/auth/login`, `/platform/auth/login`) con límite propio anti fuerza bruta: 5/min y 20/h por IP (`auth/login-throttle.ts`, configurable con `LOGIN_THROTTLE_PER_MIN`/`_PER_HOUR`). `trust proxy` = `TRUST_PROXY_HOPS` (default 1) para que el throttling use la IP real detrás del proxy de Render y no la del proxy. `SubscriptionGuard` (APP_GUARD global) devuelve HTTP 402 si el tenant no está `active`. `PlanQuotaGuard` (por-handler con `@QuotaLimit('patients'|'products'|'sales_per_month'|'users')`) devuelve HTTP 402 + body `{ error: 'PlanQuotaExceeded', limit, current, planName }` al exceder el plan; cableado en `POST /patients`, `POST /inventory` (salvo `category: lens_options`), `POST /sales`. `PlanFeatureGuard` (por-handler/controller con `@PlanFeature('commissions')`) devuelve HTTP 402 + body `{ error: 'FeatureNotInPlan', feature, planSlug, planName }` cuando el flag booleano del plan no está activo; cableado en controller `commissions/*` y en `GET /sales/metrics`. Rutas sin tenantId en CLS (public/platform) se saltan. RLS habilitado en todas las tablas via migración 015.
 
-**Total endpoints:** 69 (43 tenant + 1 subscriptions + 1 sales/metrics + 3 commissions + 4 public + 3 platform-auth + 13 platform-management + 1 health) — ver `docs/API_ENDPOINTS.md`
+**Total endpoints:** 70 (44 tenant + 1 subscriptions + 1 sales/metrics + 3 commissions + 4 public + 3 platform-auth + 13 platform-management + 1 health) — ver `docs/API_ENDPOINTS.md`
 
-**Tests:** Jest. 45 tests críticos en `apps/backend/src/**/*.spec.ts`:
+**Tests:** Jest. 55 tests críticos en `apps/backend/src/**/*.spec.ts`:
 - `auth.service.spec.ts` — login OK, password incorrecto, usuario inexistente/inactivo, garantiza que `passwordHash` NUNCA se filtra en respuestas.
 - `subscription.guard.spec.ts` — pasa sin tenantId (rutas public/platform), suspended → 402, cache 5 min funciona.
 - `plan-quota.guard.spec.ts` — sin decorator → pasa, sin sub → 402, dentro de límite → pasa, exceso → 402 con body `PlanQuotaExceeded`, UNLIMITED (-1) → pasa, `sales_per_month` lee `features.max_sales_per_month`.
+- `roles.guard.spec.ts` — rol listado pasa, no listado → bloquea, `super_admin` siempre pasa, sin usuario → bloquea.
+- `users.service.spec.ts` — `resetPassword`: admin restablece a un óptico sin la actual (hash válido), 403 en la propia cuenta y de admin → super_admin, 404 fuera del tenant.
 - `sales.service.spec.ts` — los lentes y materiales se cobran pero no mueven stock al vender ni al cancelar; el total aplica descuento por línea, descuento global e IVA.
 - `tenant-prisma.service.spec.ts` — el más crítico para aislamiento: verifica que el query extension inyecta `tenantId` en `where` (find/update/delete/count/aggregate/groupBy), en `data` (create/createMany), en `where + create` (upsert pero NO en update); NO inyecta en `findUnique` (rompería unique constraints), en modelos no scoped (`Tenant`, `SubscriptionPlan`), ni en rutas sin tenantId en CLS. Cubre los 16 modelos en `TENANT_SCOPED_MODELS`. Cobertura del archivo: 100% líneas, 95% branches.
 - Comando: `npm test --workspace=apps/backend` o `cd apps/backend && npx jest`. Coverage: `npm test -- --coverage`.
 
+**Tests frontend (Vitest + Testing Library):** `*.test.ts(x)` junto al código, `npm test --workspace=apps/frontend`. Cubren `calculateSaleTotals` (`features/sales/utils/saleTotals.ts` — debe dar lo mismo que `SalesService.create`), normalización de `taxRate` en `settingsService`, payload de `salesService.create` y `ResetPasswordModal`.
+
+**E2E (Playwright, workspace `e2e/`):** `playwright.config.ts` levanta `apps/backend/dist/main.js` (:3055) y Vite (:5180). `scripts/prepare-db.sh` hace `prisma db push --force-reset` + `bootstrap.sql` (tenant + defaults de `tenant_id` que en Supabase vienen de las migraciones) + seeds + `after-seed.sql` (suscripción activa, `gerente@` como super_admin). Se niega a correr contra URLs de Supabase. Specs: login, venta con lentes y materiales (total en pantalla = guardado, stock), restablecer contraseña.
+
 **CI/CD:** `.github/workflows/ci.yml` — en cada PR/push a `main`:
-- Job `validate` (matrix: backend, frontend, admin, landing): `npm ci` + `prisma generate` (solo backend) + `lint` + `test` (solo backend) + `build` por app en paralelo. `fail-fast: false` para diagnóstico completo.
+- Job `validate` (matrix: backend, frontend, admin, landing): `npm ci` + `prisma generate` (solo backend) + `lint` + `test` (backend y frontend) + `build` por app en paralelo. `fail-fast: false` para diagnóstico completo.
+- Job `e2e`: Postgres como service container + `db:prepare` + Playwright (Chromium). Sube el reporte como artifact si falla. `docker-publish-backend` depende de `validate` y `e2e`.
 - Job `docker-publish-backend` (solo en push a `main`): builda `apps/backend/Dockerfile` y pushea a `ghcr.io/edsonvillarroel/vision-kit-backend` con tags `latest` + `sha-<short>`. Usa `cache: type=gha` para builds incrementales (~1–2 min después del primer build).
 - `concurrency` cancela runs anteriores del mismo branch — ahorra CI minutes en pushes rápidos.
 
@@ -236,8 +248,8 @@ Cada módulo en `apps/backend/src/<modulo>/` tiene:
 
 | Rol | Acceso |
 |-----|--------|
-| `super_admin` | Todo dentro del tenant — creado solo vía provisioning |
-| `admin` | Todo — usuarios, configuración, eliminar cualquier cosa |
+| `super_admin` | Todo dentro del tenant — creado solo vía provisioning. `RolesGuard` lo deja pasar en cualquier `@Roles(...)` |
+| `admin` | Todo — usuarios, configuración, eliminar cualquier cosa, restablecer contraseñas (salvo la del super_admin) |
 | `manager` | Ventas, pacientes, inventario, reportes, ver usuarios |
 | `optician` | Ventas, pacientes, historiales, citas, exámenes clínicos |
 
@@ -297,8 +309,10 @@ Cada módulo en `apps/backend/src/<modulo>/` tiene:
 - **DTOs backend:** validación con `class-validator`, `PartialType` para updates
 - **Whitelist estricto (evitar 400):** el `ValidationPipe` global usa `whitelist: true` + `forbidNonWhitelisted: true`. Un body con CUALQUIER propiedad que no esté declarada en el DTO → **HTTP 400**. Regla para el frontend: **enviar solo campos declarados en el DTO**; los campos de estado (ej. `status`, `warningReason` de paciente) NO van en POST — se gestionan por PATCH. Además, cadenas vacías en campos con `@IsEmail`/`@IsDateString`/`@IsEnum` fallan aunque sean opcionales → mandar `undefined`, no `""`. (Nota: los PATCH tipados como `Partial<Dto>`/objeto inline NO validan; ver Gotchas en `AGENT.md`.)
 - **Nunca** exponer el campo `passwordHash` en respuestas — usar `select` en Prisma
-- **Rutas protegidas:** `JwtAuthGuard` en el controller, `RolesGuard` solo cuando se necesita rol específico
+- **Rutas protegidas:** `JwtAuthGuard` en el controller, `RolesGuard` solo cuando se necesita rol específico. No hace falta listar `super_admin` en `@Roles` (pasa siempre)
+- **Migraciones antes del merge:** Render despliega el backend al mergear a `main`; si el PR trae archivos en `supabase/migrations/`, aplicarlos en Supabase ANTES de mergear (checklist en `.github/pull_request_template.md`). Si no, producción responde 500
 - **Stock:** al ajustar stock, recalcular automáticamente el `status` del producto
+- **Configs de herramientas = código ejecutable:** cambios en `.claude/`, `.vscode/`, `.cursor/`, `.gemini/`, `.github/` o en scripts de `package.json` se revisan como código. Nunca hooks `SessionStart`, tareas `runOn: folderOpen` ni scripts que ejecuten archivos del repo automáticamente (vector del malware de `a2a8cb7`, ver `DECISIONS.md`)
 - **Lentes y materiales (`lens_options`):** usar `LENS_OPTIONS_CATEGORY` de `inventory/inventory.constants.ts`. Toda consulta nueva de productos que represente inventario físico debe excluir esta categoría (ya excluida en `GET /inventory` sin filtro, catálogo público, cuotas y uso del plan; las ventas no mueven su stock)
 
 ---

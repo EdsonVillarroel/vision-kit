@@ -7,6 +7,7 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -66,5 +67,17 @@ export class UsersController {
       throw new ForbiddenException('Solo puedes cambiar tu propia contraseña');
     }
     return this.usersService.changePassword(id, dto.currentPassword, dto.newPassword);
+  }
+
+  @ApiOperation({ summary: 'Restablecer contraseña de otro usuario sin la actual — roles: super_admin, admin' })
+  @ApiResponse({ status: 403, description: 'Propia cuenta o cuenta super_admin restablecida por un admin' })
+  @Roles('super_admin', 'admin')
+  @Patch(':id/reset-password')
+  resetPassword(
+    @Param('id') id: string,
+    @Body() dto: ResetPasswordDto,
+    @Req() req: any,
+  ) {
+    return this.usersService.resetPassword(id, dto.newPassword, req.user);
   }
 }

@@ -83,4 +83,23 @@ export class UsersService {
     await this.tenantPrisma.client.user.update({ where: { id }, data: { passwordHash: hashed } });
     return { message: 'Contraseña actualizada exitosamente' };
   }
+
+  /** Restablece la contraseña sin pedir la actual (para quien la olvidó). Solo admin/super_admin. */
+  async resetPassword(id: string, newPassword: string, actor: { id: string; role: string }) {
+    if (actor.id === id) {
+      throw new ForbiddenException('Para tu propia cuenta usa "Cambiar contraseña" en tu perfil');
+    }
+
+    const user = await this.tenantPrisma.client.user.findFirst({ where: { id }, select: { id: true, role: true } });
+    if (!user) throw new NotFoundException(`Usuario ${id} no encontrado`);
+
+    // Un admin no puede tomar control de la cuenta del super_admin
+    if (user.role === 'super_admin' && actor.role !== 'super_admin') {
+      throw new ForbiddenException('Solo el super_admin puede restablecer su propia contraseña');
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await this.tenantPrisma.client.user.update({ where: { id }, data: { passwordHash: hashed } });
+    return { message: 'Contraseña restablecida exitosamente' };
+  }
 }

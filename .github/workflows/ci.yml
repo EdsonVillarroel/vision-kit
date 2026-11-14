@@ -43,17 +43,69 @@ jobs:
       - name: Lint
         run: npm run lint --workspace=apps/${{ matrix.app }} --if-present
 
-      - name: Test (solo backend)
-        if: matrix.app == 'backend'
-        run: npm test --workspace=apps/backend
+      - name: Test unitarios (backend + frontend)
+        if: matrix.app == 'backend' || matrix.app == 'frontend'
+        run: npm test --workspace=apps/${{ matrix.app }}
 
       - name: Build
         run: npm run build --workspace=apps/${{ matrix.app }}
 
+  # ── Pruebas de punta a punta (Playwright): backend + frontend reales contra Postgres ──
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: pg
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      E2E_DATABASE_URL: postgresql://postgres:pg@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install workspace dependencies
+        run: npm ci
+
+      - name: Prisma generate + build backend
+        run: |
+          npx --workspace=apps/backend prisma generate
+          npm run build --workspace=apps/backend
+
+      - name: Preparar base de prueba (schema + seed)
+        run: npm run db:prepare --workspace=e2e
+
+      - name: Instalar Chromium
+        run: npx --workspace=e2e playwright install --with-deps chromium
+
+      - name: Playwright
+        run: npm test --workspace=e2e
+
+      - name: Reporte (si falla)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+          retention-days: 7
+
   # ── Build + push de la imagen del backend a GHCR (solo en push a main) ────
   docker-publish-backend:
     name: Publish Backend Image
-    needs: validate
+    needs: [validate, e2e]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:

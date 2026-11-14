@@ -504,14 +504,14 @@ async function main() {
     // Usar SQL raw para evitar incompatibilidades con PgBouncer y campos de tipo Date
     await prisma.$executeRawUnsafe(`
       INSERT INTO appointments (
-        id, appointment_number, patient_id, practitioner_id,
+        id, tenant_id, appointment_number, patient_id, practitioner_id,
         date, time, duration, end_time, type, status,
         reason, reminder_sent, created_by_id, created_at, updated_at
       ) VALUES (
-        gen_random_uuid(), $1, $2::uuid, $3::uuid,
+        gen_random_uuid(), $12::uuid, $1, $2::uuid, $3::uuid,
         $4::date, $5::time, $6, $7::time, $8::appointment_type, $9::appointment_status,
         $10, false, $11::uuid, now(), now()
-      ) ON CONFLICT (appointment_number) DO NOTHING
+      ) ON CONFLICT (tenant_id, appointment_number) DO NOTHING
     `,
       appointmentNumber,
       apt.patientId,
@@ -524,6 +524,7 @@ async function main() {
       dbStatus[apt.status] ?? apt.status,
       apt.reason ?? null,
       adminId,
+      DEFAULT_TENANT_ID,
     );
     console.log(`✅ Appointment: ${apt.type} at ${apt.time}`);
   }

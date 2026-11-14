@@ -86,7 +86,8 @@ export const QuickActionsFab = () => {
         )}
       />
 
-      <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-3">
+      {/* El contenedor no captura clics: solo los botones visibles (si no, tapa la esquina de la página) */}
+      <div className="pointer-events-none fixed bottom-6 right-6 z-40 flex flex-col items-end gap-3">
         {/* Acciones */}
         <div className="flex flex-col items-end gap-3">
           {ACTIONS.map((action, i) => (
@@ -100,7 +101,7 @@ export const QuickActionsFab = () => {
                 'group flex items-center gap-3 outline-none',
                 'transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]',
                 open
-                  ? 'translate-y-0 opacity-100'
+                  ? 'pointer-events-auto translate-y-0 opacity-100'
                   : 'pointer-events-none translate-y-2 opacity-0'
               )}
             >
@@ -121,7 +122,7 @@ export const QuickActionsFab = () => {
           aria-label={open ? 'Cerrar acciones rápidas' : 'Acciones rápidas'}
           aria-expanded={open}
           className={clsx(
-            'flex h-14 w-14 items-center justify-center rounded-full bg-theme-primary text-theme-text-icons',
+            'pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full bg-theme-primary text-theme-text-icons',
             'shadow-[0_4px_16px_rgba(16,24,40,0.24)] outline-none',
             'transition-transform duration-150 ease-[cubic-bezier(0.16,1,0.3,1)] hover:scale-105 active:scale-95',
             'focus-visible:ring-2 focus-visible:ring-theme-primary/50 focus-visible:ring-offset-2'
